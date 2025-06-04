@@ -1,0 +1,6 @@
+@PRN232_Su25_Readify_WebAPI_HostAddress = http://localhost:5208
+
+GET {{PRN232_Su25_Readify_WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
