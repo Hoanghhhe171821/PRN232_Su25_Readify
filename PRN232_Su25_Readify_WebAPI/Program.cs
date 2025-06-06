@@ -1,4 +1,6 @@
 
+using PRN232_Su25_Readify_WebAPI.Models;
+
 namespace PRN232_Su25_Readify_WebAPI
 {
     public class Program
@@ -10,6 +12,7 @@ namespace PRN232_Su25_Readify_WebAPI
             // Add services to the container.
 
             builder.Services.AddControllers();
+            builder.Services.AddDbContext<Prn232Su25FinalProjectReadifyContext>();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
