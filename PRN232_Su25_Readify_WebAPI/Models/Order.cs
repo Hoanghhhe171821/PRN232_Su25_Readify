@@ -2,13 +2,14 @@
 
 namespace PRN232_Su25_Readify_WebAPI.Models
 {
-    public class RecentRead 
+    public class Order : BaseId
     {
+        public int TotalAmount { get; set; }
+        public StatusOrder Status { get; set; }
+
         public string UserId { get; set; }
         [ForeignKey("UserId")]
         public AppUser? User { get; set; }
-    
-        public int BookId { get; set; }
-        public Book? Book { get; set; }
+        
     }
 }
