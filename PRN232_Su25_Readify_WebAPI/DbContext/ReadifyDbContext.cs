@@ -30,6 +30,8 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
         public DbSet<RoyaltyPayoutRequest> RoyaltyPayoutRequests { get; set; }
         public DbSet<RoyaltyPayoutTransaction> RoyaltyPayoutTransaction { get; set; }
         public DbSet<RoyaltyTransaction> RoyaltyTransaction { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder builder)
