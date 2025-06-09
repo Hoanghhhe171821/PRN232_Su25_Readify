@@ -25,10 +25,28 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         [HttpGet("{BookId}")]
         public async Task<IActionResult> GetAllChapterByBookId(int BookId)
         {
-            var chapters = _context.Chapters.Include(c => c.Book).Where( b => b.BookId == BookId ).ToListAsync();
+            var chapters = await _context.Chapters.Include(c => c.Book).Where( b => b.BookId == BookId ).ToListAsync();
             if(chapters == null) return NotFound();
 
             return Ok(chapters);
+        }
+        [HttpPost("{BookId}")]
+        public async Task<IActionResult> UpdateBookByBookId(int BookId, [FromBody] Book updateBook)
+        {
+            var book = await _context.Books.FirstOrDefaultAsync(b => b.BookId == BookId);
+
+            if (book == null) return NotFound();
+
+            book.Title = updateBook.Title;
+            book.Description = updateBook.Description;
+            book.IsFree = updateBook.IsFree;
+            book.Price = updateBook.Price;
+            book.Status = updateBook.Status;
+
+            await _context.SaveChangesAsync();
+            
+
+            return Ok(book);
         }
 
 
