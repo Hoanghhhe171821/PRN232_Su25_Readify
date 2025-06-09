@@ -1,16 +1,26 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.DbContext;
+using PRN232_Su25_Readify_WebAPI.Middlewares;
+using PRN232_Su25_Readify_WebAPI.Models;
+using PRN232_Su25_Readify_WebAPI.Services;
+using PRN232_Su25_Readify_WebAPI.Services.IServices;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 builder.Services.AddDbContext<ReadifyDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-
+// DI Service
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddIdentity<AppUser, IdentityRole>()
+    .AddEntityFrameworkStores<ReadifyDbContext>()
+    .AddDefaultTokenProviders();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -25,7 +35,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthorization();
-
+app.UseMiddleware<ExceptionMid>();
 app.MapControllers();
 
 app.Run();
