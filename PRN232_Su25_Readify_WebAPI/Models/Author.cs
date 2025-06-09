@@ -1,19 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PRN232_Su25_Readify_WebAPI.Models;
-
-public partial class Author
+namespace PRN232_Su25_Readify_WebAPI.Models
 {
-    public int AuthorId { get; set; }
+    public class Author : BaseId
+    {
+        [StringLength(50)]
+        public string Name { get; set; }
+        public string? Bio { get; set; }
+        public string? Website { get; set; }
 
-    public string Name { get; set; } = null!;
-
-    public string? Bio { get; set; }
-
-    public string? Website { get; set; }
-
-    public DateTime? CreatedAt { get; set; }
-
-    public virtual ICollection<Book> Books { get; set; } = new List<Book>();
+        public string? UserId { get; set; }
+        [ForeignKey("UserId")]
+        public AppUser? User { get; set; }
+        public ICollection<Book>? Books { get; set; }
+        
+    }
 }

@@ -1,21 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PRN232_Su25_Readify_WebAPI.Models;
-
-public partial class Payment
+namespace PRN232_Su25_Readify_WebAPI.Models
 {
-    public int PaymentId { get; set; }
+    public class Payment : BaseId
+    {
+        public int? Amount { get; set; }
+        public string? PaymentMethod { get; set; }
 
-    public int? UserId { get; set; }
-
-    public int? Amount { get; set; }
-
-    public string? PaymentMethod { get; set; }
-
-    public DateTime? PaymentDate { get; set; }
-
-    public string? Status { get; set; }
-
-    public virtual User? User { get; set; }
+        public string? UserId { get; set; }
+        [ForeignKey("UserId")]
+        public AppUser? User { get; set; }
+    }
 }

@@ -1,43 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PRN232_Su25_Readify_WebAPI.Models;
-
-public partial class Book
+namespace PRN232_Su25_Readify_WebAPI.Models
 {
-    public int BookId { get; set; }
+    public class Book : BaseId
+    {
+        public string Title { get; set; }
+        public string? Description { get; set; }
+        public bool IsFree { get; set; }
+        public int Price { get; set; }
+        public int UnitInOrder { get; set; } = 0;
+        public string? ImageUrl { get; set; }
+        [Range(0,0.9)]
+        public decimal? RoyaltyRate { get; set; } // % trich cho tac gia
 
-    public string Title { get; set; } = null!;
+        public int AuthorId { get; set; }
+        public Author? Author { get; set; }
 
-    public string? Description { get; set; }
+        public string? UploadedBy { get; set; }
+        [ForeignKey("UploadedBy")]
+        public AppUser? AppUser { get; set; }
 
-    public int? AuthorId { get; set; }
-
-    public bool? IsFree { get; set; }
-
-    public int? Price { get; set; }
-
-    public string? Status { get; set; }
-
-    public DateTime? CreatedAt { get; set; }
-
-    public int? UploadedBy { get; set; }
-
-    public virtual Author? Author { get; set; }
-
-    public virtual BookRevenue? BookRevenue { get; set; }
-
-    public virtual ICollection<Chapter> Chapters { get; set; } = new List<Chapter>();
-
-    public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
-
-    public virtual ICollection<Error> Errors { get; set; } = new List<Error>();
-
-    public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
-
-    public virtual ICollection<Purchase> Purchases { get; set; } = new List<Purchase>();
-
-    public virtual ICollection<RecentRead> RecentReads { get; set; } = new List<RecentRead>();
-
-    public virtual User? UploadedByNavigation { get; set; }
+        public ICollection<BookCategory>? BookCategories { get; set; }
+        public ICollection<Chapter>? Chapters { get; set; }
+        public ICollection<Comment>? Comments { get; set; }
+        public ICollection<RoyaltyTransaction>? RoyaltyTransactions { get; set; }
+    }
 }

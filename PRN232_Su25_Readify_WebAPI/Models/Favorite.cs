@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PRN232_Su25_Readify_WebAPI.Models;
-
-public partial class Favorite
+namespace PRN232_Su25_Readify_WebAPI.Models
 {
-    public int UserId { get; set; }
+    public class Favorite 
+    {
+        public int BookId { get; set; }
+        public Book? Book { get; set; }
 
-    public int BookId { get; set; }
-
-    public DateTime? AddedAt { get; set; }
-
-    public virtual Book Book { get; set; } = null!;
-
-    public virtual User User { get; set; } = null!;
+        public string UserId { get; set; }
+        [ForeignKey(nameof(UserId))]
+        public AppUser? User { get; set; }
+    }
 }
