@@ -62,8 +62,10 @@ namespace PRN232_Su25_Readify_WebAPI.Services
         public async Task<string> RegisterAsync(RegisterDtoRequest register)
         {
             var isMail = await _userManager.FindByEmailAsync(register.Email);
-
+            var isUserName = await _userManager.FindByNameAsync(register.UserName);
             if (isMail != null) { throw new BRException("Email is already exist"); }
+            if (isUserName != null) { throw new BRException("UserName is already exist"); }
+
 
             var user = new AppUser
             {
