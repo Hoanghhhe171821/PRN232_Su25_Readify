@@ -24,19 +24,32 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(books);
         }
         [HttpGet("GetAllBooks")]
-        public async Task<IActionResult> GetAllBooks()
+        public async Task<IActionResult> GetAllBooks(int page =1 , int pageSize = 12)
         {
-            var books = await _context.Books
+            if (page <= 0) page = 1;
+            if (pageSize <= 12) pageSize = 12;
+
+            var query =  _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
+                .AsQueryable();
+            var totalItems = await query.CountAsync();
+            var books = await query.Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
-            if (!books.Any()) return NotFound();
-            return Ok(books);
+            var result = new
+            {
+                TotalItems = totalItems,
+                PageSize = pageSize,
+                PageNumber = page,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize),
+                Items = books
+            };
+            return Ok(result);
         }
         [HttpGet("RecommendBooks")]
         public async Task<IActionResult> GetRecommendBooks()
         {
             var books = await _context.Books
                 .Where(b => b.IsActive == true)
-                .OrderByDescending(b => b.UnitInOrder).Take(4)
+                .OrderByDescending(b => b.UnitInOrder).Take(6)
                 .ToListAsync();
             if (!books.Any()) return NotFound();
             return Ok(books);

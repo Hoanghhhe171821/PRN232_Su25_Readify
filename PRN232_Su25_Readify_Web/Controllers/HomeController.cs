@@ -6,6 +6,7 @@ using PRN232_Su25_Readify_Web.Models;
 using PRN232_Su25_Readify_WebAPI.Models;
 using Newtonsoft.Json;
 using PRN232_Su25_Readify_Web.Dtos;
+using PRN232_Su25_Readify_Web.Dtos.Home;
 
 namespace PRN232_Su25_Readify_Web.Controllers
 {
@@ -22,14 +23,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var responseRecommendBooks = await _httpClient.GetAsync("api/Books/RecommendBooks");
-            var jsonRecommendBooks = await responseRecommendBooks.Content.ReadAsStringAsync();
-            var recommendBooks = JsonConvert.DeserializeObject<List<Book>>(jsonRecommendBooks);
-
-            var responseNewReleaseBooks = await _httpClient.GetAsync("api/Books/NewReleaseBooks");
-            var jsonNewReleaseBooks = await responseNewReleaseBooks.Content.ReadAsStringAsync();
-            var newReleaseBooks = JsonConvert.DeserializeObject<List<Book>>(jsonNewReleaseBooks);
-
+            var recommendBooks = await GetApiDataAsync<List<Book>>("api/Books/RecommendBooks");
+            var newReleaseBooks = await GetApiDataAsync<List<Book>>("api/Books/NewReleaseBooks");
 
             var data = new HomeIndexViewModel
             {
@@ -38,6 +33,17 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             };
             return View(data);
+        }
+        //Get data by Api Url
+        private async Task<T> GetApiDataAsync<T>(string url)
+        {
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode(); // Báo l?i n?u API tr? l?i
+
+            var json = await response.Content.ReadAsStringAsync();
+            var data = JsonConvert.DeserializeObject<T>(json);
+
+            return data;
         }
 
         public IActionResult Privacy()
