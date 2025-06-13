@@ -7,6 +7,7 @@ using static System.Reflection.Metadata.BlobBuilder;
 
 namespace PRN232_Su25_Readify_Web.Controllers
 {
+    [Route("[Controller]")]
     public class BooksController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -15,22 +16,30 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _httpClient = factory.CreateClient();
             _httpClient.BaseAddress = new Uri("https://localhost:7267/");
         }
-        public async Task<IActionResult>BookList(int page = 1)
+        [HttpGet("BookList")]
+        public async Task<IActionResult> BookList(int page = 1)
         {
-            var jsonResult = await GetApiDataAsync<JObject>($"api/Books/GetAllBooks?page={page}");
+            var booksJsonResult = await GetApiDataAsync<JObject>($"api/Books/GetAllBooks?page={page}");
 
-            var books = jsonResult["items"].ToObject<List<Book>>();
-            var totalItems = jsonResult["totalItems"].ToObject<int>();
-            var pageSize = jsonResult["pageSize"].ToObject<int>();
+            var books = booksJsonResult["items"].ToObject<List<Book>>();
+            var totalItems = booksJsonResult["totalItems"].ToObject<int>();
+            var pageSize = booksJsonResult["pageSize"].ToObject<int>();
             var totalPage = (int)Math.Ceiling((double)totalItems / pageSize);
 
-            var model = new PagedResult<Book>
+            var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+
+            var model = new BookListViewModel
             {
-                Items = books,
-                TotalItems = totalItems,
-                PageSize = pageSize,
-                PageNumber = page,
-                TotalPage = totalPage
+                PagedBooks = new PagedResult<Book>
+                {
+                    Items = books,
+                    TotalItems = totalItems,
+                    PageSize = pageSize,
+                    PageNumber = page,
+                    TotalPage = totalPage
+                },
+                Categories = categories.ToList()
+
             };
             return View(model);
         }
