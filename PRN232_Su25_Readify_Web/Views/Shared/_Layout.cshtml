@@ -188,7 +188,7 @@
 				<div class="container clearfix">
 					<!-- Website Logo -->
 					<div class="logo-header logo-dark">
-						<a href="index.html"><img src="~/images/logo.png" alt="logo"></a>
+						<a asp-controller="Home" asp-action="Index"><img src="~/images/logo.png" alt="logo"></a>
 					</div>
 
 					<!-- Nav Toggle Button -->
@@ -208,7 +208,7 @@
 					<!-- Main Nav -->
 					<div class="header-nav navbar-collapse collapse justify-content-start" id="navbarNavDropdown">
 						<div class="logo-header logo-dark">
-							<a href="index.html"><img src="~/images/logo.png" alt=""></a>
+							<a ><img src="~/images/logo.png" alt=""></a>
 						</div>
 						<form class="search-input">
 							<div class="input-group">
@@ -243,7 +243,7 @@
 							<li class="sub-menu-down">
 								<a href="javascript:void(0);"><span>Shop</span></a>
 								<ul class="sub-menu">
-									<li><a href="books-grid-view.html">Shop Grid</a></li>
+									<li><a asp-controller="Books" asp-action="BookList" >Shop Grid</a></li>
 									<li><a href="books-grid-view-sidebar.html">Shop Grid Sidebar</a></li>
 									<li><a href="books-list.html">Shop List</a></li>
 									<li><a href="books-list-view-sidebar.html">Shop List Sidebar</a></li>
