@@ -15,15 +15,53 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         {
             _context = context;
         }
-        [HttpGet]
-        public async Task<IActionResult> GetAllBooks()
+        [HttpGet("GetAllFreeBooks")]
+        public async Task<IActionResult> GetAllFreeBooks()
         {
-            var books = await _context.Books.Include(b => b.Author).Include(b => b.Chapters).
+            var books = await _context.Books.Where(b => b.IsFree == true).
                 ToListAsync();
             if (!books.Any()) return NotFound();
             return Ok(books);
         }
-        [HttpGet("{BookId}")]
+        [HttpGet("GetAllBooks")]
+        public async Task<IActionResult> GetAllBooks()
+        {
+            var books = await _context.Books
+                .ToListAsync();
+            if (!books.Any()) return NotFound();
+            return Ok(books);
+        }
+        [HttpGet("RecommendBooks")]
+        public async Task<IActionResult> GetRecommendBooks()
+        {
+            var books = await _context.Books
+                .Where(b => b.IsActive == true)
+                .OrderByDescending(b => b.UnitInOrder).Take(4)
+                .ToListAsync();
+            if (!books.Any()) return NotFound();
+            return Ok(books);
+        }
+        [HttpGet("NewReleaseBooks")]
+        public async Task<IActionResult> GetNewReleaseBooks()
+        {
+            var books = await _context.Books.Include(b =>  b.BookCategories).ThenInclude(bc => bc.Category)
+                .Where(b => b.IsActive == true)
+                .OrderByDescending(b => b.UpdateDate ?? b.CreateDate)
+                .Take(6)
+                .ToListAsync();
+            if (!books.Any()) return NotFound();
+            return Ok(books);
+        }
+        [HttpGet("GetBookById/{BookId}")]
+        public async Task<IActionResult> GetBookById(int bookId)
+        {
+            var books = await _context.Books.Include( b=> b.Chapters).Include(b => b.Author)
+                .Where(b => b.IsActive == true && b.Id == bookId)
+                .ToListAsync();
+            if (!books.Any()) return NotFound();
+            return Ok(books);
+        }
+        [HttpGet("GetAllChapterByBookId/{BookId}")]
         public async Task<IActionResult> GetAllChapterByBookId(int BookId)
         {
             var chapters = await _context.Chapters.Include(c => c.Book).Where( b => b.BookId == BookId ).ToListAsync();
