@@ -1,0 +1,62 @@
+﻿@model PRN232_Su25_Readify_Web.Models.Auth.RegisterDtoRequest
+<div class="page-content">
+    <!-- inner page banner -->
+    @await Html.PartialAsync("_AuthPageTemplate","Register")
+    <!-- inner page banner End-->
+    <!-- contact area -->
+    <section class="content-inner shop-account">
+        <!-- Product -->
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-6 col-md-6 mb-4">
+                    <div class="login-area">
+                        @if (TempData["ErrorMessage"] != null)
+                        {
+                            <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+                        }
+                        @if (TempData["SuccessMessage"] != null)
+                        {
+                            <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+                        }
+                        <form asp-controller="Auth" asp-action="Register">
+                            <h4 class="text-secondary">Registration</h4>
+                            <p class="font-weight-600">If you don't have an account with us, please Registration.</p>
+                            <div class="mb-4">
+                                <label asp-for="UserName" class="label-title">Username *</label>
+                                <input name="UserName" asp-for="UserName" class="form-control" placeholder="Your Username" type="text">
+                                <span asp-validation-for="UserName" class="text-danger"></span>
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="Email" class="label-title">Email address *</label>
+                                <input name="Email" asp-for="Email" class="form-control" placeholder="Your Email address" type="email">
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="Password" class="label-title">Password *</label>
+                                <input name="Password" asp-for="Password" class="form-control " placeholder="Type Password" type="password">
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="ConfirmPassword" class="label-title">ConfirmPassword *</label>
+                                <input name="ConfirmPassword" asp-for="ConfirmPassword" class="form-control " placeholder="Type Password" type="password">
+                                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                            </div>
+                            <div class="mb-5">
+                                <small>Your personal data will be used to support your experience throughout this website, to manage access to your account, and for other purposes described in our <a href="privacy-policy.html">privacy policy</a>.</small>
+                                <p class="font-weight-600">
+                                    <a asp-action="login" asp-controller="auth">Login</a>
+                                </p>
+                            </div>
+
+                            <div class="text-left">
+                                <button class="btn btn-primary btnhover w-100 me-2">Register</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product END -->
+    </section>
+    <!-- contact area End-->
+</div>
