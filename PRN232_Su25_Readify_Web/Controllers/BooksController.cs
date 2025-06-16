@@ -17,9 +17,16 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _httpClient.BaseAddress = new Uri("https://localhost:7267/");
         }
         [HttpGet("BookList")]
-        public async Task<IActionResult> BookList(int page = 1)
+        public async Task<IActionResult> BookList(int page = 1,, List<int> cateIds = null, string orderBy = "Desc")
         {
-            var booksJsonResult = await GetApiDataAsync<JObject>($"api/Books/GetAllBooks?page={page}");
+            var url = $"api/Books/GetAllBooks?page={page}&orderBy={orderBy}";
+            if (cateIds != null && cateIds.Any())
+            {
+                url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
+            }
+
+
+            var booksJsonResult = await GetApiDataAsync<JObject>(url);
 
             var books = booksJsonResult["items"].ToObject<List<Book>>();
             var totalItems = booksJsonResult["totalItems"].ToObject<int>();
@@ -35,10 +42,11 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     Items = books,
                     TotalItems = totalItems,
                     PageSize = pageSize,
-                    PageNumber = page,
+                    PageNumber = page,                    
                     TotalPage = totalPage
                 },
-                Categories = categories.ToList()
+                Categories = categories.ToList(),
+                OrderBy = orderBy
 
             };
             return View(model);
