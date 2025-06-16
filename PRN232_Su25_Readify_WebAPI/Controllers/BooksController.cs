@@ -47,7 +47,9 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 query = query.OrderByDescending(b => b.UpdateDate ?? b.CreateDate);
             }
             //Filter by Search Title
-            query = query.Where(b => b.Title.Contains(searchTitle));
+            if(searchTitle!=null) query = query.Where(b => b.Title.Contains(searchTitle));
+
+
             //Count
             var totalItems = await query.CountAsync();
             //Paging

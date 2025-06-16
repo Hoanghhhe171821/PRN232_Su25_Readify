@@ -17,9 +17,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _httpClient.BaseAddress = new Uri("https://localhost:7267/");
         }
         [HttpGet("BookList")]
-        public async Task<IActionResult> BookList(int page = 1,, List<int> cateIds = null, string orderBy = "Desc")
+        public async Task<IActionResult> BookList(int page = 1,string searchTitle = null, List<int> cateIds = null, string orderBy = "Desc")
         {
-            var url = $"api/Books/GetAllBooks?page={page}&orderBy={orderBy}";
+            var url = $"api/Books/GetAllBooks?page={page}&searchTitle={searchTitle}&orderBy={orderBy}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
@@ -46,7 +46,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     TotalPage = totalPage
                 },
                 Categories = categories.ToList(),
-                OrderBy = orderBy
+                OrderBy = orderBy,
+                SearchTitle = searchTitle
 
             };
             return View(model);
