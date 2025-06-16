@@ -1,6 +1,9 @@
 ﻿@using PRN232_Su25_Readify_WebAPI.Models
 @using PRN232_Su25_Readify_Web.Dtos.Books
 @model BookListViewModel
+@{
+    var selectedCateIds = Context.Request.Query["cateIds"].Select(int.Parse).ToList();
+}
 <div class="page-content bg-grey">
     <div class="content-inner-1 border-bottom">
         <div class="container">
@@ -10,38 +13,43 @@
                     <div class="shop-filter">
                         <div class="d-flex justify-content-between">
                             <h4 class="title">Filter Option</h4>
-                            <a href="javascript:void(0);" class="panel-close-btn"><i class="flaticon-close"></i></a>
+
                         </div>
-                        <div class="accordion accordion-filter" id="accordionExample">
+                        <form asp-controller="Books" asp-action="BookList" method="get">
+                            <input type="hidden" name="page" value="@Model.PagedBooks.PageNumber" />
+                            <input type="hidden" name="page" value="@Model.OrderBy" />
 
-                            <div class="accordion-item">
-                                <button class="accordion-button" id="headingOne" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Shop by Category</button>
-                                <div id="collapseOne" class="accordion-collapse collapse show accordion-body" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                    <div class="widget dz-widget_services d-flex justify-content-between">
-                                        <div class="">
-                                            @foreach(var cate in Model.Categories){
-                                                <div class="form-check search-content">
-                                                    <input class="form-check-input" type="checkbox" value="" id="productCheckBox-01">
-                                                    <label class="form-check-label" for="productCheckBox-01">
-                                                        @cate.Name
-                                                    </label>
-                                                </div>
-                                            }
+                            <div class="accordion accordion-filter" id="accordionExample">
+                                <div class="accordion-item">
+                                    <button class="accordion-button" id="headingOne" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Shop by Category</button>
+                                    <div id="collapseOne" class="accordion-collapse collapse show accordion-body" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                        <div class="widget dz-widget_services d-flex justify-content-between">
 
+                                            <div class="">
+                                                @foreach (var cate in Model.Categories)
+                                                {
+                                                    <div class="form-check search-content">
+                                                        <input class="form-check-input" type="checkbox"
+                                                               value="@cate.Id" name="cateIds" id="productCheckBox-@cate.Id"
+                                                        @(selectedCateIds.Contains(cate.Id) ? "checked" : "")>
+                                                        <label class="form-check-label" for="productCheckBox-@cate.Id">
+                                                            @cate.Name
+                                                        </label>
+                                                    </div>
+                                                }
+
+                                            </div>
                                         </div>
-                                        
                                     </div>
                                 </div>
                             </div>
-
-                            
-                        </div>
-                        <div class="row filter-buttons">
-                            <div>
-                                <a href="" class="btn btn-secondary btnhover mt-4 d-block">Refine Search</a>
-                                <a href="" class="btn btn-outline-secondary btnhover mt-3 d-block">Reset Filter</a>
+                            <div class="row filter-buttons">
+                                <div>
+                                    <button type="submit" class="btn btn-secondary btnhover mt-4 d-block">Refine Search</button>
+                                    <a asp-controller="Books" asp-action="BookList" class="btn btn-outline-secondary btnhover mt-3 d-block">Reset Filter</a>
+                                </div>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
                 <div class="col-xl-9">
@@ -52,37 +60,41 @@
                     <div class="filter-area m-b30">
                         <div class="grid-area">
                         </div>
+
                         <div class="category">
-                            <div class="filter-category">
+                            @*<div class="filter-category">
                                 <a data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
                                     <i class="fas fa-list me-2"></i>
                                     Categories
                                 </a>
-                            </div>
-                            <div class="form-group">
-                                <i class="fas fa-sort-amount-down me-2 text-secondary"></i>
-                                <select class="default-select">
-                                    <option>Newest</option>
-                                    <option>1 Day</option>
-                                    <option>1 Week</option>
-                                    <option>3 Weeks</option>
-                                    <option>1 Month</option>
-                                    <option>3 Months</option>
-                                </select>
-                            </div>
+                            </div>*@
+                            <form asp-controller="Books" asp-action="BookList" method="get" class="d-inline">
+                                @* Giữ cateIds *@
+                                @if (selectedCateIds != null && selectedCateIds.Any())
+                                {
+                                    foreach (var cateId in selectedCateIds)
+                                    {
+                                        <input type="hidden" name="cateIds" value="@cateId" />
+                                    }
+                                }
+
+
+                                @* Giữ page hiện tại *@
+                                <input type="hidden" name="page" value="@Model.PagedBooks.PageNumber" />
+
+                                <div class="form-group">
+                                    <i class="fas fa-sort-amount-down me-2 text-secondary"></i>
+                                    <select class="default-select" name="orderBy" onchange="this.form.submit()">
+                                        <option value="Desc" selected="@(Model.OrderBy == "Desc")">Newest</option>
+                                        <option value="Asc" selected="@(Model.OrderBy == "Asc")">Oldest</option>
+                                    </select>
+
+                                </div>
+                            </form>
                         </div>
                     </div>
                     <div class="acod-content collapse " id="collapseExample">
                         <div class="widget widget_services style-2">
-                            @foreach(var cate in Model.Categories){
-                                <div class="form-check search-content">
-                                    <input class="form-check-input" type="checkbox" value="" id="productCheckBox01">
-                                    <label class="form-check-label" for="productCheckBox01">
-                                        @cate.Name
-                                    </label>
-                                </div>
-
-                            }
                         </div>
                     </div>
                     @*Book list*@
@@ -147,6 +159,7 @@
 
                     </div>
                     @*Paging*@
+
                     <div class="row page mt-0">
                         <div class="col-md-6">
                             <p class="page-text">
@@ -161,6 +174,12 @@
                                     {
                                         <li class="page-item">
                                             <form asp-controller="Books" asp-action="BookList" asp-route-page="@(Model.PagedBooks.PageNumber - 1)" method="get" class="d-inline">
+                                                @foreach (var cateId in selectedCateIds)
+                                                {
+                                                    <input type="hidden" name="cateIds" value="@cateId" />
+                                                }
+                                                <input type="hidden" name="page" value="@Model.OrderBy" />
+
                                                 <button type="submit" class="page-link prev">Prev</button>
                                             </form>
                                         </li>
@@ -170,6 +189,12 @@
                                     {
                                         <li class="page-item">
                                             <form asp-controller="Books" asp-action="BookList" asp-route-page="@i" method="get" class="d-inline">
+                                                @foreach (var cateId in selectedCateIds)
+                                                {
+                                                    <input type="hidden" name="cateIds" value="@cateId" />
+                                                }
+                                                <input type="hidden" name="page" value="@Model.OrderBy" />
+
                                                 <button type="submit" class="page-link @(i == Model.PagedBooks.PageNumber ? "active" : "")">
                                                     @i
                                                 </button>
@@ -180,7 +205,14 @@
                                     @if (Model.PagedBooks.PageNumber < Model.PagedBooks.TotalPage)
                                     {
                                         <li class="page-item">
+
                                             <form asp-controller="Books" asp-action="BookList" asp-route-page="@(Model.PagedBooks.PageNumber + 1)" method="get" class="d-inline">
+
+                                                <input type="hidden" name="page" value="@Model.OrderBy" />
+                                                @foreach (var cateId in selectedCateIds)
+                                                {
+                                                    <input type="hidden" name="cateIds" value="@cateId" />
+                                                }
                                                 <button type="submit" class="page-link next">Next</button>
                                             </form>
                                         </li>
