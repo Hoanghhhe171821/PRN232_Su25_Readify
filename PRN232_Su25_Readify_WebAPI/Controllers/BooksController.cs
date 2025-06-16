@@ -24,15 +24,28 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(books);
         }
         [HttpGet("GetAllBooks")]
-        public async Task<IActionResult> GetAllBooks(int page =1 , int pageSize = 12)
+        public async Task<IActionResult> GetAllBooks(int page =1 , int pageSize = 12,
+            [FromQuery(Name = "cateIds")] List<int> cateIds = null,
+            [FromQuery(Name = "orderBy")] string orderBy = "Desc")
         {
             if (page <= 0) page = 1;
-            if (pageSize <= 12) pageSize = 12;
+            if (pageSize <= 1) pageSize = 12;
 
             var query =  _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
                 .AsQueryable();
+            if (cateIds != null && cateIds.Any()) query = query.Where(b => b.BookCategories.Any(bc => cateIds.Contains(bc.CategoryId)));
+            bool isAsc = string.Equals(orderBy, "Asc", StringComparison.OrdinalIgnoreCase);
+            if (isAsc)
+            {
+                query = query.OrderBy(b => b.UpdateDate ?? b.CreateDate);
+            }
+            else
+            {
+                query = query.OrderByDescending(b => b.UpdateDate ?? b.CreateDate);
+            }
             var totalItems = await query.CountAsync();
-            var books = await query.Skip((page - 1) * pageSize).Take(pageSize)
+            var books = await query
+                .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
             var result = new
             {
