@@ -17,7 +17,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _httpClient.BaseAddress = new Uri("https://localhost:7267/");
         }
         [HttpGet("BookList")]
-        public async Task<IActionResult> BookList(int page = 1, List<int> cateIds = null, string orderBy = "Desc")
+        public async Task<IActionResult> BookList(int page = 1,, List<int> cateIds = null, string orderBy = "Desc")
         {
             var url = $"api/Books/GetAllBooks?page={page}&orderBy={orderBy}";
             if (cateIds != null && cateIds.Any())
