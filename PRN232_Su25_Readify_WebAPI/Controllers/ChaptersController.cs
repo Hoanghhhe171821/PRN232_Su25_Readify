@@ -96,5 +96,30 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Chapter created successfully", path = repoFilePath });
         }
+        [HttpGet("GetChapter")]
+        public async Task<IActionResult> GetChapter(int bookId, int chapterOrder)
+        {
+            Chapter chapter =await _context.Chapters.Include(c => c.Book).FirstOrDefaultAsync(c => c.BookId == bookId && c.Id == chapterOrder);
+            if (chapter == null) return NotFound();
+
+            try
+            {
+                var fileContent = await _client.Repository.Content.GetAllContentsByRef(
+                                            _owner, _repo, chapter.FilePath, "main");
+                var base64Content = fileContent.First().Content;
+                var fileBytes = Convert.FromBase64String(base64Content);
+                var text = System.Text.Encoding.UTF8.GetString(fileBytes);
+                return Ok(new { chapter.Title, content = text });
+            }
+            catch (NotFoundException)
+            {
+                return NotFound("File not found in GitHub repository.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }

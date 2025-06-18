@@ -8,5 +8,6 @@ namespace PRN232_Su25_Readify_Web.Dtos.Books
         public List<Category> Categories { get; set; }
         public string OrderBy { get; set; }
         public string SearchTitle { get; set; }
+        public bool IsFree { get; set; }
     }
 }

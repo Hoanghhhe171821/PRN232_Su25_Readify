@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PRN232_Su25_Readify_Web.Dtos.Books;
 using PRN232_Su25_Readify_WebAPI.Models;
+using System.Net;
 using static System.Reflection.Metadata.BlobBuilder;
 
 namespace PRN232_Su25_Readify_Web.Controllers
@@ -17,9 +18,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _httpClient.BaseAddress = new Uri("https://localhost:7267/");
         }
         [HttpGet("BookList")]
-        public async Task<IActionResult> BookList(int page = 1,string searchTitle = null, List<int> cateIds = null, string orderBy = "Desc")
+        public async Task<IActionResult> BookList(int page = 1, string searchTitle = null,
+            List<int> cateIds = null, string orderBy = "Desc",bool isFree = false)
         {
-            var url = $"api/Books/GetAllBooks?page={page}&searchTitle={searchTitle}&orderBy={orderBy}";
+            var url = $"api/Books/GetAllBooks?page={page}&searchTitle={searchTitle}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
@@ -42,19 +44,48 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     Items = books,
                     TotalItems = totalItems,
                     PageSize = pageSize,
-                    PageNumber = page,                    
+                    PageNumber = page,
                     TotalPage = totalPage
                 },
                 Categories = categories.ToList(),
                 OrderBy = orderBy,
-                SearchTitle = searchTitle
+                SearchTitle = searchTitle,
+                IsFree = isFree
 
             };
             return View(model);
         }
+        [HttpGet("BookDetails/{bookId}")]
+        public async Task<IActionResult> BookDetails(int bookId)
+        {
+            var book =await GetApiDataAsync<Book>($"api/Books/GetBookById/{bookId}");
+            var chapterQuan = book.Chapters.Count();
+            var result = new BookDetailsViewModel
+            {
+                Book = book,
+                ChapterQuantity = chapterQuan
+            };
+            return View(result);
+        }
+        [HttpGet("Read")]
+        public async Task<IActionResult> Read( int bookId, int chapterOrder)
+        {
+            if (bookId == null && chapterOrder == null) return RedirectToAction("BookDetails", "Books");
+
+            var book = await GetApiDataAsync<Book>($"api/Books/GetBookById/{bookId}");
+            if (book == null) return RedirectToAction("BookList", "Books");
+
+            var content = await GetApiDataAsync<ReadViewModel>($"GetChapter?bookId={bookId}&chapterOrder={chapterOrder}");
+            if (content == null) return RedirectToAction("BookDetails", "Books");
+            return View(content);
+        }
         private async Task<T> GetApiDataAsync<T>(string url)
         {
             var response = await _httpClient.GetAsync(url);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return default;
+            }
             response.EnsureSuccessStatusCode(); // Báo lỗi nếu API trả lỗi
 
             var json = await response.Content.ReadAsStringAsync();
@@ -62,5 +93,6 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             return data;
         }
+
     }
 }

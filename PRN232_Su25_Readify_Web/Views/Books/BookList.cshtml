@@ -18,7 +18,7 @@
                         <form asp-controller="Books" asp-action="BookList" method="get">
                             <input type="hidden" name="page" value="@Model.PagedBooks.PageNumber" />
                             <input type="hidden" name="page" value="@Model.OrderBy" />
-                            <input type="hidden"  type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
+                            <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
 
                             <div class="accordion accordion-filter" id="accordionExample">
                                 <div class="accordion-item">
@@ -58,18 +58,22 @@
                         <h4 class="title">Books</h4>
 
                     </div>
+                    @*ShopFilter*@
                     <div class="filter-area m-b30">
                         <div class="grid-area">
                         </div>
+                        <form asp-controller="Books" asp-action="BookList" method="get">
+                        <div class="category">                            
+                                <div class="form-group d-flex align-items-center">
+                                    <div class="form-check form-switch  dropdown  default-select btn  btn-light">
+                                        <input class="form-check-input" style="margin-left: 0.5em;" type="checkbox" id="isFreeCheck" name="isFree"
+                                               value="true" @(Model.IsFree ? "checked" : "") onchange="this.form.submit()">
+                                        <label class="form-check-label ms-2" for="isFreeCheck">
+                                            Free
+                                        </label>
+                                    </div>
+                                </div>
 
-                        <div class="category">
-                            @*<div class="filter-category">
-                                <a data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
-                                    <i class="fas fa-list me-2"></i>
-                                    Categories
-                                </a>
-                            </div>*@
-                            <form asp-controller="Books" asp-action="BookList" method="get" class="d-inline">
                                 @* Giữ cateIds *@
                                 @if (selectedCateIds != null && selectedCateIds.Any())
                                 {
@@ -82,7 +86,7 @@
 
                                 @* Giữ page hiện tại *@
                                 <input type="hidden" name="page" value="@Model.PagedBooks.PageNumber" />
-
+                                @*Filter by UpdateDate*@
                                 <div class="form-group">
                                     <i class="fas fa-sort-amount-down me-2 text-secondary"></i>
                                     <select class="default-select" name="orderBy" onchange="this.form.submit()">
@@ -91,27 +95,32 @@
                                     </select>
 
                                 </div>
-                            </form>
+                            
                         </div>
+                        </form>
                     </div>
-                    <div class="acod-content collapse " id="collapseExample">
-                        <div class="widget widget_services style-2">
-                        </div>
-                    </div>
+                    
                     @*Book list*@
                     <div class="row book-grid-row">
-                        @if(!@Model.PagedBooks.Items.Any()) {
+                        @if (!@Model.PagedBooks.Items.Any())
+                        {
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="title">There is no Book!</h5>
 
                             </div>
-                        }else{
+                        }
+                        else
+                        {
                             @foreach (var book in Model.PagedBooks.Items)
                             {
+
                                 <div class="col-book style-2">
                                     <div class="dz-shop-card style-1">
                                         <div class="dz-media">
-                                            <img src="@book.ImageUrl" alt="book">
+                                            <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                               style="text-decoration: none; color: inherit;">
+                                                <img src="@book.ImageUrl" alt="book">
+                                            </a>
                                         </div>
                                         <div class="bookmark-btn style-2">
                                             <input class="form-check-input" type="checkbox" id="flexCheckDefault1">
@@ -120,13 +129,16 @@
                                             </label>
                                         </div>
                                         <div class="dz-content">
-                                            <h5 class="title"><a href="books-grid-view.html">@book.Title</a></h5>
+                                            <h5 class="title">
+                                                <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                                   style="text-decoration: none; color: inherit;">@book.Title</a>
+                                            </h5>
                                             <ul class="dz-tags">
                                                 @if (book.BookCategories != null && book.BookCategories.Any())
                                                 {
                                                     foreach (var bc in book.BookCategories)
                                                     {
-                                                        <li><a href="books-grid-view.html">@bc.Category.Name</a></li>
+                                                        <li><a href="">@bc.Category.Name</a></li>
 
                                                     }
                                                 }
@@ -164,7 +176,7 @@
                             }
 
                         }
-                        
+
                     </div>
                     @*Paging*@
 
