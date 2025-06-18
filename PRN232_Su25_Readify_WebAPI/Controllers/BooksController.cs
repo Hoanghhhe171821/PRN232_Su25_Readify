@@ -24,16 +24,19 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(books);
         }
         [HttpGet("GetAllBooks")]
-        public async Task<IActionResult> GetAllBooks(int page =1 , int pageSize = 12,
+        public async Task<IActionResult> GetAllBooks(int page = 1, int pageSize = 12,
             [FromQuery(Name = "searchTitle")] string searchTitle = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
-            [FromQuery(Name = "orderBy")] string orderBy = "Desc")
+            [FromQuery(Name = "orderBy")] string orderBy = "Desc",
+            [FromQuery(Name = "isFree")] bool isFree = false )
         {
             if (page <= 0) page = 1;
             if (pageSize <= 1) pageSize = 12;
 
             var query =  _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
                 .AsQueryable();
+            //Filter by isFree
+            if (isFree == true) query = query.Where(b => b.IsFree == true);
             //Filter by category
             if (cateIds != null && cateIds.Any()) query = query.Where(b => b.BookCategories.Any(bc => cateIds.Contains(bc.CategoryId)));
             //Filter by Update date & Create Date
@@ -85,13 +88,14 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 .ToListAsync();
             return Ok(books);
         }
-        [HttpGet("GetBookById/{BookId}")]
+        [HttpGet("GetBookById/{bookId}")]
         public async Task<IActionResult> GetBookById(int bookId)
         {
-            var books = await _context.Books.Include( b=> b.Chapters).Include(b => b.Author)
+            var books = await _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
+                .Include( b=> b.Chapters).Include(b => b.Author)
                 .Where(b => b.IsActive == true && b.Id == bookId)
-                .ToListAsync();
-            if (!books.Any()) return NotFound();
+                .FirstOrDefaultAsync();
+            if (books == null) return NotFound();
             return Ok(books);
         }
         [HttpGet("GetAllChapterByBookId/{BookId}")]
