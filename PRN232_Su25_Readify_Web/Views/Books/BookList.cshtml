@@ -63,7 +63,7 @@
                         <div class="grid-area">
                         </div>
                         <form asp-controller="Books" asp-action="BookList" method="get">
-                        <div class="category">                            
+                            <div class="category">
                                 <div class="form-group d-flex align-items-center">
                                     <div class="form-check form-switch  dropdown  default-select btn  btn-light">
                                         <input class="form-check-input" style="margin-left: 0.5em;" type="checkbox" id="isFreeCheck" name="isFree"
@@ -95,11 +95,11 @@
                                     </select>
 
                                 </div>
-                            
-                        </div>
+
+                            </div>
                         </form>
                     </div>
-                    
+
                     @*Book list*@
                     <div class="row book-grid-row">
                         @if (!@Model.PagedBooks.Items.Any())
@@ -156,19 +156,25 @@
                                                 <li><i class="flaticon-star text-muted"></i></li>
                                             </ul>
                                             <div class="book-footer">
-                                                <div class="price">
-                                                    @if (book.IsFree)
-                                                    {
+
+                                                @if (book.IsFree)
+                                                {
+                                                    <div class="price">
                                                         <span class="price-num">Miễn phí</span>
                                                         <del>@string.Format("{0:N0} đ", book.Price)</del>
+                                                    </div>
+                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                                       class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
 
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="price-num">@string.Format("{0:N0} đ", book.Price)</span>
-                                                    }
-                                                </div>
-                                                <a href="shop-cart.html" class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart</a>
+                                                }
+                                                else
+                                                {
+                                                    <div class="price">
+                                                        <span class="price-num">@string.Format("{0:N0} đ", book.Price)</span>   
+                                                    </div>
+                                                    <a href="shop-cart.html" class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart</a>
+                                                }
+
                                             </div>
                                         </div>
                                     </div>
