@@ -4,7 +4,9 @@ namespace PRN232_Su25_Readify_Web.Dtos.Books
 {
     public class ReadViewModel
     {
-        public Book Books{ get; set; }
+        public Book Book{ get; set; }
+        public List<Chapter> Chapters { get; set; }
+        public int ChapterOrder { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
     }

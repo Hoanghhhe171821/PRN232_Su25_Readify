@@ -59,6 +59,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
         public async Task<IActionResult> BookDetails(int bookId)
         {
             var book =await GetApiDataAsync<Book>($"api/Books/GetBookById/{bookId}");
+            if (book == null) return RedirectToAction("BookList", "Books");
+
             var chapterQuan = book.Chapters.Count();
             var result = new BookDetailsViewModel
             {
@@ -73,11 +75,25 @@ namespace PRN232_Su25_Readify_Web.Controllers
             if (bookId == null && chapterOrder == null) return RedirectToAction("BookDetails", "Books");
 
             var book = await GetApiDataAsync<Book>($"api/Books/GetBookById/{bookId}");
-            if (book == null) return RedirectToAction("BookList", "Books");
+            if (book == null ) return RedirectToAction("BookList", "Books");
+            //Kiểm tra sách free hoặc đã mua
+            if (book.IsFree == false) return RedirectToAction("BookList", "Books");
 
-            var content = await GetApiDataAsync<ReadViewModel>($"GetChapter?bookId={bookId}&chapterOrder={chapterOrder}");
-            if (content == null) return RedirectToAction("BookDetails", "Books");
-            return View(content);
+
+            var chapters = await GetApiDataAsync<List<Chapter>>($"api/Books/GetAllChapterByBookId/{bookId}");
+            if(chapters == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId });
+
+            var query = await GetApiDataAsync<ReadViewModel>($"GetChapter?bookId={bookId}&chapterOrder={chapterOrder}");
+            if (query == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId });
+            var result = new ReadViewModel
+            {
+                Book = book,
+                ChapterOrder = chapterOrder,
+                Content = query.Content,
+                Title = query.Title,
+                Chapters = chapters
+            };
+            return View(result);
         }
         private async Task<T> GetApiDataAsync<T>(string url)
         {
