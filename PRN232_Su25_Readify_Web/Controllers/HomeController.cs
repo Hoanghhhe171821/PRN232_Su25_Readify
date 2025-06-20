@@ -7,6 +7,9 @@ using PRN232_Su25_Readify_WebAPI.Models;
 using Newtonsoft.Json;
 using PRN232_Su25_Readify_Web.Dtos;
 using PRN232_Su25_Readify_Web.Dtos.Home;
+using Newtonsoft.Json.Linq;
+using Octokit;
+using PRN232_Su25_Readify_Web.Dtos.Books;
 
 namespace PRN232_Su25_Readify_Web.Controllers
 {
@@ -25,7 +28,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
         {
             var recommendBooks = await GetApiDataAsync<List<Book>>("api/Books/RecommendBooks");
             var newReleaseBooks = await GetApiDataAsync<List<Book>>("api/Books/NewReleaseBooks");
-
+           
             var data = new HomeIndexViewModel
             {
                 RecommendBooks = recommendBooks,
@@ -54,7 +57,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(new ErrorViewModel { RequestId = System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

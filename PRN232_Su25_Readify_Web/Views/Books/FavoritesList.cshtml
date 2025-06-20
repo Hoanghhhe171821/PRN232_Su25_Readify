@@ -15,7 +15,7 @@
                             <h4 class="title">Filter Option</h4>
 
                         </div>
-                        <form asp-controller="Books" asp-action="BookList" method="get">
+                        <form asp-controller="Books" asp-action="FavoritesList" method="get">
                             <input type="hidden" name="page" value="@Model.PagedBooks.PageNumber" />
                             <input type="hidden" name="page" value="@Model.OrderBy" />
                             <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
@@ -47,7 +47,7 @@
                             <div class="row filter-buttons">
                                 <div>
                                     <button type="submit" class="btn btn-secondary btnhover mt-4 d-block">Refine Search</button>
-                                    <a asp-controller="Books" asp-action="BookList" class="btn btn-outline-secondary btnhover mt-3 d-block">Reset Filter</a>
+                                    <a asp-controller="Books" asp-action="FavoritesList" class="btn btn-outline-secondary btnhover mt-3 d-block">Reset Filter</a>
                                 </div>
                             </div>
                         </form>
@@ -62,7 +62,7 @@
                     <div class="filter-area m-b30">
                         <div class="grid-area">
                         </div>
-                        <form asp-controller="Books" asp-action="BookList" method="get">
+                        <form asp-controller="Books" asp-action="FavoritesList" method="get">
                             <div class="category">
                                 <div class="form-group d-flex align-items-center">
                                     <div class="form-check form-switch  dropdown  default-select btn  btn-light">
@@ -116,14 +116,12 @@
 
                                 <div class="col-book style-2">
                                     <div class="dz-shop-card style-1">
-                                        @*Image*@
                                         <div class="dz-media">
                                             <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
                                                style="text-decoration: none; color: inherit;">
                                                 <img src="@book.ImageUrl" alt="book">
                                             </a>
                                         </div>
-                                        @*Favorite*@
                                         <div class="bookmark-btn style-2">
                                             <input class="form-check-input" type="checkbox"
                                                    id="flexCheckFavorite-@book.Id"
@@ -133,7 +131,6 @@
                                                 <i id="favoriteIcon-@book.Id" class="flaticon-heart @(book.IsFavorite ? "text-pink" : "")"></i>
                                             </label>
                                         </div>
-                                        @*Content*@
                                         <div class="dz-content">
                                             <h5 class="title">
                                                 <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
@@ -203,7 +200,7 @@
                                     @if (Model.PagedBooks.PageNumber > 1)
                                     {
                                         <li class="page-item">
-                                            <form asp-controller="Books" asp-action="BookList" asp-route-page="@(Model.PagedBooks.PageNumber - 1)" method="get" class="d-inline">
+                                            <form asp-controller="Books" asp-action="FavoritesList" asp-route-page="@(Model.PagedBooks.PageNumber - 1)" method="get" class="d-inline">
                                                 @foreach (var cateId in selectedCateIds)
                                                 {
                                                     <input type="hidden" name="cateIds" value="@cateId" />
@@ -220,7 +217,7 @@
                                     @for (int i = 1; i <= Model.PagedBooks.TotalPage; i++)
                                     {
                                         <li class="page-item">
-                                            <form asp-controller="Books" asp-action="BookList" asp-route-page="@i" method="get" class="d-inline">
+                                            <form asp-controller="Books" asp-action="FavoritesList" asp-route-page="@i" method="get" class="d-inline">
                                                 @foreach (var cateId in selectedCateIds)
                                                 {
                                                     <input type="hidden" name="cateIds" value="@cateId" />
@@ -240,7 +237,7 @@
                                     {
                                         <li class="page-item">
 
-                                            <form asp-controller="Books" asp-action="BookList" asp-route-page="@(Model.PagedBooks.PageNumber + 1)" method="get" class="d-inline">
+                                            <form asp-controller="Books" asp-action="FavoritesList" asp-route-page="@(Model.PagedBooks.PageNumber + 1)" method="get" class="d-inline">
                                                 <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
 
 
