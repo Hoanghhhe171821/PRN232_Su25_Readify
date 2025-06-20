@@ -21,25 +21,35 @@ namespace PRN232_Su25_Readify_Web.Controllers
         public async Task<IActionResult> BookList(int page = 1, string searchTitle = null,
             List<int> cateIds = null, string orderBy = "Desc",bool isFree = false)
         {
+            //Seeding User
+            var userId = "0aece579-7768-4515-9f25-08e10f0e7032";
+
             var url = $"api/Books/GetAllBooks?page={page}&searchTitle={searchTitle}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
             }
 
-
+            //Get Book by API
             var booksJsonResult = await GetApiDataAsync<JObject>(url);
-
-            var books = booksJsonResult["items"].ToObject<List<Book>>();
+            
+            var books = booksJsonResult["items"].ToObject<List<BookViewModel>>();
             var totalItems = booksJsonResult["totalItems"].ToObject<int>();
             var pageSize = booksJsonResult["pageSize"].ToObject<int>();
             var totalPage = (int)Math.Ceiling((double)totalItems / pageSize);
-
+            //Get Cate by API
             var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+            //Get Favor by API
+            var favorites = await GetApiDataAsync<List<int>>($"api/Books/GetUserFavorites?userId={userId}");
+            //Gán isFavor
+            foreach (var book in books)
+            {
+                book.IsFavorite = favorites.Contains(book.Id);
+            }
 
             var model = new BookListViewModel
             {
-                PagedBooks = new PagedResult<Book>
+                PagedBooks = new PagedResult<BookViewModel>
                 {
                     Items = books,
                     TotalItems = totalItems,
@@ -50,8 +60,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 Categories = categories.ToList(),
                 OrderBy = orderBy,
                 SearchTitle = searchTitle,
-                IsFree = isFree
-
+                IsFree = isFree,
+                UserId = userId
             };
             return View(model);
         }

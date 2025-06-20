@@ -48,5 +48,5 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 app.UseMiddleware<ExceptionMid>();
 app.MapControllers();
-app.UseCors("AllowAll");
+app.UseCors("AllowMvcApp");
 app.Run();
