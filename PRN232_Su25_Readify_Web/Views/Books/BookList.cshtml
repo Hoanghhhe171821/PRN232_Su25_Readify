@@ -123,9 +123,12 @@
                                             </a>
                                         </div>
                                         <div class="bookmark-btn style-2">
-                                            <input class="form-check-input" type="checkbox" id="flexCheckDefault1">
-                                            <label class="form-check-label" for="flexCheckDefault1">
-                                                <i class="flaticon-heart"></i>
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="flexCheckFavorite-@book.Id"
+                                            @(book.IsFavorite ? "checked" : "")
+                                                   onclick="toggleFavorite(@book.Id,'@Model.UserId')">
+                                            <label class="form-check-label" for="flexCheckFavorite-@book.Id">
+                                                <i id="favoriteIcon-@book.Id" class="flaticon-heart @(book.IsFavorite ? "text-pink" : "")"></i>
                                             </label>
                                         </div>
                                         <div class="dz-content">
@@ -170,7 +173,7 @@
                                                 else
                                                 {
                                                     <div class="price">
-                                                        <span class="price-num">@string.Format("{0:N0} đ", book.Price)</span>   
+                                                        <span class="price-num">@string.Format("{0:N0} đ", book.Price)</span>
                                                     </div>
                                                     <a href="shop-cart.html" class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart</a>
                                                 }
@@ -180,9 +183,7 @@
                                     </div>
                                 </div>
                             }
-
                         }
-
                     </div>
                     @*Paging*@
 
@@ -344,3 +345,31 @@
         <!-- Newsletter End -->
 
     </div>
+    @section Scripts {
+        <script>
+                function toggleFavorite(bookId,userId) {
+                var checkbox = $('#flexCheckFavorite-' + bookId);
+                var isChecked = checkbox.is(':checked');
+                $.ajax({
+                    url: 'https://localhost:7267/api/Books/AddToFavorite',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        BookId: bookId,
+                        UserId: userId
+                    }),
+                    success: function (res) {
+                        if (res.isFavorite) {
+                            $('#favoriteIcon-' + bookId).addClass('text-pink');
+                        } else {
+                            $('#favoriteIcon-' + bookId).removeClass('text-pink');
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                        checkbox.prop('checked', !isChecked);
+                    }
+                });
+            }
+        </script>
+    }

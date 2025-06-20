@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.DbContext;
+using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
     [ApiController]
@@ -106,7 +107,41 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             return Ok(chapters);
         }
-        
+        [HttpPost("AddToFavorite")]
+        public async Task<IActionResult> AddToFavorite([FromBody] FavoriteModel model)
+        {
+            if (model == null || model.BookId == 0 || string.IsNullOrEmpty(model.UserId))
+                return BadRequest("Invalid data");
 
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == model.UserId);
+            if (user == null) return BadRequest("Pls Login!");
+
+            var book = await _context.Books.SingleOrDefaultAsync(b => b.Id == model.BookId);
+            if (book == null) return BadRequest("Book not found");
+
+            var isFavor = await _context.Favorite.SingleOrDefaultAsync(f => f.BookId == model.BookId && f.UserId == model.UserId);
+            if (isFavor == null)
+            {
+                _context.Favorite.Add(new Favorite { BookId = model.BookId, UserId = model.UserId });
+                await _context.SaveChangesAsync();
+                return Ok(new { isFavorite = true });
+            }
+            else
+            {
+                _context.Favorite.Remove(isFavor);
+                await _context.SaveChangesAsync();
+                return Ok(new { isFavorite = false });
+            }
+        }
+        [HttpGet("GetUserFavorites")]
+        public async Task<IActionResult> GetUserFavorites(string userId)
+        {
+            var bookIds = await _context.Favorite
+                .Where(f => f.UserId == userId)
+                .Select(f => f.BookId)
+                .ToListAsync();
+
+            return Ok(bookIds);
+        }
     }
 }
