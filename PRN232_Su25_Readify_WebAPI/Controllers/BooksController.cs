@@ -29,12 +29,12 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             [FromQuery(Name = "searchTitle")] string searchTitle = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
             [FromQuery(Name = "orderBy")] string orderBy = "Desc",
-            [FromQuery(Name = "isFree")] bool isFree = false )
+            [FromQuery(Name = "isFree")] bool isFree = false)
         {
             if (page <= 0) page = 1;
             if (pageSize <= 1) pageSize = 12;
 
-            var query =  _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
+            var query = _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
                 .AsQueryable();
             //Filter by isFree
             if (isFree == true) query = query.Where(b => b.IsFree == true);
@@ -51,7 +51,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 query = query.OrderByDescending(b => b.UpdateDate ?? b.CreateDate);
             }
             //Filter by Search Title
-            if(searchTitle!=null) query = query.Where(b => b.Title.Contains(searchTitle));
+            if (searchTitle != null) query = query.Where(b => b.Title.Contains(searchTitle));
 
 
             //Count
@@ -82,7 +82,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         [HttpGet("NewReleaseBooks")]
         public async Task<IActionResult> GetNewReleaseBooks()
         {
-            var books = await _context.Books.Include(b =>  b.BookCategories).ThenInclude(bc => bc.Category)
+            var books = await _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
                 .Where(b => b.IsActive == true)
                 .OrderByDescending(b => b.UpdateDate ?? b.CreateDate)
                 .Take(6)
@@ -93,7 +93,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         public async Task<IActionResult> GetBookById(int bookId)
         {
             var books = await _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
-                .Include( b=> b.Chapters).Include(b => b.Author)
+                .Include(b => b.Chapters).Include(b => b.Author)
                 .Where(b => b.IsActive == true && b.Id == bookId)
                 .FirstOrDefaultAsync();
             if (books == null) return NotFound();
@@ -102,8 +102,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         [HttpGet("GetAllChapterByBookId/{BookId}")]
         public async Task<IActionResult> GetAllChapterByBookId(int BookId)
         {
-            var chapters = await _context.Chapters.Include(c => c.Book).Where( b => b.BookId == BookId ).ToListAsync();
-            if(chapters == null) return NotFound();
+            var chapters = await _context.Chapters.Include(c => c.Book).Where(b => b.BookId == BookId).ToListAsync();
+            if (chapters == null) return NotFound();
 
             return Ok(chapters);
         }
@@ -134,14 +134,59 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             }
         }
         [HttpGet("GetUserFavorites")]
-        public async Task<IActionResult> GetUserFavorites(string userId)
+        public async Task<IActionResult> GetUserFavorites(string userId, int page = 1, int pageSize = 12,
+            [FromQuery(Name = "searchTitle")] string searchTitle = null,
+            [FromQuery(Name = "cateIds")] List<int> cateIds = null,
+            [FromQuery(Name = "orderBy")] string orderBy = "Desc",
+            [FromQuery(Name = "isFree")] bool isFree = false)
         {
-            var bookIds = await _context.Favorite
-                .Where(f => f.UserId == userId)
-                .Select(f => f.BookId)
-                .ToListAsync();
+            if (page <= 0) page = 1;
+            if (pageSize <= 1) pageSize = 12;
+            //Validate
+            if (userId == null) return BadRequest("Pls login");
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Id.Equals(userId));
+            if (user == null) return BadRequest("Invalid User");
 
-            return Ok(bookIds);
+            //Get List Favor Book Id
+            var favorBookIds = await _context.Favorite.Where(f => f.UserId.Equals(userId)).Select(f => f.BookId).ToListAsync();
+
+            var query = _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category).Where(b => favorBookIds.Contains(b.Id))
+                .AsQueryable();
+
+            //Filter by isFree
+            if (isFree == true) query = query.Where(b => b.IsFree == true);
+            //Filter by category
+            if (cateIds != null && cateIds.Any()) query = query.Where(b => b.BookCategories.Any(bc => cateIds.Contains(bc.CategoryId)));
+            //Filter by Update date & Create Date
+            bool isAsc = string.Equals(orderBy, "Asc", StringComparison.OrdinalIgnoreCase);
+            if (isAsc)
+            {
+                query = query.OrderBy(b => b.UpdateDate ?? b.CreateDate);
+            }
+            else
+            {
+                query = query.OrderByDescending(b => b.UpdateDate ?? b.CreateDate);
+            }
+            //Filter by Search Title
+            if (searchTitle != null) query = query.Where(b => b.Title.Contains(searchTitle));
+
+
+            //Count
+            var totalItems = await query.CountAsync();
+            //Paging
+            var books = await query
+                .Skip((page - 1) * pageSize).Take(pageSize)
+                .ToListAsync();
+            var result = new
+            {
+                TotalItems = totalItems,
+                PageSize = pageSize,
+                PageNumber = page,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize),
+                Items = books
+            };
+            return Ok(result);
         }
+
     }
 }

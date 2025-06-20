@@ -88,9 +88,12 @@
 											</a>
 										}
 										<div class="bookmark-btn style-1">
-											<input class="form-check-input" type="checkbox" id="flexCheckDefault1">
-											<label class="form-check-label" for="flexCheckDefault1">
-												<i class="flaticon-heart"></i>
+											<input class="form-check-input" type="checkbox"
+												   id="flexCheckFavorite-@Model.Book.Id"
+											@(Model.isFavorite ? "checked" : "")
+												   onclick="toggleFavorite(@Model.Book.Id,'@Model.UserId')">
+											<label class="form-check-label" for="flexCheckFavorite-@Model.Book.Id">
+												<i id="favoriteIcon-@Model.Book.Id" class="flaticon-heart @(Model.isFavorite ? "text-pink" : "")"></i>
 											</label>
 										</div>
 									</div>
@@ -119,3 +122,31 @@
 		margin-top: 10px;
 	}
 </style>
+@section Scripts {
+	<script>
+			function toggleFavorite(bookId,userId) {
+			var checkbox = $('#flexCheckFavorite-' + bookId);
+			var isChecked = checkbox.is(':checked');
+			$.ajax({
+				url: 'https://localhost:7267/api/Books/AddToFavorite',
+				type: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify({
+					BookId: bookId,
+					UserId: userId
+				}),
+				success: function (res) {
+					if (res.isFavorite) {
+						$('#favoriteIcon-' + bookId).addClass('text-pink');
+					} else {
+						$('#favoriteIcon-' + bookId).removeClass('text-pink');
+					}
+				},
+				error: function (xhr) {
+					alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+					checkbox.prop('checked', !isChecked);
+				}
+			});
+		}
+	</script>
+}
