@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using PRN232_Su25_Readify_WebAPI.DbContext;
+using PRN232_Su25_Readify_WebAPI.Dtos;
 using PRN232_Su25_Readify_WebAPI.Dtos.Auths;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System.Net;
-using System.Net.Http;
 using System.Web;
 
 namespace PRN232_Su25_Readify_WebAPI.Services
@@ -16,18 +17,20 @@ namespace PRN232_Su25_Readify_WebAPI.Services
         private readonly UserManager<AppUser> _userManager;
         private readonly IJwtService _jwtService;
         private readonly IConfiguration _configuration;
+        private readonly ReadifyDbContext _context;
+        private readonly IMail _mail;
 
-        public AuthService(SignInManager<AppUser> signInManager,
+        public AuthService(SignInManager<AppUser> signInManager, IMail mail,
             UserManager<AppUser> userManager, IJwtService jwtService,
-            IConfiguration configuration )
+            IConfiguration configuration, ReadifyDbContext context )
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _jwtService = jwtService;
             _configuration = configuration;
+            _context = context;
+            _mail = mail;
         }
-
-
 
         public async Task<AuthResult> LoginAsync(LoginDtoRequest login)
         {
@@ -86,7 +89,6 @@ namespace PRN232_Su25_Readify_WebAPI.Services
 
                 throw new ValidationEx(errors);
             }
-            await _userManager.AddToRoleAsync(user, "User");
 
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = HttpUtility.UrlEncode(token);
@@ -95,6 +97,8 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             var confirmationLink = $"{backendUrl}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
             Console.WriteLine(confirmationLink);
             Console.WriteLine($"Token {token}");
+            await _userManager.AddToRoleAsync(user, "User");
+            await _mail.SendMailConfirmAsync(register.Email, confirmationLink);
 
             return "Register successfully! Please check your email to confirm.";
         }
@@ -145,5 +149,65 @@ namespace PRN232_Su25_Readify_WebAPI.Services
 
             return "Password has been reset successfully.";
         }
+
+        public async Task RemoveRefreshTokenAsync(string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                throw new BRException("Refresh token không hợp lệ.");
+
+            var token = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == refreshToken 
+            && !rt.IsRevoked);
+
+            if(token == null) { throw new BRException($"Unable to remove refresh token"); }
+
+            token.IsRevoked = true;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<PagedResult<AccountDto>> ListAccountsAsync(string? keyword, int page = 1, int pageSize = 10)
+        {
+            var query = _userManager.Users.AsQueryable();
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                query = query.Where(u => u.UserName.Contains(keyword) || u.Email.Contains(keyword));
+            }
+
+            var totalItems = await query.CountAsync();
+
+            var users = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var result = new List<AccountDto>();
+
+            foreach (var user in users)
+            {
+                // NOTE: Không truy cập song song vào DbContext
+                var roles = await _userManager.GetRolesAsync(user);
+
+                result.Add(new AccountDto
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    UserName = user.UserName,
+                    Points = user.Points,
+                    LockoutEnabled = user.LockoutEnabled,
+                    LockoutEnd = user.LockoutEnd?.DateTime,
+                    Roles = roles.ToList()
+                });
+            }
+
+            return new PagedResult<AccountDto>
+            {
+                Items = result,
+                CurrentPage = page,
+                TotalItems = totalItems,
+                PageSize = pageSize
+            };
+        }
+
     }
 }
