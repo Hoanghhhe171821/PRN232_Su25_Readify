@@ -16,14 +16,6 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         {
             _context = context;
         }
-        [HttpGet("GetAllFreeBooks")]
-        public async Task<IActionResult> GetAllFreeBooks()
-        {
-            var books = await _context.Books.Where(b => b.IsFree == true).
-                ToListAsync();
-            if (!books.Any()) return NotFound();
-            return Ok(books);
-        }
         [HttpGet("GetAllBooks")]
         public async Task<IActionResult> GetAllBooks(int page = 1, int pageSize = 12,
             [FromQuery(Name = "searchTitle")] string searchTitle = null,
@@ -86,6 +78,20 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 .Where(b => b.IsActive == true)
                 .OrderByDescending(b => b.UpdateDate ?? b.CreateDate)
                 .Take(6)
+                .ToListAsync();
+            return Ok(books);
+        }
+        [HttpGet("RelatedBooks/{BookId}")]
+        public async Task<IActionResult> GetRelatedBooks(int BookId)
+        {
+            var currentBook = await _context.Books.SingleOrDefaultAsync(b => b.Id == BookId);
+            if (currentBook == null) return BadRequest();
+
+            var books = await _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
+                .Where(b => b.IsActive == true 
+                            && b.AuthorId == currentBook.AuthorId
+                            && b.Id != currentBook.Id)
+                .OrderByDescending(b => b.UnitInOrder).Take(3)
                 .ToListAsync();
             return Ok(books);
         }
