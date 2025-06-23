@@ -1,0 +1,152 @@
+﻿@using PRN232_Su25_Readify_Web.Dtos.Books
+@model BookDetailsViewModel
+<div class="page-content bg-grey">
+	<section class="content-inner-1 border-bottom">
+		<div class="container">
+			<div class="d-flex justify-content-between align-items-center">
+				<h4 class="title">Books</h4>
+			</div>
+			<div class="row">
+				<div class="col-md-12 col-sm-12">
+					<div class="dz-shop-card style-2">
+						<div class="dz-media">
+							<img src="@Model.Book.ImageUrl" alt="book">
+						</div>
+						<div class="dz-content">
+							<div class="dz-header">
+								<div>
+									<ul class="dz-tags">
+										@foreach(var cate in Model.Book.BookCategories){
+											<li><a >@cate.Category.Name</a></li>
+										}									
+									</ul>
+									<h4 class="title mb-0"><a >@Model.Book.Title</a></h4>
+								</div>
+								<div class="price">
+									@if(Model.Book.IsFree){
+										<span class="price-num text-primary">Miễn Phí</span>
+										<del>@string.Format("{0:N0} đ", Model.Book.Price)</del>
+									}else{
+										<span class="price-num text-primary">
+											@string.Format("{0:N0} đ", Model.Book.Price)</span>
+									}
+								</div>
+							</div>
+
+							<div class="dz-body">
+								<div class="dz-rating-box">
+									<div>
+										<p class="dz-para" style="width: 760px;">@Model.Book.Description</p>
+										<div class="promo-links">
+											@if(Model.Book.Chapters.Any()){
+												
+												@foreach (var chapter in Model.Book.Chapters.OrderBy(c => c.ChapterOrder)
+																				.Take(4))
+												{
+													<a style="color:blue">Chapter @chapter.ChapterOrder - @chapter.Title</a>
+												}
+												@if (Model.Book.Chapters.Count() > 4)
+												{
+													<span class="see-more">Xem thêm</span>
+												}
+												
+											}else{
+												<a style="color:gray">Không có chương nào!</a>
+
+											}
+											
+										</div>
+									</div>
+									<div class="review-num">
+										<h4>5.0</h4>
+										<ul class="dz-rating">
+											<li><i class="flaticon-star text-yellow"></i></li>
+											<li><i class="flaticon-star text-yellow"></i></li>
+											<li><i class="flaticon-star text-yellow"></i></li>
+											<li><i class="flaticon-star text-yellow"></i></li>
+											<li><i class="flaticon-star text-muted"></i></li>
+										</ul>
+										<span><a > 0 Reviews</a></span>
+									</div>
+								</div>
+								<div class="rate">
+									<ul class="book-info">
+										<li><span>Writen by</span>@Model.Book.Author.Name</li>										
+										<li><span>Year</span>@Model.Book.CreateDate.Value.Year</li>
+									</ul>
+									<div class="d-flex">
+										@if(Model.Book.IsFree){
+											<a asp-controller="Books" asp-action="Read"
+											   asp-route-bookId="@Model.Book.Id"
+											   asp-route-chapterOrder="1"
+											   class="btn btn-secondary btnhover btnhover2">
+												<i class="flaticon-shopping-cart-1 m-r10"></i> Read
+											</a>
+										}else{
+											<a href="shop-cart.html" class="btn btn-secondary btnhover btnhover2">
+												<i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
+											</a>
+										}
+										<div class="bookmark-btn style-1">
+											<input class="form-check-input" type="checkbox"
+												   id="flexCheckFavorite-@Model.Book.Id"
+											@(Model.isFavorite ? "checked" : "")
+												   onclick="toggleFavorite(@Model.Book.Id,'@Model.UserId')">
+											<label class="form-check-label" for="flexCheckFavorite-@Model.Book.Id">
+												<i id="favoriteIcon-@Model.Book.Id" class="flaticon-heart @(Model.isFavorite ? "text-pink" : "")"></i>
+											</label>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+</div>
+<style>
+	.promo-links a {
+		display: block;
+		margin-bottom: 10px;
+	}
+
+		.promo-links a:nth-child(n+5) {
+			display: none; /* Ẩn các phần tử từ thứ 5 trở đi */
+		}
+
+	.see-more {
+		display: block;
+		color: gray;
+		margin-top: 10px;
+	}
+</style>
+@section Scripts {
+	<script>
+			function toggleFavorite(bookId,userId) {
+			var checkbox = $('#flexCheckFavorite-' + bookId);
+			var isChecked = checkbox.is(':checked');
+			$.ajax({
+				url: 'https://localhost:7267/api/Books/AddToFavorite',
+				type: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify({
+					BookId: bookId,
+					UserId: userId
+				}),
+				success: function (res) {
+					if (res.isFavorite) {
+						$('#favoriteIcon-' + bookId).addClass('text-pink');
+					} else {
+						$('#favoriteIcon-' + bookId).removeClass('text-pink');
+					}
+				},
+				error: function (xhr) {
+					alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+					checkbox.prop('checked', !isChecked);
+				}
+			});
+		}
+	</script>
+}

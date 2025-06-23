@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using PRN232_Su25_Readify_WebAPI.Dtos.Auths;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
 using PRN232_Su25_Readify_WebAPI.Models;
@@ -14,12 +16,15 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
     {
         private readonly IAuthService _authService;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IJwtService _jwtService;
 
         public AuthController(IAuthService authService,
-            UserManager<AppUser> userManager)
+            UserManager<AppUser> userManager,
+            IJwtService jwtService)
         {
             _authService = authService;
             _userManager = userManager;
+            _jwtService = jwtService;
         }
 
 
@@ -38,7 +43,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             var result = await _authService.LoginAsync(login);
 
-            return Ok(new { message = "Login successful", data = result.Token });
+            return Ok(result);
         }
 
         [HttpGet("confirm-email")]
@@ -126,6 +131,35 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             var result = await _authService.ResetPassword(dto);
             return Ok(result);
         }
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshAccessToken([FromBody] RefreshTokenRequest dto)
+        {
 
+            if (dto.AccessToken != null)
+            {
+                var principal = _jwtService.ValidateToken(dto.AccessToken);
+                if (principal == null) throw new UnauthorEx("Invalid accessToken, Please login again");
+            }
+
+            var newAccessToken = await _jwtService.RefreshAccessToken(dto.RefreshToken);
+
+            return Ok(new AuthResult
+            {
+                Token = newAccessToken.token,
+                RefreshToken = dto.RefreshToken,
+                ExpriseAt = newAccessToken.expriseAt
+            });
+        }
+        [HttpPost("logout")]        
+        
+        public async Task<IActionResult> Logout([FromBody] string refreshToken)
+        {
+            if (string.IsNullOrEmpty(refreshToken)) throw new BRException("Refresh token là bắt buộc");
+
+            await _authService.RemoveRefreshTokenAsync(refreshToken);
+
+            return Ok();
+        }
+        
     }
 }

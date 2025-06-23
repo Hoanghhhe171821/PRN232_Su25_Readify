@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Auths;
+using PRN232_Su25_Readify_WebAPI.Exceptions;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System.IdentityModel.Tokens.Jwt;
@@ -25,7 +26,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             _context = context;
         }
 
-        public async Task<string> GenerateAccessToken(AppUser user)
+        public async Task<(string token, DateTime expriseAt)> GenerateAccessToken(AppUser user)
         {
             var authClaims = new List<Claim>
             {
@@ -48,12 +49,14 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
-                expires: DateTime.Now.AddMinutes(10),
+                expires: DateTime.UtcNow.AddMinutes(10),
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                 );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var jwtToken =  new JwtSecurityTokenHandler().WriteToken(token);
+
+            return (jwtToken, token.ValidTo);
         }
 
 
@@ -80,7 +83,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
-                expires: DateTime.Now.AddMinutes(1),
+                expires: DateTime.UtcNow.AddMinutes(1),
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                 );
@@ -90,8 +93,8 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             {
                 JwtId = token.Id,
                 UserId = user.Id,
-                AddedDate = DateTime.Now,
-                ExpiryDate = DateTime.Now.AddMinutes(30),
+                AddedDate = DateTime.UtcNow,
+                ExpiryDate = DateTime.UtcNow.AddMinutes(30),
                 IsRevoked = false,
                 Token = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString()
             };
@@ -109,11 +112,11 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             return response;
         }
 
-        public async Task<string> RefreshAccessToken(string refreshToken)
+        public async Task<(string token, DateTime expriseAt)> RefreshAccessToken(string refreshToken)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                return null;
+                throw new UnauthorEx("Unauthorized access");
             }
 
             var storedToken = _context.RefreshTokens.FirstOrDefault(r => r.Token == refreshToken
@@ -121,14 +124,15 @@ namespace PRN232_Su25_Readify_WebAPI.Services
 
             if (storedToken == null || storedToken.ExpiryDate < DateTime.UtcNow || storedToken.IsRevoked)
             {
-                return null;
+                throw new UnauthorEx("Request fail, Please login again.");
             }
 
             var user = await _userManager.FindByIdAsync(storedToken.UserId);
-            if (user == null) return null;
+            if (user == null) throw new UnauthorEx("User is not found. Please login again");
 
             return await GenerateAccessToken(user);
         }
+
         public async Task<ClaimsPrincipal> ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
