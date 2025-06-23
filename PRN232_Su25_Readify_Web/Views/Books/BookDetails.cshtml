@@ -1,152 +1,363 @@
 ﻿@using PRN232_Su25_Readify_Web.Dtos.Books
 @model BookDetailsViewModel
-<div class="page-content bg-grey">
-	<section class="content-inner-1 border-bottom">
-		<div class="container">
-			<div class="d-flex justify-content-between align-items-center">
-				<h4 class="title">Books</h4>
-			</div>
-			<div class="row">
-				<div class="col-md-12 col-sm-12">
-					<div class="dz-shop-card style-2">
-						<div class="dz-media">
-							<img src="@Model.Book.ImageUrl" alt="book">
-						</div>
-						<div class="dz-content">
-							<div class="dz-header">
-								<div>
-									<ul class="dz-tags">
-										@foreach(var cate in Model.Book.BookCategories){
-											<li><a >@cate.Category.Name</a></li>
-										}									
-									</ul>
-									<h4 class="title mb-0"><a >@Model.Book.Title</a></h4>
-								</div>
-								<div class="price">
-									@if(Model.Book.IsFree){
-										<span class="price-num text-primary">Miễn Phí</span>
-										<del>@string.Format("{0:N0} đ", Model.Book.Price)</del>
-									}else{
-										<span class="price-num text-primary">
-											@string.Format("{0:N0} đ", Model.Book.Price)</span>
-									}
-								</div>
-							</div>
+<div class="page-content">
+    <section class="content-inner-1">
+        <div class="container">
+            <div class="row book-grid-row style-4 m-b60">
+                <div class="col">
+                    <div class="dz-box">
+                        <div class="dz-media">
+                            <img src="@Model.Book.ImageUrl" alt="book">
+                        </div>
+                        <div class="dz-content">
+                            <div class="dz-header">
+                                <h3 class="title">@Model.Book.Title</h3>
+                                <div class="shop-item-rating">
+                                    <div class="d-lg-flex d-sm-inline-flex d-flex align-items-center">
+                                        <ul class="dz-rating">
+                                            <li><i class="flaticon-star text-yellow"></i></li>
+                                            <li><i class="flaticon-star text-yellow"></i></li>
+                                            <li><i class="flaticon-star text-yellow"></i></li>
+                                            <li><i class="flaticon-star text-yellow"></i></li>
+                                            <li><i class="flaticon-star text-muted"></i></li>
+                                        </ul>
+                                        <h6 class="m-b0">4.0</h6>
+                                    </div>
+                                    <div class="social-area">
+                                        <ul class="dz-social-icon style-3">
+                                            <li><a href="https://www.facebook.com/dexignzone" target="_blank"><i class="fa-brands fa-facebook-f"></i></a></li>
+                                            <li><a href="https://twitter.com/dexignzones" target="_blank"><i class="fa-brands fa-twitter"></i></a></li>
+                                            <li><a href="https://www.whatsapp.com/" target="_blank"><i class="fa-brands fa-whatsapp"></i></a></li>
+                                            <li><a href="https://www.google.com/intl/en-GB/gmail/about/" target="_blank"><i class="fa-solid fa-envelope"></i></a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dz-body">
+                                <div class="book-detail">
+                                    <ul class="book-info">
+                                        <li>
+                                            <div class="writer-info">
+                                                <img src="~/images/profile1.jpg" alt="book">
+                                                <div>
+                                                    <span>Writen by</span>@Model.Book.Author.Name
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li><span>Year</span>@Model.Book.CreateDate.Value.Year</li>
+                                    </ul>
+                                </div>
+                                <p class="text-1" style="width: 760px; height: 100px;">@Model.Book.Description</p>
+                                <p class="text-2 promo-links" style="width: 760px; height: 100px;">
+                                    @if (Model.Book.Chapters.Any())
+                                    {
 
-							<div class="dz-body">
-								<div class="dz-rating-box">
-									<div>
-										<p class="dz-para" style="width: 760px;">@Model.Book.Description</p>
-										<div class="promo-links">
-											@if(Model.Book.Chapters.Any()){
-												
-												@foreach (var chapter in Model.Book.Chapters.OrderBy(c => c.ChapterOrder)
-																				.Take(4))
-												{
-													<a style="color:blue">Chapter @chapter.ChapterOrder - @chapter.Title</a>
-												}
-												@if (Model.Book.Chapters.Count() > 4)
-												{
-													<span class="see-more">Xem thêm</span>
-												}
-												
-											}else{
-												<a style="color:gray">Không có chương nào!</a>
+                                        @foreach (var chapter in Model.Book.Chapters.OrderBy(c => c.ChapterOrder)
+                                       .Take(4))
+                                        {
+                                            <a style="color:blue">Chapter @chapter.ChapterOrder - @chapter.Title</a>
+                                        }
+                                        @if (Model.Book.Chapters.Count() > 4)
+                                        {
+                                            <span class="see-more">Xem thêm</span>
+                                        }
 
-											}
-											
-										</div>
-									</div>
-									<div class="review-num">
-										<h4>5.0</h4>
-										<ul class="dz-rating">
-											<li><i class="flaticon-star text-yellow"></i></li>
-											<li><i class="flaticon-star text-yellow"></i></li>
-											<li><i class="flaticon-star text-yellow"></i></li>
-											<li><i class="flaticon-star text-yellow"></i></li>
-											<li><i class="flaticon-star text-muted"></i></li>
-										</ul>
-										<span><a > 0 Reviews</a></span>
-									</div>
-								</div>
-								<div class="rate">
-									<ul class="book-info">
-										<li><span>Writen by</span>@Model.Book.Author.Name</li>										
-										<li><span>Year</span>@Model.Book.CreateDate.Value.Year</li>
-									</ul>
-									<div class="d-flex">
-										@if(Model.Book.IsFree){
-											<a asp-controller="Books" asp-action="Read"
-											   asp-route-bookId="@Model.Book.Id"
-											   asp-route-chapterOrder="1"
-											   class="btn btn-secondary btnhover btnhover2">
-												<i class="flaticon-shopping-cart-1 m-r10"></i> Read
-											</a>
-										}else{
-											<a href="shop-cart.html" class="btn btn-secondary btnhover btnhover2">
-												<i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
-											</a>
-										}
-										<div class="bookmark-btn style-1">
-											<input class="form-check-input" type="checkbox"
-												   id="flexCheckFavorite-@Model.Book.Id"
-											@(Model.isFavorite ? "checked" : "")
-												   onclick="toggleFavorite(@Model.Book.Id,'@Model.UserId')">
-											<label class="form-check-label" for="flexCheckFavorite-@Model.Book.Id">
-												<i id="favoriteIcon-@Model.Book.Id" class="flaticon-heart @(Model.isFavorite ? "text-pink" : "")"></i>
-											</label>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
+                                    }
+                                    else
+                                    {
+                                        <a style="color:gray">Không có chương nào!</a>
+
+                                    }
+                                </p>
+                                <div class="book-footer">
+                                    @if (Model.Book.IsFree)
+                                    {
+                                        <div class="price">
+                                            <h5>Miễn phí</h5>
+                                            <p class="p-lr10">@string.Format("{0:N0} đ", Model.Book.Price)</p>
+                                        </div>
+                                        <div class="product-num">
+                                            <div class="quantity btn-quantity style-1 me-3">
+                                                <input id="demo_vertical2" type="text" value="1" name="demo_vertical2" />
+                                            </div>
+                                            <a asp-controller="Books" asp-action="Read"
+                                               asp-route-bookId="@Model.Book.Id"
+                                               asp-route-chapterOrder="1"
+                                               class="btn btn-secondary btnhover btnhover2">
+                                                <i class="flaticon-shopping-cart-1 m-r10"></i> Read
+                                            </a>
+                                            <div class="bookmark-btn style-1 d-none d-sm-block">
+                                                <input class="form-check-input" type="checkbox"
+                                                       id="flexCheckFavorite-@Model.Book.Id"
+                                                @(Model.isFavorite ? "checked" : "")
+                                                       onclick="toggleFavorite(@Model.Book.Id,'@Model.UserId')">
+                                                <label class="form-check-label" for="flexCheckFavorite-@Model.Book.Id">
+                                                    <i id="favoriteIcon-@Model.Book.Id" class="flaticon-heart @(Model.isFavorite ? "text-pink" : "")"></i>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="price">
+                                            <h5>@string.Format("{0:N0} đ", Model.Book.Price)</h5>
+                                            <p class="p-lr10">$70.00</p>
+                                        </div>
+                                        <div class="product-num">
+                                            <div class="quantity btn-quantity style-1 me-3">
+                                                <input id="demo_vertical2" type="text" value="1" name="demo_vertical2" />
+                                            </div>
+                                            <a href="" class="btn btn-primary btnhover btnhover2"><i class="flaticon-shopping-cart-1"></i> <span>Add to cart</span></a>
+                                            <div class="bookmark-btn style-1 d-none d-sm-block">
+                                                <input class="form-check-input" type="checkbox"
+                                                       id="flexCheckFavorite-@Model.Book.Id"
+                                                @(Model.isFavorite ? "checked" : "")
+                                                       onclick="toggleFavorite(@Model.Book.Id,'@Model.UserId')">
+                                                <label class="form-check-label" for="flexCheckFavorite-@Model.Book.Id">
+                                                    <i id="favoriteIcon-@Model.Book.Id" class="flaticon-heart @(Model.isFavorite ? "text-pink" : "")"></i>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xl-8">
+                    <div class="product-description tabs-site-button">
+                        <ul class="nav nav-tabs">
+                            <li><a data-bs-toggle="tab" href="#graphic-design-1" class="active">Details Product</a></li>
+                            <li><a data-bs-toggle="tab" href="#developement-1">Customer Reviews</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div id="graphic-design-1" class="tab-pane show active">
+                                <table class="table border book-overview">
+                                    <tr>
+                                        <th>Book Title</th>
+                                        <td>@Model.Book.Title</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Author</th>
+                                        <td>@Model.Book.Author.Name</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Date Published</th>
+                                        <td>@Model.Book.CreateDate?.ToString("dd MMMM, yyyy")</td>
+                                    </tr>
+                                    @if (Model.ChapterQuantity > 0)
+                                    {
+                                        <tr>
+                                            <th>Chapter</th>
+                                            <td>@Model.ChapterQuantity</td>
+                                        </tr>
+                                    }
+                                    <tr class="tags">
+                                        <th>Tags</th>
+                                        <td>
+                                            @foreach (var cate in Model.Book.BookCategories)
+                                            {
+                                                <a class="badge">@cate.Category.Name</a>
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div id="developement-1" class="tab-pane">
+                                <div class="clear" id="comment-list">
+                                    <div class="post-comments comments-area style-1 clearfix">
+                                        <h4 class="comments-title">4 COMMENTS</h4>
+                                        <div id="comment">
+                                            <ol class="comment-list">
+                                                <li class="comment even thread-even depth-1 comment" id="comment-2">
+                                                    <div class="comment-body">
+                                                        <div class="comment-author vcard">
+                                                            <img src="images/profile4.jpg" alt="" class="avatar" />
+                                                            <cite class="fn">Michel Poe</cite> <span class="says">says:</span>
+                                                            <div class="comment-meta">
+                                                                <a href="javascript:void(0);">December 22, 2024 at 6:14 am</a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="comment-content dlab-page-text">
+                                                            <p>Donec suscipit porta lorem eget condimentum. Morbi vitae mauris in leo venenatis varius. Aliquam nunc enim, egestas ac dui in, aliquam vulputate erat.</p>
+                                                        </div>
+                                                        <div class="reply">
+                                                            <a rel="nofollow" class="comment-reply-link" href="javascript:void(0);"><i class="fa fa-reply"></i> Reply</a>
+                                                        </div>
+                                                    </div>
+                                                    <ol class="children">
+                                                        <li class="comment byuser comment-author-w3itexpertsuser bypostauthor odd alt depth-2 comment" id="comment-3">
+                                                            <div class="comment-body" id="div-comment-3">
+                                                                <div class="comment-author vcard">
+                                                                    <img src="images/profile3.jpg" alt="" class="avatar" />
+                                                                    <cite class="fn">Celesto Anderson</cite> <span class="says">says:</span>
+                                                                    <div class="comment-meta">
+                                                                        <a href="javascript:void(0);">December 22, 2024 at 6:14 am</a>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="comment-content dlab-page-text">
+                                                                    <p>Donec suscipit porta lorem eget condimentum. Morbi vitae mauris in leo venenatis varius. Aliquam nunc enim, egestas ac dui in, aliquam vulputate erat.</p>
+                                                                </div>
+                                                                <div class="reply">
+                                                                    <a class="comment-reply-link" href="javascript:void(0);"><i class="fa fa-reply"></i> Reply</a>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    </ol>
+                                                </li>
+                                                <li class="comment even thread-odd thread-alt depth-1 comment" id="comment-4">
+                                                    <div class="comment-body" id="div-comment-4">
+                                                        <div class="comment-author vcard">
+                                                            <img src="images/profile2.jpg" alt="" class="avatar" />
+                                                            <cite class="fn">Ryan</cite> <span class="says">says:</span>
+                                                            <div class="comment-meta">
+                                                                <a href="javascript:void(0);">December 22, 2024 at 6:14 am</a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="comment-content dlab-page-text">
+                                                            <p>Donec suscipit porta lorem eget condimentum. Morbi vitae mauris in leo venenatis varius. Aliquam nunc enim, egestas ac dui in, aliquam vulputate erat.</p>
+                                                        </div>
+                                                        <div class="reply">
+                                                            <a class="comment-reply-link" href="javascript:void(0);"><i class="fa fa-reply"></i> Reply</a>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                                <li class="comment odd alt thread-even depth-1 comment" id="comment-5">
+                                                    <div class="comment-body" id="div-comment-5">
+                                                        <div class="comment-author vcard">
+                                                            <img src="images/profile1.jpg" alt="" class="avatar" />
+                                                            <cite class="fn">Stuart</cite> <span class="says">says:</span>
+                                                            <div class="comment-meta">
+                                                                <a href="javascript:void(0);">December 22, 2024 at 6:14 am</a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="comment-content dlab-page-text">
+                                                            <p>Donec suscipit porta lorem eget condimentum. Morbi vitae mauris in leo venenatis varius. Aliquam nunc enim, egestas ac dui in, aliquam vulputate erat.</p>
+                                                        </div>
+                                                        <div class="reply">
+                                                            <a rel="nofollow" class="comment-reply-link" href="javascript:void(0);"><i class="fa fa-reply"></i> Reply</a>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </ol>
+                                        </div>
+                                        <div class="default-form comment-respond style-1" id="respond">
+                                            <h4 class="comment-reply-title" id="reply-title">LEAVE A REPLY <small> <a rel="nofollow" id="cancel-comment-reply-link" href="javascript:void(0)" style="display:none;">Cancel reply</a> </small></h4>
+                                            <div class="clearfix">
+                                                <form method="post" id="comments_form" class="comment-form" novalidate>
+                                                    <p class="comment-form-author"><input id="name" placeholder="Author" name="author" type="text" value=""></p>
+                                                    <p class="comment-form-email"><input id="email" required="required" placeholder="Email" name="email" type="email" value=""></p>
+                                                    <p class="comment-form-comment"><textarea id="comments" placeholder="Type Comment Here" class="form-control4" name="comment" cols="45" rows="3" required="required"></textarea></p>
+                                                    <p class="col-md-12 col-sm-12 col-xs-12 form-submit">
+                                                        <button id="submit" type="submit" class="submit btn btn-primary filled">
+                                                            Submit Now <i class="fa fa-angle-right m-l10"></i>
+                                                        </button>
+                                                    </p>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 mt-5 mt-xl-0">
+                    <div class="widget">
+                        <h4 class="widget-title">Related Books</h4>
+                        <div class="row
+                             @foreach(var related in Model.RelatedBooks){
+                                <div class="col-xl-12 col-lg-6">
+                                    <div class="dz-shop-card style-5">
+                                        <div class="dz-media">
+                                            <img src="@related.ImageUrl" alt="">
+                                        </div>
+                                        <div class="dz-content">
+                                            <h5 class="subtitle">@related.Title</h5>
+                                            <ul class="dz-tags">
+                                                @foreach(var tags in related.BookCategories){
+                                                    <li>@tags.Category.Name</li>
+                                                }
+                                            </ul>
+
+                                                @if(related.IsFree){
+                                                    <div class="price">
+                                                        <span class="price-num">Miễn phí</span>
+                                                        <del>@string.Format("{0:N0} đ", Model.Book.Price)</del>
+                                                    </div>
+                                                 <a asp-controller="Books" asp-action="Read"
+                                                        asp-route-bookId="@Model.Book.Id"
+                                                        asp-route-chapterOrder="1"
+                                                        class="btn btn-secondary btnhover btnhover2">
+                                                <i class="flaticon-shopping-cart-1 m-r10"></i> Read
+                                                </a>
+                                                }else{
+                                                    <div class="price">
+                                                        <span class="price-num">@string.Format("{0:N0} đ", Model.Book.Price)</span>
+                                                    </div>
+                                                    <a class="btn btn-outline-primary btn-sm btnhover btnhover2"><i class="flaticon-shopping-cart-1 me-2"></i> Add to cart</a>
+                                                }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+
 </div>
 <style>
-	.promo-links a {
-		display: block;
-		margin-bottom: 10px;
-	}
+    .promo-links a {
+        display: block;
+        margin-bottom: 10px;
+    }
 
-		.promo-links a:nth-child(n+5) {
-			display: none; /* Ẩn các phần tử từ thứ 5 trở đi */
-		}
+        .promo-links a:nth-child(n+5) {
+            display: none; /* Ẩn các phần tử từ thứ 5 trở đi */
+        }
 
-	.see-more {
-		display: block;
-		color: gray;
-		margin-top: 10px;
-	}
+    .see-more {
+        display: block;
+        color: gray;
+        margin-top: 10px;
+    }
 </style>
 @section Scripts {
-	<script>
-			function toggleFavorite(bookId,userId) {
-			var checkbox = $('#flexCheckFavorite-' + bookId);
-			var isChecked = checkbox.is(':checked');
-			$.ajax({
-				url: 'https://localhost:7267/api/Books/AddToFavorite',
-				type: 'POST',
-				contentType: 'application/json',
-				data: JSON.stringify({
-					BookId: bookId,
-					UserId: userId
-				}),
-				success: function (res) {
-					if (res.isFavorite) {
-						$('#favoriteIcon-' + bookId).addClass('text-pink');
-					} else {
-						$('#favoriteIcon-' + bookId).removeClass('text-pink');
-					}
-				},
-				error: function (xhr) {
-					alert('Error: ' + xhr.status + ' ' + xhr.responseText);
-					checkbox.prop('checked', !isChecked);
-				}
-			});
-		}
-	</script>
+<script>
+        function toggleFavorite(bookId,userId) {
+        var checkbox = $('#flexCheckFavorite-' + bookId);
+        var isChecked = checkbox.is(':checked');
+        $.ajax({
+            url: 'https://localhost:7267/api/Books/AddToFavorite',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                BookId: bookId,
+                UserId: userId
+            }),
+            success: function (res) {
+                if (res.isFavorite) {
+                    $('#favoriteIcon-' + bookId).addClass('text-pink');
+                } else {
+                    $('#favoriteIcon-' + bookId).removeClass('text-pink');
+                }
+            },
+            error: function (xhr) {
+                alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                checkbox.prop('checked', !isChecked);
+            }
+        });
+    }
+</script>
 }
