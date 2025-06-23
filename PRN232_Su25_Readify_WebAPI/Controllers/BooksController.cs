@@ -4,6 +4,9 @@ using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
+using Microsoft.AspNetCore.Authorization;
+using PRN232_Su25_Readify_WebAPI.Exceptions;
+
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
     [ApiController]
@@ -113,6 +116,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             return Ok(chapters);
         }
+
         [HttpPost("AddToFavorite")]
         public async Task<IActionResult> AddToFavorite([FromBody] FavoriteModel model)
         {
@@ -180,6 +184,32 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             //Count
             var totalItems = await query.CountAsync();
             //Paging
+                var books = await query
+        .Skip((page - 1) * pageSize).Take(pageSize)
+        .ToListAsync();
+    var result = new
+    {
+        TotalItems = totalItems,
+        PageSize = pageSize,
+        PageNumber = page,
+        TotalPages = (int)Math.Ceiling((double)totalItems / pageSize),
+        Items = books
+    };
+    return Ok(result);
+}
+
+
+        // Các endpoint mới cho "Manage Books" (Contributor)
+        [HttpGet("manage")]
+        [Authorize(Roles = "Contributor")]
+        public async Task<IActionResult> GetManageBooks(int page = 1, int pageSize = 10,
+            [FromQuery(Name = "searchTitle")] string searchTitle = null)
+        {
+            var query = _context.Books.Include(b => b.Author).AsQueryable();
+
+            if (searchTitle != null) query = query.Where(b => b.Title.Contains(searchTitle));
+
+            var totalItems = await query.CountAsync();
             var books = await query
                 .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
@@ -193,6 +223,57 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             };
             return Ok(result);
         }
+
+
+        [HttpPost("manage")]
+        [Authorize(Roles = "Contributor")]
+        public async Task<IActionResult> CreateBook([FromBody] Book book)
+        {
+            if (book == null) throw new BRException("Book data is required.");
+
+            // Đảm bảo AuthorId và UploadedBy được gán (có thể lấy từ user hiện tại)
+            var userId = User?.Identity?.Name; // Lấy ID người dùng hiện tại từ token
+            if (string.IsNullOrEmpty(userId)) throw new UnauthorEx("User not authenticated.");
+            book.UploadedBy = userId;
+
+            _context.Books.Add(book);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetBookById), new { bookId = book.Id }, book);
+        }
+
+        [HttpPut("manage/{id}")]
+        [Authorize(Roles = "Contributor")]
+        public async Task<IActionResult> UpdateBook(int id, [FromBody] Book book)
+        {
+            if (book == null || id != book.Id) throw new BRException("Invalid book data.");
+
+            var existingBook = await _context.Books.FindAsync(id);
+            if (existingBook == null) throw new NFoundEx("Book not found.");
+
+            existingBook.Title = book.Title;
+            existingBook.Description = book.Description;
+            existingBook.IsFree = book.IsFree;
+            existingBook.Price = book.Price;
+            existingBook.ImageUrl = book.ImageUrl;
+            existingBook.RoyaltyRate = book.RoyaltyRate;
+
+            _context.Entry(existingBook).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("manage/{id}")]
+        [Authorize(Roles = "Contributor")]
+        public async Task<IActionResult> DeleteBook(int id)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book == null) throw new NFoundEx("Book not found.");
+
+            _context.Books.Remove(book);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
 
     }
 }

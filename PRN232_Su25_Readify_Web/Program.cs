@@ -1,3 +1,5 @@
+using PRN232_Su25_Readify_Web.Middlewares;
+
 namespace PRN232_Su25_Readify_Web
 {
     public class Program
@@ -8,6 +10,7 @@ namespace PRN232_Su25_Readify_Web
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.AddHttpClient();
             builder.Services.AddHttpClient();
             var app = builder.Build();
 
@@ -21,7 +24,7 @@ namespace PRN232_Su25_Readify_Web
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-
+            app.UseMiddleware<JwtMiddleware>();
             app.UseRouting();
 
             app.UseAuthorization();
