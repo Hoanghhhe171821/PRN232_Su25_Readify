@@ -1,7 +1,8 @@
 ﻿@model PRN232_Su25_Readify_Web.Models.Auth.RegisterDtoRequest
+
 <div class="page-content">
     <!-- inner page banner -->
-    @await Html.PartialAsync("_AuthPageTemplate","Register")
+    @await Html.PartialAsync("_AuthPageTemplate", "Register")
     <!-- inner page banner End-->
     <!-- contact area -->
     <section class="content-inner shop-account">
@@ -18,7 +19,7 @@
                         {
                             <div class="alert alert-success">@TempData["SuccessMessage"]</div>
                         }
-                        <form asp-controller="Auth" asp-action="Register">
+                        <form asp-controller="Auths" asp-action="Register">
                             <h4 class="text-secondary">Registration</h4>
                             <p class="font-weight-600">If you don't have an account with us, please Registration.</p>
                             <div class="mb-4">
@@ -44,7 +45,7 @@
                             <div class="mb-5">
                                 <small>Your personal data will be used to support your experience throughout this website, to manage access to your account, and for other purposes described in our <a href="privacy-policy.html">privacy policy</a>.</small>
                                 <p class="font-weight-600">
-                                    <a asp-action="login" asp-controller="auth">Login</a>
+                                    <a asp-action="login" asp-controller="auths">Login</a>
                                 </p>
                             </div>
 
