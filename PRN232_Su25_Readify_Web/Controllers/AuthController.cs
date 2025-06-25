@@ -17,24 +17,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        private JwtPayLoad DecodeJwt(string token)
-        {
-            var parts = token.Split('.');
-            if (parts.Length != 3) return null;
-
-            var payload = parts[1];
-            payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '='); // padding
-
-            var jsonBytes = Convert.FromBase64String(payload.Replace('-', '+').Replace('_', '/'));
-            var json = Encoding.UTF8.GetString(jsonBytes);
-
-            var payloadData = JsonSerializer.Deserialize<JwtPayLoad>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            return payloadData;
-        }
+      
         [HttpGet("login")]
         public IActionResult Login()
         {
@@ -60,17 +43,24 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 {
                     PropertyNameCaseInsensitive = true
                 });
-                var token = authResult?.Data;
-                Console.WriteLine(token);
-                Response.Cookies.Append("accessToken", token, new CookieOptions
+                Console.WriteLine(authResult);
+
+
+                Response.Cookies.Append("access_Token", authResult.Token, new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddHours(1)
+                    Expires = authResult.ExpriseAt.AddMinutes(2)
                 });
-                TempData["SuccessMessage"] = "Login successful!";
-                return RedirectToAction("login", "auth");
+                Response.Cookies.Append("refresh_Token", authResult.RefreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTime.UtcNow.AddMinutes(30)
+                });
+                return RedirectToAction("Index", "Home");
             }
             TempData["ErrorMessage"] = errorMessage ?? "Lỗi không xác định khi đăng ký.";
             return View(dto);
@@ -103,7 +93,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
         {
             var (success, data, errorMessage) = await ApiHelper.
                 PostAsync("api/auth/forgot-password", EmailForgot, _httpClientFactory);
-            if(success && !String.IsNullOrWhiteSpace(data))
+            if (success && !String.IsNullOrWhiteSpace(data))
             {
                 TempData["SuccessMessage"] = data;
                 return RedirectToAction("Login");
@@ -111,6 +101,30 @@ namespace PRN232_Su25_Readify_Web.Controllers
             TempData["ErrorMessage"] = errorMessage ?? "Lỗi không xác định khi đăng ký.";
             return View();
         }
+
+        [HttpGet("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var refreshToken = Request.Cookies["refresh_Token"];
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                Response.Cookies.Delete("access_Token");
+                Response.Cookies.Delete("refresh_Token");
+                return RedirectToAction("login");
+            }
+
+            var (success, data, errorMessage) = await ApiHelper.
+                PostAsync("api/auth/logout", refreshToken, _httpClientFactory);
+
+            if (success)
+            {
+                Response.Cookies.Delete("access_Token");
+                Response.Cookies.Delete("refresh_Token");
+            }
+                return RedirectToAction("Login");
+        }
+
+
 
     }
 }

@@ -1,0 +1,214 @@
+﻿@model PRN232_Su25_Readify_Web.Models.Pagination<PRN232_Su25_Readify_Web.Models.Account.AccountDto>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+
+<!-- Thanh tìm kiếm và nút thêm -->
+<form method="get" class="row mb-3 mt-5" asp-controller="accounts" asp-action="Index">
+    <div class="col-md-8">
+        <div class="input-group">
+            <input type="text" name="keyword" class="form-control" placeholder="Tìm kiếm user..."
+                   value="@Context.Request.Query["keyword"]">
+            <button type="submit" class="btn btn-outline-secondary">Tìm kiếm</button>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+
+        <a class="btn btn-primary" asp-action="Create">
+            + Thêm User
+        </a>
+    </div>
+</form>
+
+<table class="table">
+    <thead class="table-light">
+        <tr>
+            <th>No</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Points</th>
+            <th>LockoutEnd</th>
+            <th>Role</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int y = (ViewBag.CurrentPage - 1) * 5 + 1;
+        }
+
+        @foreach (var acc in Model.Items)
+        {
+            <tr>
+                <td>@y</td>
+                <td>@acc.UserName</td>
+                <td>@(acc.Email ?? "Không có email")</td>
+                <td>@acc.Points</td>
+                <td>
+                    @{
+                        if (acc.LockoutEnabled && acc.LockoutEnd.HasValue && acc.LockoutEnd.Value > DateTime.UtcNow)
+                        {
+                            <span class="text-danger">Bị khóa đến @acc.LockoutEnd.Value.ToString("g")</span>
+                        }
+                        else
+                        {
+                            <span class="text-success">Đang hoạt động</span>
+                        }
+                    }
+                </td>
+                <td>
+                    @string.Join(", ", acc.Roles)
+                </td>
+                <td>
+                    <form asp-action="LockAccount" method="post" style="display:inline">
+                        <input type="hidden" name="userId" value="@acc.Id" />
+                        <button type="submit" class="btn btn-danger btn-sm">Khóa</button>
+                    </form>
+
+                    <button type="button" class="btn btn-primary btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#setRoleModal"
+                            data-userid="@acc.Id"
+                            data-username="@acc.UserName"
+                            data-roles="@string.Join(',', acc.Roles)">
+                        Set Role
+                    </button>
+
+                </td>
+            </tr>
+            y += 1;
+        }
+
+    </tbody>
+</table>
+
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <!-- Nút Trước -->
+        <li class="page-item ">
+            <a class="page-link"
+               href="@Url.Action("Index", new { searchQuery = Context.Request.Query["keyword"], page = 1 })">
+                Đầu
+            </a>
+        </li>
+
+        <!-- Các trang -->
+        @{
+            int maxPagesToShow = 3; // Số lượng page tối đa hiển thị
+            int currentPage = Model.CurrentPage;
+            int totalPages = Model.TotalPages;
+            // Tính toán trang bắt đầu và kết thúc
+            int startPage = Math.Max(1, currentPage - 1); // Đảm bảo không nhỏ hơn 1
+            int endPage = startPage + maxPagesToShow - 1; // Hiển thị 3 trang kể từ startPage
+
+            // Điều chỉnh nếu endPage vượt quá totalPages
+            if (endPage > totalPages)
+            {
+                endPage = totalPages;
+                startPage = Math.Max(1, endPage - maxPagesToShow + 1); // Điều chỉnh startPage nếu cần
+            }
+
+            // Hiển thị các trang
+            for (int i = startPage; i <= endPage; i++)
+            {
+                <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                    <a class="page-link"
+                       href="@Url.Action("Index", new { searchQuery = Context.Request.Query["keyword"], page = i })">
+                        @i
+                    </a>
+                </li>
+            }
+        }
+        <!-- Nút Sau -->
+
+        <li class="page-item ">
+            <a class="page-link"
+               href="@Url.Action("Index", new { searchQuery = Context.Request.Query["keyword"], page = Model.TotalPages })">
+                Cuối
+            </a>
+        </li>
+
+
+    </ul>
+</nav>
+
+<div class="modal fade" id="setRoleModal" tabindex="-1" aria-labelledby="setRoleLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" asp-action="SetRole" asp-controller="accounts">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="setRoleLabel">Phân quyền cho người dùng</h5>
+                    <input type="hidden" name="userName" id="userName" />
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="userId" id="modalUserId" />
+
+                    <p id="modalUsername" class="fw-bold"></p>
+
+                    @foreach (var role in ViewBag.Roles as List<string>)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="roles" value="@role" id="role_@role">
+                            <label class="form-check-label" for="role_@role">@role</label>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Lưu</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const setRoleModal = document.getElementById('setRoleModal');
+        setRoleModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+
+            const userId = button.getAttribute('data-userid');
+            const username = button.getAttribute('data-username');
+            const rolesString = button.getAttribute('data-roles') || '';
+            const userRoles = rolesString.split(',').map(r => r.trim());
+
+            // Gán ID và tên
+            document.getElementById('modalUserId').value = userId;
+            document.getElementById('modalUsername').innerText = `Phân quyền cho: ${username}`;
+            document.getElementById('userName').value = username;
+            // Bỏ chọn tất cả
+            document.querySelectorAll('#setRoleModal input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+
+            // Chọn các checkbox đã có trong user
+            userRoles.forEach(role => {
+                const checkbox = document.querySelector(`#setRoleModal input[type="checkbox"][value="${role}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        });
+
+                const lastUserId = document.getElementById('modalUserId').value;
+
+        if (lastUserId !== userId) {
+            // Bỏ chọn tất cả nếu mở người khác
+            document.querySelectorAll('#setRoleModal input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+        }
+    </script>
+}
+
