@@ -12,10 +12,18 @@ namespace PRN232_Su25_Readify_Web.Controllers
     public class BooksController : Controller
     {
         private readonly HttpClient _httpClient;
+        private string GetGivenAPIBaseUrl()
+        {
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .Build();
+            string baseUrl = config["GivenAPIBaseUrl"];
+            return baseUrl;
+        }
         public BooksController(IHttpClientFactory factory)
         {
             _httpClient = factory.CreateClient();
-            _httpClient.BaseAddress = new Uri("https://localhost:7267/");
+            _httpClient.BaseAddress = new Uri(GetGivenAPIBaseUrl());
         }
         [HttpGet("BookList")]
         public async Task<IActionResult> BookList(int page = 1, string searchTitle = null,
@@ -84,6 +92,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
             var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
             var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
 
+            //Lấy danh sách book liên quan tới tác giả
+            var relatedBooks = await GetApiDataAsync<List<Book>>($"api/Books/RelatedBooks/{bookId}");
+
             // Lấy danh sách Id của các Book yêu thích
             var favoriteBookIds = favoriteBooks.Select(b => b.Id).ToList();
             var isFavor = false;
@@ -95,7 +106,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 Book = book,
                 ChapterQuantity = chapterQuan,
                 isFavorite = isFavor,
-                UserId = userId
+                UserId = userId,
+                RelatedBooks = relatedBooks
             };
             return View(result);
         }

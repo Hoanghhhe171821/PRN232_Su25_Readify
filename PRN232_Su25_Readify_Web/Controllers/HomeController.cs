@@ -1,15 +1,8 @@
-using System.Diagnostics;
-using System.Net.Http.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using PRN232_Su25_Readify_Web.Dtos.Home;
 using PRN232_Su25_Readify_Web.Models;
 using PRN232_Su25_Readify_WebAPI.Models;
-using Newtonsoft.Json;
-using PRN232_Su25_Readify_Web.Dtos;
-using PRN232_Su25_Readify_Web.Dtos.Home;
-using Newtonsoft.Json.Linq;
-using Octokit;
-using PRN232_Su25_Readify_Web.Dtos.Books;
 
 namespace PRN232_Su25_Readify_Web.Controllers
 {
@@ -33,7 +26,6 @@ namespace PRN232_Su25_Readify_Web.Controllers
             {
                 RecommendBooks = recommendBooks,
                 NewReleaseBooks = newReleaseBooks
-
             };
             return View(data);
         }
