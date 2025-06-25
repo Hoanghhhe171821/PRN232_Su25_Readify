@@ -4,6 +4,21 @@
 @{
     var selectedCateIds = Context.Request.Query["cateIds"].Select(int.Parse).ToList();
 }
+@functions {
+    IDictionary<string, string> BuildRouteValues(int page, List<int> cateIds)
+    {
+        var routeValues = new Dictionary<string, string>();
+        routeValues["page"] = page.ToString();
+        routeValues["orderBy"] = Model.OrderBy ?? "";
+        routeValues["searchTitle"] = Context.Request.Query["searchTitle"].ToString() ?? "";
+
+        for (int i = 0; i < cateIds.Count; i++)
+        {
+            routeValues[$"cateIds[{i}]"] = cateIds[i].ToString();
+        }
+        return routeValues;
+    }
+}
 <div class="page-content bg-grey">
     <div class="content-inner-1 border-bottom">
         <div class="container">
@@ -189,7 +204,6 @@
                         }
                     </div>
                     @*Paging*@
-
                     <div class="row page mt-0">
                         <div class="col-md-6">
                             <p class="page-text">
@@ -202,55 +216,40 @@
 
                                     @if (Model.PagedBooks.PageNumber > 1)
                                     {
+                                        var prevRouteValues = BuildRouteValues(Model.PagedBooks.PageNumber - 1, selectedCateIds);
                                         <li class="page-item">
-                                            <form asp-controller="Books" asp-action="BookList" asp-route-page="@(Model.PagedBooks.PageNumber - 1)" method="get" class="d-inline">
-                                                @foreach (var cateId in selectedCateIds)
-                                                {
-                                                    <input type="hidden" name="cateIds" value="@cateId" />
-                                                }
-                                                <input type="hidden" name="page" value="@Model.OrderBy" />
-                                                <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
-
-
-                                                <button type="submit" class="page-link prev">Prev</button>
-                                            </form>
+                                            <a class="page-link prev"
+                                               asp-controller="Books"
+                                               asp-action="BookList"
+                                               asp-all-route-data="prevRouteValues">
+                                                Prev
+                                            </a>
                                         </li>
                                     }
 
                                     @for (int i = 1; i <= Model.PagedBooks.TotalPage; i++)
                                     {
+                                        var pageRouteValues = BuildRouteValues(i, selectedCateIds);
                                         <li class="page-item">
-                                            <form asp-controller="Books" asp-action="BookList" asp-route-page="@i" method="get" class="d-inline">
-                                                @foreach (var cateId in selectedCateIds)
-                                                {
-                                                    <input type="hidden" name="cateIds" value="@cateId" />
-                                                }
-                                                <input type="hidden" name="page" value="@Model.OrderBy" />
-                                                <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
-
-
-                                                <button type="submit" class="page-link @(i == Model.PagedBooks.PageNumber ? "active" : "")">
-                                                    @i
-                                                </button>
-                                            </form>
+                                            <a class="page-link @(i == Model.PagedBooks.PageNumber ? "active" : "")"
+                                               asp-controller="Books"
+                                               asp-action="BookList"
+                                               asp-all-route-data="pageRouteValues">
+                                                @i
+                                            </a>
                                         </li>
                                     }
 
                                     @if (Model.PagedBooks.PageNumber < Model.PagedBooks.TotalPage)
                                     {
+                                        var nextRouteValues = BuildRouteValues(Model.PagedBooks.PageNumber + 1, selectedCateIds);
                                         <li class="page-item">
-
-                                            <form asp-controller="Books" asp-action="BookList" asp-route-page="@(Model.PagedBooks.PageNumber + 1)" method="get" class="d-inline">
-                                                <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
-
-
-                                                <input type="hidden" name="page" value="@Model.OrderBy" />
-                                                @foreach (var cateId in selectedCateIds)
-                                                {
-                                                    <input type="hidden" name="cateIds" value="@cateId" />
-                                                }
-                                                <button type="submit" class="page-link next">Next</button>
-                                            </form>
+                                            <a class="page-link next"
+                                               asp-controller="Books"
+                                               asp-action="BookList"
+                                               asp-all-route-data="nextRouteValues">
+                                                Next
+                                            </a>
                                         </li>
                                     }
 
@@ -258,7 +257,6 @@
                             </nav>
                         </div>
                     </div>
-
 
                 </div>
             </div>

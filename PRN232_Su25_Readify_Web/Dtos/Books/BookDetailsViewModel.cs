@@ -9,5 +9,6 @@ namespace PRN232_Su25_Readify_Web.Dtos.Books
         public int ChapterQuantity { get; set; }
         public bool isFavorite { get; set; }
         public List<Book> RelatedBooks { get; set; }
+        public PagedResult<Comment> PagedComments { get; set; }
     }
 }

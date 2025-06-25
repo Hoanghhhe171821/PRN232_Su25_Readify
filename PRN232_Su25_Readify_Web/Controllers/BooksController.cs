@@ -80,13 +80,20 @@ namespace PRN232_Su25_Readify_Web.Controllers
             return View(model);
         }
         [HttpGet("BookDetails/{bookId}")]
-        public async Task<IActionResult> BookDetails(int bookId)
+        public async Task<IActionResult> BookDetails(int bookId, int pageNumber = 1)
         {
             //Seeding User
             var userId = "0aece579-7768-4515-9f25-08e10f0e7032";
 
             var book =await GetApiDataAsync<Book>($"api/Books/GetBookById/{bookId}");
             if (book == null) return RedirectToAction("BookList", "Books");
+            //Lấy tất cả comment của sách
+            var commentResponse = await GetApiDataAsync<JObject>($"api/Comments/GetCommentsByBookId/{bookId}?pageNumber={pageNumber}&pageSize=5");
+
+            var comments = commentResponse["comments"].ToObject<List<Comment>>();
+            var totalComments = commentResponse["totalComments"].ToObject<int>();
+            var pageSize = 5;
+            var totalPage = (int)Math.Ceiling((double)totalComments / 5);
 
             // Lấy danh sách các Book yêu thích từ API
             var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
@@ -107,7 +114,15 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 ChapterQuantity = chapterQuan,
                 isFavorite = isFavor,
                 UserId = userId,
-                RelatedBooks = relatedBooks
+                RelatedBooks = relatedBooks,
+                PagedComments = new PagedResult<Comment>
+                {
+                    Items = comments,
+                    TotalItems = totalComments,
+                    PageSize = pageSize,
+                    PageNumber = pageNumber,
+                    TotalPage = totalPage
+                }
             };
             return View(result);
         }
