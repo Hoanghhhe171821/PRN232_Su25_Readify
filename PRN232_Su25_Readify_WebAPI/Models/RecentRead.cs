@@ -10,5 +10,10 @@ namespace PRN232_Su25_Readify_WebAPI.Models
     
         public int BookId { get; set; }
         public Book? Book { get; set; }
+
+        public int? ChapterId { get; set; }
+        public Chapter? Chapter { get; set; }
+
+        public DateTime DateRead { get; set; } = DateTime.UtcNow;
     }
 }
