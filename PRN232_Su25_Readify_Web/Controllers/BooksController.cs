@@ -207,6 +207,60 @@ namespace PRN232_Su25_Readify_Web.Controllers
             };
             return View(model);
         }
+        [HttpGet("RecentList")]
+        public async Task<IActionResult> RecentList(string userId,int page = 1, string searchTitle = null,
+    List<int> cateIds = null, string orderBy = "Desc", bool isFree = false)
+        {
+            //Seeding User
+             userId = "0aece579-7768-4515-9f25-08e10f0e7032";
+
+            var url = $"api/Books/GetAllRecentRead?userId={userId}&page={page}&searchTitle={searchTitle}&orderBy={orderBy}&isFree={isFree}";
+            if (cateIds != null && cateIds.Any())
+            {
+                url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
+            }
+
+            //Get Book by API
+            var booksJsonResult = await GetApiDataAsync<JObject>(url);
+            var books = booksJsonResult["items"].ToObject<List<BookViewModel>>();
+            var totalItems = booksJsonResult["totalItems"].ToObject<int>();
+            var pageSize = booksJsonResult["pageSize"].ToObject<int>();
+            var totalPage = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            //Get Cate by API
+            var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+
+            // Lấy danh sách các Book yêu thích từ API
+            var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
+            var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
+
+            // Lấy danh sách Id của các Book yêu thích
+            var favoriteBookIds = favoriteBooks.Select(b => b.Id).ToList();
+
+            // Gán IsFavorite
+            foreach (var book in books)
+            {
+                book.IsFavorite = favoriteBookIds.Contains(book.Id);
+            }
+
+            var model = new BookListViewModel
+            {
+                PagedBooks = new PagedResult<BookViewModel>
+                {
+                    Items = books,
+                    TotalItems = totalItems,
+                    PageSize = pageSize,
+                    PageNumber = page,
+                    TotalPage = totalPage
+                },
+                Categories = categories.ToList(),
+                OrderBy = orderBy,
+                SearchTitle = searchTitle,
+                IsFree = isFree,
+                UserId = userId
+            };
+            return View(model);
+        }
         private async Task<T> GetApiDataAsync<T>(string url)
         {
             var response = await _httpClient.GetAsync(url);
