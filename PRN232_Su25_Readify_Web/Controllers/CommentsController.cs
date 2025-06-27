@@ -25,10 +25,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Add(string userId, int bookId, string content)
         {
-            //Seeding user
-            userId = "0aece579-7768-4515-9f25-08e10f0e7032";
-            //thay = login
-            if (userId == null) return RedirectToAction("Index", "Home");
+            if (userId == null) return RedirectToAction("Login", "Auths");
 
             if (string.IsNullOrEmpty(content))
             {

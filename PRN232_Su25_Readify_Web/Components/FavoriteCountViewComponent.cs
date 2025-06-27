@@ -16,8 +16,7 @@ namespace PRN232_Su25_Readify_Web.Components
         }
         public async Task<IViewComponentResult> InvokeAsync(string userId)
         {            
-            //Seeding user
-             userId = "0aece579-7768-4515-9f25-08e10f0e7032";
+
 
             if (string.IsNullOrEmpty(userId)) return View(0);
             var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");

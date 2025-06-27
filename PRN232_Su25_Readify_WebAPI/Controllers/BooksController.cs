@@ -206,6 +206,14 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             var isBookExisted = await _context.Books.AnyAsync(b => b.Id == recentRead.BookId);
             if (!isBookExisted) return BadRequest("Book not existed!");
+            if(recentRead.ChapterId != null)
+            {
+                var isChapterExisted = await _context.Chapters.Include(c => c.Book)
+                                        .AnyAsync(c => c.BookId == recentRead.BookId && c.Id == recentRead.ChapterId);
+                if (!isChapterExisted) return BadRequest("Chapters not existed!");
+
+            }
+
 
             var isExisted = await _context.RecentRead.AnyAsync(rd => rd.UserId.Equals(recentRead.UserId) && rd.BookId == recentRead.BookId);
             if (!isExisted)
@@ -213,13 +221,14 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 var data = new RecentRead
                 {
                     BookId = recentRead.BookId,
-                    UserId = recentRead.UserId
+                    UserId = recentRead.UserId,
+                    ChapterId = recentRead.ChapterId
                 };
                 var result = await _context.RecentRead.AddAsync(data);
                 await _context.SaveChangesAsync();
                 return Ok(data);
             }
-            return Ok("Đã tồn tại");
+            return Ok(new { message = "Đã tồn tại" });
 
         }
         [HttpGet("GetAllRecentRead")]
