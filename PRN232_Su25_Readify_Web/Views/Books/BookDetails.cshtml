@@ -1,5 +1,8 @@
 ﻿@using PRN232_Su25_Readify_Web.Dtos.Books
 @model BookDetailsViewModel
+@{
+    var userId = User.FindFirst("userId")?.Value;
+}
 <div class="page-content">
     <section class="content-inner-1">
         <div class="container">
@@ -84,6 +87,7 @@
                                             <a asp-controller="Books" asp-action="Read"
                                                asp-route-bookId="@Model.Book.Id"
                                                asp-route-chapterOrder="1"
+                                               asp-route-userId="@userId"
                                                class="btn btn-secondary btnhover btnhover2">
                                                 <i class="flaticon-shopping-cart-1 m-r10"></i> Read
                                             </a>
@@ -91,7 +95,7 @@
                                                 <input class="form-check-input" type="checkbox"
                                                        id="flexCheckFavorite-@Model.Book.Id"
                                                 @(Model.isFavorite ? "checked" : "")
-                                                       onclick="toggleFavorite(@Model.Book.Id,'@Model.UserId')">
+                                                       onclick="toggleFavorite(@Model.Book.Id,'@userId')">
                                                 <label class="form-check-label" for="flexCheckFavorite-@Model.Book.Id">
                                                     <i id="favoriteIcon-@Model.Book.Id" class="flaticon-heart @(Model.isFavorite ? "text-pink" : "")"></i>
                                                 </label>
@@ -113,7 +117,7 @@
                                                 <input class="form-check-input" type="checkbox"
                                                        id="flexCheckFavorite-@Model.Book.Id"
                                                 @(Model.isFavorite ? "checked" : "")
-                                                       onclick="toggleFavorite(@Model.Book.Id,'@Model.UserId')">
+                                                       onclick="toggleFavorite(@Model.Book.Id,'@userId')">
                                                 <label class="form-check-label" for="flexCheckFavorite-@Model.Book.Id">
                                                     <i id="favoriteIcon-@Model.Book.Id" class="flaticon-heart @(Model.isFavorite ? "text-pink" : "")"></i>
                                                 </label>
@@ -263,7 +267,7 @@
                                             <div class="clearfix">
                                                 <form method="post" asp-controller="Comments" asp-action="Add" class="comment-form">
                                                     <input hidden name="bookId" value="@Model.Book.Id" />
-                                                    <input hidden name="userId" value="@Model.UserId" />
+                                                    <input hidden name="userId" value="@userId" />
                                                     <p class="comment-form-comment">
                                                         <textarea name="content" placeholder="Type Comment Here" class="form-control4" cols="45" rows="3" required="required"></textarea>
                                                     </p>
@@ -371,7 +375,7 @@
                 }
             },
             error: function (xhr) {
-                alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                alert('Pls login to use');
                 checkbox.prop('checked', !isChecked);
             }
         });

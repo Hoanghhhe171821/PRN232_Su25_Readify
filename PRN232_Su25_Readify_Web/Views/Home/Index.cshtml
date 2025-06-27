@@ -248,6 +248,7 @@
 							<div class="books-card style-1 wow fadeInUp" data-wow-delay="0.1s">
 								<div class="dz-media">
 									<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+									asp-route-userId="@User.FindFirst("userId")?.Value"
 									   style="text-decoration: none; color: inherit;">
 										<img src="@book.ImageUrl" alt="book">
 									</a>
@@ -255,6 +256,7 @@
 								<div class="dz-content">
 									<h4 class="title">
 										<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+										   asp-route-userId="@User.FindFirst("userId")?.Value"
 										   style="text-decoration: none; color: inherit;">@book.Title</a>
 									</h4>
 									@if(book.IsFree){
@@ -343,6 +345,7 @@
 							<div class="books-card style-3 wow fadeInUp" data-wow-delay="0.1s">
 								<div class="dz-media">
 									<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+									   asp-route-userId="@User.FindFirst("userId")?.Value"
 									   style="text-decoration: none; color: inherit;">
 										<img src="@book.ImageUrl" alt="book">
 									</a>
@@ -350,6 +353,7 @@
 								<div class="dz-content">
 									<h5 class="title">
 										<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+										   asp-route-userId="@User.FindFirst("userId")?.Value"
 											style="text-decoration: none; color: inherit;">@book.Title</a>
 									</h5>
 									<ul class="dz-tags">
