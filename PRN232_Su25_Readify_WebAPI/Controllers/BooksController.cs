@@ -6,6 +6,7 @@ using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 using Microsoft.AspNetCore.Authorization;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -91,7 +92,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (currentBook == null) return BadRequest();
 
             var books = await _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
-                .Where(b => b.IsActive == true 
+                .Where(b => b.IsActive == true
                             && b.AuthorId == currentBook.AuthorId
                             && b.Id != currentBook.Id)
                 .OrderByDescending(b => b.UnitInOrder).Take(3)
@@ -184,21 +185,121 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             //Count
             var totalItems = await query.CountAsync();
             //Paging
-                var books = await query
-        .Skip((page - 1) * pageSize).Take(pageSize)
-        .ToListAsync();
-    var result = new
-    {
-        TotalItems = totalItems,
-        PageSize = pageSize,
-        PageNumber = page,
-        TotalPages = (int)Math.Ceiling((double)totalItems / pageSize),
-        Items = books
-    };
-    return Ok(result);
-}
+            var books = await query
+    .Skip((page - 1) * pageSize).Take(pageSize)
+    .ToListAsync();
+            var result = new
+            {
+                TotalItems = totalItems,
+                PageSize = pageSize,
+                PageNumber = page,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize),
+                Items = books
+            };
+            return Ok(result);
+        }
 
+        [HttpPost("AddToRecentRead")]
+        public async Task<IActionResult> AddToRecentRead([FromBody] RecentReadModel recentRead)
+        {
+            var isUserExisted = await _context.Users.AnyAsync(u => u.Id.Equals(recentRead.UserId));
+            if (!isUserExisted) return BadRequest("Pls login!");
 
+            var isBookExisted = await _context.Books.AnyAsync(b => b.Id == recentRead.BookId);
+            if (!isBookExisted) return BadRequest("Book not existed!");
+            if (recentRead.ChapterId != null)
+            {
+                var isChapterExisted = await _context.Chapters.Include(c => c.Book)
+                                        .AnyAsync(c => c.BookId == recentRead.BookId && c.Id == recentRead.ChapterId);
+                if (!isChapterExisted) return BadRequest("Chapters not existed!");
+
+            }
+
+            var isExisted = await _context.RecentRead
+                    .FirstOrDefaultAsync(rd => rd.UserId == recentRead.UserId && rd.BookId == recentRead.BookId);
+
+            if (isExisted == null)
+            {
+                var data = new RecentRead
+                {
+                    BookId = recentRead.BookId,
+                    UserId = recentRead.UserId,
+                    ChapterId = recentRead.ChapterId,
+                };
+                 await _context.RecentRead.AddAsync(data);
+
+            }
+            else
+            {
+                // Cập nhật chương mới và ngày đọc
+                isExisted.ChapterId = recentRead.ChapterId;
+                isExisted.DateRead = DateTime.Now;
+                _context.RecentRead.Update(isExisted);
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+
+        }
+        [HttpGet("GetAllRecentRead")]
+        public async Task<IActionResult> GetAllRecentRead(string userId, int page = 1, int pageSize = 12,
+            [FromQuery(Name = "searchTitle")] string searchTitle = null,
+            [FromQuery(Name = "cateIds")] List<int> cateIds = null,
+            [FromQuery(Name = "orderBy")] string orderBy = "Desc",
+            [FromQuery(Name = "isFree")] bool isFree = false)
+        {
+            // Validate user
+            if (string.IsNullOrEmpty(userId)) return BadRequest("Pls login!");
+            var isExistedUser = await _context.Users.AnyAsync(u => u.Id == userId);
+            if (!isExistedUser) return BadRequest("Invalid user!");
+
+            // Validate paging
+            if (page <= 0) page = 1;
+            if (pageSize <= 1) pageSize = 12;
+
+            // Get list of recently read book IDs
+            var recentReadIds = await _context.RecentRead
+                .Where(rd => rd.UserId == userId)
+                .Select(rd => rd.BookId)
+                .ToListAsync();
+
+            // Query books
+            var query = _context.Books
+                .Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
+                .Where(b => recentReadIds.Contains(b.Id))
+                .AsQueryable();
+
+            // Filter by isFree
+            if (isFree) query = query.Where(b => b.IsFree);
+
+            // Filter by category
+            if (cateIds != null && cateIds.Any())
+                query = query.Where(b => b.BookCategories.Any(bc => cateIds.Contains(bc.CategoryId)));
+
+            // Filter by searchTitle
+            if (!string.IsNullOrEmpty(searchTitle))
+                query = query.Where(b => b.Title.Contains(searchTitle));
+
+            // Sort
+            bool isAsc = string.Equals(orderBy, "Asc", StringComparison.OrdinalIgnoreCase);
+            query = isAsc
+                ? query.OrderBy(b => b.UpdateDate ?? b.CreateDate)
+                : query.OrderByDescending(b => b.UpdateDate ?? b.CreateDate);
+
+            // Count & paging
+            var totalItems = await query.CountAsync();
+            var books = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            var result = new
+            {
+                TotalItems = totalItems,
+                PageSize = pageSize,
+                PageNumber = page,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize),
+                Items = books
+            };
+
+            return Ok(result);
+        }
         // Các endpoint mới cho "Manage Books" (Contributor)
         [HttpGet("manage")]
         [Authorize(Roles = "Contributor")]

@@ -7,6 +7,8 @@ using PRN232_Su25_Readify_WebAPI.Models;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class ChaptersController : ControllerBase
     {
         private readonly GitHubClient _client;
@@ -119,6 +121,20 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+        [HttpGet("GetRecentedRead")]
+        public async Task<IActionResult> GetRecentedRead(string userId, int bookId)
+        {
+            if (userId == null) return BadRequest("Pls login");
+            var isExistedBook =await _context.Books.AnyAsync(b => b.Id == bookId);
+            if(!isExistedBook) return BadRequest("Book not exist!");
+
+            var recentRead = await _context.RecentRead
+                .FirstOrDefaultAsync(rd => rd.UserId.Equals(userId) && rd.BookId == bookId);
+            if(recentRead== null) return BadRequest("Khôn tồn tại");
+
+            var chapterId = recentRead.ChapterId;
+            return Ok(chapterId);
         }
     }
 }
