@@ -6,6 +6,7 @@ using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 using Microsoft.AspNetCore.Authorization;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -206,7 +207,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             var isBookExisted = await _context.Books.AnyAsync(b => b.Id == recentRead.BookId);
             if (!isBookExisted) return BadRequest("Book not existed!");
-            if(recentRead.ChapterId != null)
+            if (recentRead.ChapterId != null)
             {
                 var isChapterExisted = await _context.Chapters.Include(c => c.Book)
                                         .AnyAsync(c => c.BookId == recentRead.BookId && c.Id == recentRead.ChapterId);
@@ -214,21 +215,29 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             }
 
+            var isExisted = await _context.RecentRead
+                    .FirstOrDefaultAsync(rd => rd.UserId == recentRead.UserId && rd.BookId == recentRead.BookId);
 
-            var isExisted = await _context.RecentRead.AnyAsync(rd => rd.UserId.Equals(recentRead.UserId) && rd.BookId == recentRead.BookId);
-            if (!isExisted)
+            if (isExisted == null)
             {
                 var data = new RecentRead
                 {
                     BookId = recentRead.BookId,
                     UserId = recentRead.UserId,
-                    ChapterId = recentRead.ChapterId
+                    ChapterId = recentRead.ChapterId,
                 };
-                var result = await _context.RecentRead.AddAsync(data);
-                await _context.SaveChangesAsync();
-                return Ok(data);
+                 await _context.RecentRead.AddAsync(data);
+
             }
-            return Ok(new { message = "Đã tồn tại" });
+            else
+            {
+                // Cập nhật chương mới và ngày đọc
+                isExisted.ChapterId = recentRead.ChapterId;
+                isExisted.DateRead = DateTime.Now;
+                _context.RecentRead.Update(isExisted);
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
 
         }
         [HttpGet("GetAllRecentRead")]
@@ -291,7 +300,6 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             return Ok(result);
         }
-
         // Các endpoint mới cho "Manage Books" (Contributor)
         [HttpGet("manage")]
         [Authorize(Roles = "Contributor")]

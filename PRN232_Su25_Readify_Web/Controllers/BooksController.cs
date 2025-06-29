@@ -154,7 +154,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             int chapterId = chapters.FirstOrDefault(c => c.ChapterOrder == chapterOrder).Id;
 
-            var query = await GetApiDataAsync<ReadViewModel>($"GetChapter?bookId={bookId}&chapterOrder={chapterOrder}");
+            var query = await GetApiDataAsync<ReadViewModel>($"/api/Chapters/GetChapter?bookId={bookId}&chapterOrder={chapterOrder}");
             if (query == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId });
             
             var result = new ReadViewModel
