@@ -19,6 +19,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
         private readonly IConfiguration _configuration;
         private readonly ReadifyDbContext _context;
         private readonly IMail _mail;
+        private const int PointVND = 1000;
 
         public AuthService(SignInManager<AppUser> signInManager, IMail mail,
             UserManager<AppUser> userManager, IJwtService jwtService,
@@ -209,5 +210,28 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             };
         }
 
+        public async Task<string> TopUpCoints(int points,string userId)
+        {
+            var validPoints = new[] { 50, 100, 200, 500 };
+            if (!validPoints.Contains(points))
+            {
+                throw new BRException("Chỉ được phép nạp: 50, 100, 200 hoặc 500 xu.");
+            }
+
+            int vndAmount = points * PointVND;
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new BRException("Không xác định được người dùng");
+            }
+            user.Points = vndAmount;
+
+            var result = await _context.SaveChangesAsync();
+            if (result <= 0)
+                throw new BRException("Nạp xu thất bại. Vui lòng thử lại.");
+
+            return $"Nạp thành công {points} xu (tương đương {vndAmount:N0} VNĐ).";
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PRN232_Su25_Readify_Web.Models.Auth;
 using PRN232_Su25_Readify_Web.Services;
+using System.Text;
 using System.Text.Json;
 
 namespace PRN232_Su25_Readify_Web.Controllers
@@ -119,6 +120,52 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 Response.Cookies.Delete("refresh_Token");
             }
             return RedirectToAction("login","auths");
+        }
+
+        [HttpGet]
+        public IActionResult TopUpCoints()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TopUpCoints(int points)
+        {
+            var token = Request.Cookies["access_Token"];
+            if (string.IsNullOrWhiteSpace(token) )
+            {
+                TempData["ErrorMessage"] = "Vui lòng đăng nhập để nạp tiền";
+                return View();
+            }
+            int[] validAmounts = { 50, 100, 200, 500 };
+            if (!validAmounts.Contains(points))
+            {
+                TempData["ErrorMessage"] = "Chỉ cho phép nạp các mệnh giá: 50, 100, 200, 500.";
+                return View();
+            }
+                var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(new { points }),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            var response = await client.PostAsync("https://localhost:7267/api/Auth/TopUp", content);
+            if (response.IsSuccessStatusCode)
+            {
+                // Xử lý khi thành công
+                TempData["SuccessMessage"] = "Nạp điểm thành công.";
+            }
+            else
+            {
+                // Xử lý lỗi
+                var error = await response.Content.ReadAsStringAsync();
+                TempData["ErrorMessage"] = $"Lỗi nạp điểm: {error}";
+            }
+
+            return View();
         }
     }
 }

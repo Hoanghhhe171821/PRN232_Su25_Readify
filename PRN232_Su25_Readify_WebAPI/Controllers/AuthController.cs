@@ -7,6 +7,7 @@ using PRN232_Su25_Readify_WebAPI.Exceptions;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System.Net;
+using System.Security.Claims;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -151,7 +152,6 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             });
         }
         [HttpPost("logout")]        
-        
         public async Task<IActionResult> Logout([FromBody] string refreshToken)
         {
             if (string.IsNullOrEmpty(refreshToken)) throw new BRException("Refresh token là bắt buộc");
@@ -159,6 +159,16 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             await _authService.RemoveRefreshTokenAsync(refreshToken);
 
             return Ok();
+        }
+        [Authorize]
+        [HttpPost("TopUp")]
+        public async Task<IActionResult> TopUpCoins([FromBody] TopUpRequest request)
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) throw new UnauthorEx("Không xác định được người dùng từ token");
+
+            var message = await _authService.TopUpCoints(request.Points, userId);
+            return Ok(new { Message = message });
         }
         
     }
