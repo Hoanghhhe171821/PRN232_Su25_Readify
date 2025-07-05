@@ -12,5 +12,6 @@ namespace PRN232_Su25_Readify_WebAPI.Services.IServices
         Task<string> ResetPassword(ResetPasswordDto model);
         Task RemoveRefreshTokenAsync(string refreshToken);
         Task<PagedResult<AccountDto>> ListAccountsAsync(string? keyword, int page = 1, int pageSize = 10);
+        Task<string> TopUpCoints(int points,string userId);
     }
 }
