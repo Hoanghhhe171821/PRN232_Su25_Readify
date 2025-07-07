@@ -33,7 +33,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             _mail = mail;
         }
 
-        public async Task<AuthResult> LoginAsync(LoginDtoRequest login)
+        public async Task<AuthResult> LoginAsync(LoginDtoRequest login, string userAgent)
         {
             var user = await _userManager.FindByEmailAsync(login.Email);
             if (user == null) { throw new NFoundEx("User not found"); }
@@ -57,7 +57,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                 throw new BRException("Your email has not confirm. Please check your email");
             }
 
-            var authResult = await _jwtService.GenerateTokenJWT(user);
+            var authResult = await _jwtService.GenerateTokenJWT(user,userAgent);
 
             await _userManager.ResetAccessFailedCountAsync(user);
             return authResult;
@@ -225,7 +225,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             {
                 throw new BRException("Không xác định được người dùng");
             }
-            user.Points = vndAmount;
+            user.Points += vndAmount;
 
             var result = await _context.SaveChangesAsync();
             if (result <= 0)

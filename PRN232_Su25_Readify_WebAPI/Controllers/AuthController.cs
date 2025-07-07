@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Auths;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
 using PRN232_Su25_Readify_WebAPI.Models;
@@ -18,14 +20,16 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         private readonly IAuthService _authService;
         private readonly UserManager<AppUser> _userManager;
         private readonly IJwtService _jwtService;
-
+        private readonly ReadifyDbContext _context;
         public AuthController(IAuthService authService,
             UserManager<AppUser> userManager,
+            ReadifyDbContext context,
             IJwtService jwtService)
         {
             _authService = authService;
             _userManager = userManager;
             _jwtService = jwtService;
+            _context = context;
         }
 
 
@@ -41,8 +45,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 );
                 throw new ValidationEx(errors);
             }
-
-            var result = await _authService.LoginAsync(login);
+            var userAgent = Request.Headers["User-Agent"].ToString();
+            var result = await _authService.LoginAsync(login,userAgent);
 
             return Ok(result);
         }
@@ -141,25 +145,57 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 var principal = _jwtService.ValidateToken(dto.AccessToken);
                 if (principal == null) throw new UnauthorEx("Invalid accessToken, Please login again");
             }
+            var userAgent = Request.Headers["User-Agent"].ToString();
 
-            var newAccessToken = await _jwtService.RefreshAccessToken(dto.RefreshToken);
+            var newAccessToken = await _jwtService.RefreshAccessToken(dto.SessionsId,userAgent);
 
             return Ok(new AuthResult
             {
                 Token = newAccessToken.token,
-                RefreshToken = dto.RefreshToken,
+                SessionsId = dto.SessionsId,
                 ExpriseAt = newAccessToken.expriseAt
             });
         }
+      
         [HttpPost("logout")]        
-        public async Task<IActionResult> Logout([FromBody] string refreshToken)
+        public async Task<IActionResult> Logout()
         {
-            if (string.IsNullOrEmpty(refreshToken)) throw new BRException("Refresh token là bắt buộc");
+            var accessToken = Request.Cookies["access_Token"];
+            var sessionId = Request.Cookies["session_Id"];
+            var userAgent = Request.Headers["User-Agent"].ToString();
 
-            await _authService.RemoveRefreshTokenAsync(refreshToken);
+            if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(sessionId))
+            {
+                return Unauthorized("Invalid session or token.");
+            }
 
-            return Ok();
+            var principal = await _jwtService.ValidateToken(accessToken);
+            if (principal == null)
+                return Unauthorized("Invalid token");
+
+            var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Invalid user");
+
+            var result = await _context.RefreshTokens
+                .Where(r => r.UserId == userId
+                    && r.SessionId == sessionId
+                    && r.UserAgent == userAgent
+                    && !r.IsRevoked)
+                .FirstOrDefaultAsync();
+
+            if (result != null)
+            {
+                result.IsRevoked = true;
+                await _context.SaveChangesAsync();
+            }
+
+            Response.Cookies.Delete("access_Token");
+            Response.Cookies.Delete("session_Id");
+            return Ok(new { message = "Logout successful" });
         }
+
+
         [Authorize]
         [HttpPost("TopUp")]
         public async Task<IActionResult> TopUpCoins([FromBody] TopUpRequest request)
