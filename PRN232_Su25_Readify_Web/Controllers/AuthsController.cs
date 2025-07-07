@@ -28,7 +28,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
         public async Task<IActionResult> Login(LoginDtoRequest dto)
         {
-            var (success, data, errorMessage) = await ApiHelper.PostAsync("api/auth/login", dto, _httpClientFactory);
+            var userAgent = Request.Headers["User-Agent"].ToString();
+
+            var (success, data, errorMessage) = await ApiHelper.PostAsync("api/auth/login", dto,
+                _httpClientFactory,userAgent);
             if (success && !String.IsNullOrWhiteSpace(data))
             {
                 var authResult = JsonSerializer.Deserialize<AuthResult>(data, new JsonSerializerOptions
@@ -43,15 +46,16 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
-                    Expires = authResult.ExpriseAt.AddMinutes(2)
+                    Expires = authResult.ExpriseAt
                 });
-                Response.Cookies.Append("refresh_Token", authResult.RefreshToken, new CookieOptions
+                Response.Cookies.Append("session_Id", authResult.SessionsId, new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
                     Expires = DateTime.UtcNow.AddMinutes(30)
                 });
+
                 return RedirectToAction("Index", "Home");
             }
             TempData["ErrorMessage"] = errorMessage ?? "Lỗi không xác định khi đăng ký.";
@@ -103,24 +107,33 @@ namespace PRN232_Su25_Readify_Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Logout()
         {
-            var refreshToken = Request.Cookies["refresh_Token"];
-            if (string.IsNullOrWhiteSpace(refreshToken))
+            var sessionId = Request.Cookies["session_Id"];
+            if (string.IsNullOrWhiteSpace(sessionId))
             {
+                // Nếu không có sessionId thì chỉ cần xóa cookie và chuyển hướng
                 Response.Cookies.Delete("access_Token");
-                Response.Cookies.Delete("refresh_Token");
-                return RedirectToAction("login");
+                Response.Cookies.Delete("session_Id");
+                return RedirectToAction("Login", "Auths");
             }
 
-            var (success, data, errorMessage) = await ApiHelper.
-                PostAsync("api/auth/logout", refreshToken, _httpClientFactory);
-
+            var userAgent = Request.Headers["User-Agent"].ToString();
+            
+            var (success, data, errorMessage) = await ApiHelper.PostAsync<object>("api/auth/Logout", null,
+                _httpClientFactory, userAgent);
             if (success)
             {
                 Response.Cookies.Delete("access_Token");
-                Response.Cookies.Delete("refresh_Token");
+                Response.Cookies.Delete("session_Id");
             }
-            return RedirectToAction("login","auths");
+            else
+            {
+                // (Tùy chọn) Ghi log hoặc hiển thị lỗi nếu cần
+                TempData["ErrorMessage"] = "Lỗi khi đăng xuất: " + errorMessage;
+            }
+
+            return RedirectToAction("Login", "Auths");
         }
+
 
         [HttpGet]
         public IActionResult TopUpCoints()

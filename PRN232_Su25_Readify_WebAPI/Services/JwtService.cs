@@ -60,7 +60,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
         }
 
 
-        public async Task<AuthResult> GenerateTokenJWT(AppUser user)
+        public async Task<AuthResult> GenerateTokenJWT(AppUser user, string userAgent)
         {
             var authClaims = new List<Claim>
             {
@@ -97,7 +97,9 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                 AddedDate = DateTime.UtcNow,
                 ExpiryDate = DateTime.UtcNow.AddMinutes(30),
                 IsRevoked = false,
-                Token = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString()
+                Token = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString(),
+                UserAgent = userAgent,
+                SessionId = Guid.NewGuid().ToString()
             };
 
             await _context.RefreshTokens.AddAsync(refreshToken);
@@ -106,27 +108,32 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             var response = new AuthResult
             {
                 Token = jwtToken,
-                RefreshToken = refreshToken.Token,
+                SessionsId = refreshToken.SessionId,
                 ExpriseAt = token.ValidTo
             };
 
             return response;
         }
 
-        public async Task<(string token, DateTime expriseAt)> RefreshAccessToken(string refreshToken)
+        public async Task<(string token, DateTime expriseAt)> RefreshAccessToken(string sessionId, string userAgent)
         {
-            if (string.IsNullOrWhiteSpace(refreshToken))
-            {
-                throw new UnauthorEx("Unauthorized access");
-            }
+            if (string.IsNullOrWhiteSpace(sessionId))
+                throw new UnauthorEx("Session invalid. Please login again.");
 
-            var storedToken = _context.RefreshTokens.FirstOrDefault(r => r.Token == refreshToken
-            && !r.IsRevoked);
+            var storedToken = await _context.RefreshTokens
+                .Where(r => r.SessionId == sessionId && !r.IsRevoked)
+                .OrderByDescending(r => r.AddedDate)
+                .FirstOrDefaultAsync();
 
-            if (storedToken == null || storedToken.ExpiryDate < DateTime.UtcNow || storedToken.IsRevoked)
-            {
-                throw new UnauthorEx("Request fail, Please login again.");
-            }
+            if (storedToken == null)
+                throw new UnauthorEx("Session not found or token revoked. Please login again.");
+
+            if (storedToken.ExpiryDate < DateTime.UtcNow)
+                throw new UnauthorEx("Session expired. Please login again.");
+
+            if (!string.Equals(storedToken.UserAgent, userAgent, StringComparison.OrdinalIgnoreCase))
+                throw new UnauthorEx("Device mismatch. Access denied.");
+
 
             var user = await _userManager.FindByIdAsync(storedToken.UserId);
             if (user == null) throw new UnauthorEx("User is not found. Please login again");
