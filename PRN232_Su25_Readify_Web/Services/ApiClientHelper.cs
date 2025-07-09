@@ -14,7 +14,7 @@
         public HttpClient CreateClientWithToken()
         {
             var client = _httpClientFactory.CreateClient();
-            var token = _contextAccessor.HttpContext?.Request.Cookies["Access_Token"];
+            var token = _contextAccessor.HttpContext?.Request.Cookies["access_Token"];
 
             if (!string.IsNullOrEmpty(token))
             {
