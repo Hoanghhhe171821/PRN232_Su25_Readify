@@ -13,6 +13,10 @@ namespace PRN232_Su25_Readify_WebAPI.Models
         public DateTime AddedDate { get; set; }
         public DateTime ExpiryDate { get; set; }
 
+        public string SessionId { get; set; }            //  Mã phiên duy nhất (ghi nhận ở client và gửi lên)
+        public string UserAgent { get; set; }            //  Chuỗi User-Agent từ trình duyệt hoặc thiết bị
+
+
         [ForeignKey("UserId")]
         public AppUser User { get; set; }
     }

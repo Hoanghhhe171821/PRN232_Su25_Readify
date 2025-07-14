@@ -1,4 +1,5 @@
 ﻿using PRN232_Su25_Readify_Web.Models.Auth;
+using PRN232_Su25_Readify_Web.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -23,8 +24,8 @@ namespace PRN232_Su25_Readify_Web.Middlewares
         public async Task InvokeAsync(HttpContext context)
         {
             var accessToken = context.Request.Cookies["access_Token"];
-            var refreshToken = context.Request.Cookies["refresh_Token"];
-
+            var sessionId = context.Request.Cookies["session_Id"];
+            var userAgent = context.Request.Headers["User-Agent"].ToString();
             bool shouldRefresh = false;
 
             if (!string.IsNullOrEmpty(accessToken))
@@ -45,30 +46,25 @@ namespace PRN232_Su25_Readify_Web.Middlewares
                     shouldRefresh = true;
                 }
             }
-            else if (!string.IsNullOrEmpty(refreshToken))
+            else if (!string.IsNullOrEmpty(sessionId))
             {
                 shouldRefresh = true;
             }
 
-            if (shouldRefresh && !string.IsNullOrEmpty(refreshToken))
+            if (shouldRefresh && !string.IsNullOrEmpty(sessionId))
             {
-                var client = _httpClientFactory.CreateClient();
-                var request = new HttpRequestMessage(HttpMethod.Post, apiRefreshToken);
 
                 var body = new
                 {
                     AccessToken = accessToken, // có thể là null
-                    RefreshToken = refreshToken
+                    SessionsId = sessionId,
                 };
 
-                request.Content = new StringContent(JsonSerializer.Serialize(body),
-                    Encoding.UTF8, "application/json");
-
-                var response = await client.SendAsync(request);
-                if (response.IsSuccessStatusCode)
+                var (success, data, errorMessage) = await ApiHelper.PostAsync
+                    ("api/Auth/refresh-token", body, _httpClientFactory, userAgent);
+                if (success && !string.IsNullOrEmpty(data))
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<AuthResult>(json, new JsonSerializerOptions
+                    var result = JsonSerializer.Deserialize<AuthResult>(data, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
@@ -87,23 +83,25 @@ namespace PRN232_Su25_Readify_Web.Middlewares
                 else
                 {
                     context.Response.Cookies.Delete("access_Token");
-                    context.Response.Cookies.Delete("refresh_Token");
-                    context.Response.Redirect("/Login");
+                    context.Response.Cookies.Delete("session_Id");
+                    context.Response.Redirect("auths/login");
                     return;
                 }
             }
 
-            if (!string.IsNullOrEmpty(accessToken))
+            if (!string.IsNullOrEmpty(context.Request.Cookies["access_Token"]))
             {
-                var handler = new JwtSecurityTokenHandler();
-
                 try
                 {
-                    var token = handler.ReadJwtToken(accessToken);
-                    var claimsIdentity = new ClaimsIdentity(token.Claims, "jwt");
-                    context.User = new ClaimsPrincipal(claimsIdentity);
+                    var handler = new JwtSecurityTokenHandler();
+                    var token = handler.ReadJwtToken(context.Request.Cookies["access_Token"]);
+                    var identity = new ClaimsIdentity(token.Claims, "jwt");
+                    context.User = new ClaimsPrincipal(identity);
                 }
-                catch { }
+                catch
+                {
+                    // token lỗi => không làm gì
+                }
             }
 
             await _requestDelegate(context);

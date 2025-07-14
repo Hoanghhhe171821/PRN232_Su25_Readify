@@ -4,13 +4,19 @@ namespace PRN232_Su25_Readify_Web.Services
 {
     public static class ApiHelper
     {
-        public static async Task<(bool Success, string? Data, string? ErrorMessage)> PostAsync<T>(string url, T payload, IHttpClientFactory clientFactory)
+        public static async Task<(bool Success, string? Data, string? ErrorMessage)> PostAsync<T>(string url, T payload,
+            IHttpClientFactory clientFactory, string? userAgent = null)
         {
             using var client = clientFactory.CreateClient();
             client.BaseAddress = new Uri("https://localhost:7267"); // hoặc truyền baseUrl nếu cần
 
             try
             {
+                if (!string.IsNullOrEmpty(userAgent))
+                {
+                    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgent);
+                }
+
                 var response = await client.PostAsJsonAsync(url, payload);
 
                 var content = await response.Content.ReadAsStringAsync();
