@@ -1,4 +1,5 @@
 using PRN232_Su25_Readify_Web.Middlewares;
+using PRN232_Su25_Readify_Web.Services;
 
 namespace PRN232_Su25_Readify_Web
 {
@@ -11,7 +12,8 @@ namespace PRN232_Su25_Readify_Web
             // Add services to the container.
             builder.Services.AddControllersWithViews();
             builder.Services.AddHttpClient();
-            builder.Services.AddHttpClient();
+            builder.Services.AddScoped<ApiClientHelper>();
+            builder.Services.AddHttpContextAccessor();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
