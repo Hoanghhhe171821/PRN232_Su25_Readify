@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.Models;
+using System.Reflection.Emit;
 
 namespace PRN232_Su25_Readify_WebAPI.DbContext
 {
@@ -31,12 +32,53 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
         public DbSet<RoyaltyPayoutTransaction> RoyaltyPayoutTransaction { get; set; }
         public DbSet<RoyaltyTransaction> RoyaltyTransaction { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
 
 
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.Entity<Cart>(entity =>
+            {
+                entity.ToTable("Carts");
+
+                entity.HasKey(c => c.Id);
+
+                entity.HasIndex(c => c.UserId).IsUnique(); // Mỗi User chỉ có 1 Cart
+
+                entity.Property(c => c.CreateDate)
+                      .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(c => c.AppUser)
+                      .WithOne()
+                      .HasForeignKey<Cart>(c => c.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<CartItem>(entity =>
+            {
+                entity.ToTable("CartItems");
+
+                entity.HasKey(ci => ci.Id);
+
+                entity.Property(ci => ci.CreateDate)
+                      .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(ci => ci.Cart)
+                      .WithMany(c => c.CartItems)
+                      .HasForeignKey(ci => ci.CartId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(ci => ci.Book)
+                      .WithMany()
+                      .HasForeignKey(ci => ci.BookId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Đảm bảo không có trùng sách trong giỏ của 1 user
+                entity.HasIndex(ci => new { ci.CartId, ci.BookId }).IsUnique();
+            });
             builder.Entity<IdentityRole>().HasData(
              new IdentityRole
              {

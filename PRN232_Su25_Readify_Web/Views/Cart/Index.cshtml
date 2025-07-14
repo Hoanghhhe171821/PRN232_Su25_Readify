@@ -1,0 +1,129 @@
+﻿@* Cart VIew *@
+@{
+    Layout = "_Layout";
+}
+
+@model PRN232_Su25_Readify_Web.Models.Pagination<PRN232_Su25_Readify_Web.Dtos.Books.BookViewModel>
+<div class="page-content">
+    <!-- inner page banner -->
+    <div class="dz-bnr-inr overlay-secondary-dark dz-bnr-inr-sm" style="background-image:url(images/background/bg3.jpg);">
+        <div class="container">
+            <div class="dz-bnr-inr-entry">
+                <h1>Cart</h1>
+                <nav aria-label="breadcrumb" class="breadcrumb-row">
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="index.html"> Home</a></li>
+                        <li class="breadcrumb-item">Cart</li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+    <!-- inner page banner End-->
+    <!-- contact area -->
+    <section class="content-inner shop-account">
+        <!-- Product -->
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-lg-12">
+                    <div class="table-responsive">
+                        <table class="table check-tbl">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Product name</th>
+                                    <th>Unit Price</th>
+                                    <th class="text-end">Close</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td class="product-item-img"><img src="images/books/grid/book3.jpg" alt=""></td>
+                                        <td class="product-item-name">@item.Title</td>
+                                        <td class="product-item-price">@($"{item.Price:N0} đ")</td>
+                                        <td class="product-item-close">
+                                            <a href="javascript:void(0);"
+                                               class="ti-close remove-cart-item" data-id="@item.Id"></a>
+                                        </td>
+                                    </tr>
+                                }
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            <div class="row">
+
+                <div class="col-lg-6">
+                    <div class="widget">
+                        <h4 class="widget-title">Cart Subtotal</h4>
+                        <table class="table-bordered check-tbl m-b25">
+                            <tbody>
+                                <tr>
+                                    <td>Order Subtotal</td>
+                                    <td>$@($"{ViewBag.TotalAmount:N0} đ")</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Points</td>
+                                    <td>@(ViewBag.TotalAmount / 1000)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="form-group m-b25">
+                            <a href="shop-checkout.html" class="btn btn-primary btnhover" type="button">Proceed to Checkout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product END -->
+    </section>
+    <!-- contact area End-->
+</div>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+                    console.log("JS loaded");
+            $(document).on("click", ".remove-cart-item", function () {
+                const cartItemId = $(this).data("id");
+                console.log(cartItemId);
+                // Hiển thị xác nhận trước khi xóa
+                Swal.fire({
+                    title: 'Xác nhận',
+                    text: "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: `https://localhost:7267/api/Cart/${cartItemId}`,
+                            method: "DELETE",
+                            xhrFields: {
+                                withCredentials: true // Gửi cookie chứa JWT
+                            },
+                            success: function () {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Đã xóa',
+                                    text: 'Sản phẩm đã được xóa khỏi giỏ hàng!'
+                                }).then(() => location.reload()); // Reload để cập nhật giỏ hàng
+                            },
+                            error: function (xhr) {
+                                const msg = xhr.responseJSON?.message || "Không thể xóa sản phẩm!";
+                                Swal.fire('Lỗi', msg, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+        
+        });
+    </script>
+
+}

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PRN232_Su25_Readify_WebAPI.DbContext;
+using PRN232_Su25_Readify_WebAPI.Middlewares;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
@@ -26,6 +27,7 @@ builder.Services.AddSingleton(emailConfig);
 
 // DI Service
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IMail, MailService>();
 builder.Services.AddIdentity<AppUser, IdentityRole>()
@@ -77,7 +79,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowMvcApp",
         builder => builder.WithOrigins("https://localhost:7154")
                           .AllowAnyHeader()
-                          .AllowAnyMethod());
+                          .AllowAnyMethod()
+                          .AllowCredentials());
 });
 builder.Services.AddAuthentication(options =>
 {
@@ -121,9 +124,10 @@ app.Use(async (context, next) =>
 });
 app.UseRouting();
 app.UseCors("AllowMvcApp");
+app.UseMiddleware<ExceptionMid>();
+app.UseMiddleware<JwtMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
-//app.UseMiddleware<ExceptionMid>();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
