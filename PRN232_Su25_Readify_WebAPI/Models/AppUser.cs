@@ -13,6 +13,7 @@ namespace PRN232_Su25_Readify_WebAPI.Models
         public ICollection<Order>? Orders { get; set; }
         public ICollection<Favorite>? Favorites { get; set; }
         public ICollection<RecentRead>? RecentRead { get; set; }
+        public ICollection<TopUpTransaction> TopUpTransactions { get; set; } = new List<TopUpTransaction>();
 
     }
 }

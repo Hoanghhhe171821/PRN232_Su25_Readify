@@ -124,7 +124,7 @@
                                         </div>
                                         <div class="dropdown-footer">
                                             <a class="btn btn-primary w-100 btnhover btn-sm"
-                                               asp-controller="auths" asp-action="logout">Log Out</a>
+                                               id="btnLogout">Log Out</a>
                                         </div>
                                     </div>
                                 </li>
@@ -543,6 +543,26 @@
                         alert(response?.message || "❌ Đã xảy ra lỗi không xác định.");
                         break;
                 }
+                    }
+                });
+            });
+        });
+
+            $(document).ready(function () {
+            $("#btnLogout").on("click", function (e) {
+                e.preventDefault();
+
+                $.ajax({
+                    url: "https://localhost:7267/api/auth/logout",
+                    method: "POST",
+                    xhrFields: {
+                        withCredentials: true 
+                    },
+                    success: function (response) {
+                        window.location.href = "/auths/login";
+                    },
+                    error: function (xhr, status, error) {
+                        alert("Đăng xuất thất bại: " + xhr.responseText);
                     }
                 });
             });
