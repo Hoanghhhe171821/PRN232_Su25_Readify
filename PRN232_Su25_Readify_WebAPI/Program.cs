@@ -16,6 +16,8 @@ builder.Services.AddControllers()
                      options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
                      options.JsonSerializerOptions.WriteIndented = true;
                  });
+builder.Services.Configure<MoMoConfig>(
+    builder.Configuration.GetSection("MoMo"));
 
 builder.Services.AddDbContext<ReadifyDbContext>(options =>
 {
@@ -24,11 +26,12 @@ builder.Services.AddDbContext<ReadifyDbContext>(options =>
 var emailConfig = configuration.GetSection("EmailConfiguration")
                                            .Get<EmailConfiguration>();
 builder.Services.AddSingleton(emailConfig);
-
+builder.Services.AddHttpClient();
 // DI Service
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IMail, MailService>();
 builder.Services.AddIdentity<AppUser, IdentityRole>()
     .AddEntityFrameworkStores<ReadifyDbContext>()

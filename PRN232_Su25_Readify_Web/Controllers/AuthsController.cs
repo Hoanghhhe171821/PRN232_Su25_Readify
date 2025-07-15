@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PRN232_Su25_Readify_Web.Dtos.TopUps;
 using PRN232_Su25_Readify_Web.Models.Auth;
 using PRN232_Su25_Readify_Web.Services;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
@@ -165,11 +167,12 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 "application/json"
             );
 
-            var response = await client.PostAsync("https://localhost:7267/api/Auth/TopUp", content);
+            var response = await client.PostAsync("https://localhost:7267/api/payment/TopUp", content);
             if (response.IsSuccessStatusCode)
             {
                 // Xử lý khi thành công
-                TempData["SuccessMessage"] = "Nạp điểm thành công.";
+                var json = await response.Content.ReadFromJsonAsync<TopUpResponseVM>();
+                return RedirectToAction("ConfirmTopUp", new { id = json.TransactionId });
             }
             else
             {
@@ -180,5 +183,44 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             return View();
         }
+
+        public async Task<IActionResult> ConfirmTopUp(int id)
+        {
+            var token = Request.Cookies["access_Token"];
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync($"https://localhost:7267/api/Payment/TopUp/{id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Không thể kiểm tra giao dịch.";
+                return RedirectToAction("TopUpCoints");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<TopUpCheckVM>();
+            return View(result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CheckTransactionStatus(int id)
+        {
+            var token = Request.Cookies["access_Token"];
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync($"https://localhost:7267/api/Payment/TopUp/{id}");
+            var result = await response.Content.ReadFromJsonAsync<TopUpCheckVM>();
+
+            if (result.Status == "SUCCESS")
+            {
+                TempData["SuccessMessage"] = "Thanh toán thành công! Xu đã được cộng vào tài khoản.";
+                return RedirectToAction("TopUpCoints");
+            }
+
+            TempData["ErrorMessage"] = "Thanh toán chưa hoàn tất. Vui lòng thử lại sau.";
+            return RedirectToAction("ConfirmTopUp", new { id });
+        }
+
+
     }
 }

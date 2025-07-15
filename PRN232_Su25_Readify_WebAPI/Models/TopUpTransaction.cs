@@ -1,9 +1,14 @@
-﻿namespace PRN232_Su25_Readify_WebAPI.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace PRN232_Su25_Readify_WebAPI.Models
 {
     public class TopUpTransaction
     {
         public int Id { get; set; }
+        [ForeignKey("User")]
         public string UserId { get; set; } = null!;
+        public AppUser User { get; set; } = null!; // Navigation property
+
         public int Points { get; set; } // Số điểm quy đổi
         public int Amount { get; set; } // Số tiền tương ứng
         public string MoMoOrderId { get; set; } = null!;

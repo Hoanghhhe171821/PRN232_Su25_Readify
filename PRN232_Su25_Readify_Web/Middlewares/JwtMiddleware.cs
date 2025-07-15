@@ -78,6 +78,11 @@ namespace PRN232_Su25_Readify_Web.Middlewares
                             SameSite = SameSiteMode.Strict,
                             Expires = result.ExpriseAt
                         });
+
+                        var handler = new JwtSecurityTokenHandler();
+                        var token = handler.ReadJwtToken(result.Token);
+                        var identity = new ClaimsIdentity(token.Claims, "jwt");
+                        context.User = new ClaimsPrincipal(identity);
                     }
                 }
                 else

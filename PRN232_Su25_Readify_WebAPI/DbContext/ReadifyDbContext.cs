@@ -34,8 +34,7 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
-
-
+        public DbSet<TopUpTransaction> TopUpTransactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -56,6 +55,11 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
                       .HasForeignKey<Cart>(c => c.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+            builder.Entity<TopUpTransaction>()
+               .HasOne(t => t.User)
+               .WithMany() 
+               .HasForeignKey(t => t.UserId)
+               .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<CartItem>(entity =>
             {
