@@ -117,7 +117,11 @@
                                             <div class="quantity btn-quantity style-1 me-3">
                                                 <input id="demo_vertical2" type="text" value="1" name="demo_vertical2" />
                                             </div>
-                                            <a href="" class="btn btn-primary btnhover btnhover2"><i class="flaticon-shopping-cart-1"></i> <span>Add to cart</span></a>
+                                            <button class="add-to-cart-btn btn btn-secondary btnhover btnhover2"
+                                                    data-book-id="@Model.Book.Id">
+                                                <i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
+                                            </button>
+                                            
                                             <div class="bookmark-btn style-1 d-none d-sm-block">
                                                 <input class="form-check-input" type="checkbox"
                                                        id="flexCheckFavorite-@Model.Book.Id"

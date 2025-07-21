@@ -15,7 +15,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly UserManager<AppUser> _userManager;
 
-        public CartService(ReadifyDbContext context,IHttpContextAccessor contextAccessor,
+        public CartService(ReadifyDbContext context, IHttpContextAccessor contextAccessor,
             UserManager<AppUser> userManager)
         {
             _context = context;
@@ -29,17 +29,18 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             return _contextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
 
+        #region AddCartItem
         public async Task<string> AddCartItem(CartItem item)
         {
             var userId = GetCurrentUserId();
             if (userId == null) throw new UnauthorEx("Please login to view your cart");
-            
+
             var cart = await _context.Carts.Include(c => c.CartItems)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
-        
-            if(cart == null)
+
+            if (cart == null)
             {
-                cart = new Cart { UserId = userId};
+                cart = new Cart { UserId = userId };
                 cart.IsActive = true;
                 _context.Carts.Add(cart);
                 await _context.SaveChangesAsync();
@@ -63,7 +64,9 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             await _context.SaveChangesAsync();
             return "Item added to cart";
         }
+        #endregion
 
+        #region GetAllCart
         public async Task<PagedResult<Book>> GetAllCart(int page = 1, int pageSize = 10)
         {
             var userId = GetCurrentUserId() ?? throw new UnauthorEx("Please login to view your cart");
@@ -73,7 +76,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                         .ThenInclude(ci => ci.Book)
                         .FirstOrDefaultAsync(c => c.UserId == userId);
 
-            if(cart == null) return new PagedResult<Book>();
+            if (cart == null) return new PagedResult<Book>();
 
             var query = cart.CartItems.Select(ci => ci.Book
             ).AsQueryable();
@@ -91,7 +94,9 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                 TotalItems = query.Count()
             };
         }
+        #endregion
 
+        #region RemoveCartItem
         public async Task<string> RemoveCartItem(int cartItemId)
         {
             var userId = GetCurrentUserId() ?? throw new UnauthorEx("Please login to view your cart");
@@ -106,5 +111,31 @@ namespace PRN232_Su25_Readify_WebAPI.Services
 
             return "Item removed from Cart";
         }
+        #endregion
+
+        #region RemoveAllCartItem
+        public async Task<bool> RemoveAllCartItem()
+        {
+            var userId = GetCurrentUserId();
+            var cart = await _context.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (cart.CartItems != null && cart.CartItems.Count != 0)
+            {
+                 _context.CartItems.RemoveRange(cart.CartItems);
+                var result = await _context.SaveChangesAsync();
+                if(result > 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+
+        }
+        #endregion
+
+
+
+
+
     }
 }

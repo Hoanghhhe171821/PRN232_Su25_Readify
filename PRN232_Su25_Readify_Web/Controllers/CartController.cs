@@ -19,6 +19,14 @@ namespace PRN232_Su25_Readify_Web.Controllers
         }
         public async Task<IActionResult> Index(int page = 1, int pageSize = 5)
         {
+            var accessToken = Request.Cookies["access_Token"];
+            var sessionId = Request.Cookies["session_Id"];
+
+            if(string.IsNullOrWhiteSpace(accessToken) || string.IsNullOrEmpty(sessionId))
+            {
+                return RedirectToAction("Index", "home");
+            }
+
             var client = _apiClientHelper.CreateClientWithToken();
             var query = $"?page={page}&pageSize={pageSize}";
             var response = await client.GetFromJsonAsync<Pagination<BookViewModel>>($"/api/Cart{query}");
