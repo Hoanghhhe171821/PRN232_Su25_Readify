@@ -29,6 +29,7 @@ builder.Services.AddSingleton(emailConfig);
 builder.Services.AddHttpClient();
 // DI Service
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();

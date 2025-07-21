@@ -35,6 +35,8 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<TopUpTransaction> TopUpTransactions { get; set; }
+        public DbSet<AuthorRevenueSummary> AuthorRevenueSummary { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
