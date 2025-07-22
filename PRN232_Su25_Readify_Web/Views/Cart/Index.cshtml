@@ -74,7 +74,7 @@
                             </tbody>
                         </table>
                         <div class="form-group m-b25">
-                            <a href="shop-checkout.html" class="btn btn-primary btnhover" type="button">Proceed to Checkout</a>
+                            <a class="btn-proceed-checkout btn btn-primary btnhover" type="button">Proceed to Checkout</a>
                         </div>
                     </div>
                 </div>
@@ -88,6 +88,10 @@
     <script>
         $(document).ready(function () {
                     console.log("JS loaded");
+                    const hasItems = @((Model.Items != null && Model.Items.Any()) ? "true" : "false");
+            if (!hasItems) {
+                $(".btn-proceed-checkout").hide();
+            }
             $(document).on("click", ".remove-cart-item", function () {
                 const cartItemId = $(this).data("id");
                 console.log(cartItemId);
@@ -116,6 +120,39 @@
                             },
                             error: function (xhr) {
                                 const msg = xhr.responseJSON?.message || "Không thể xóa sản phẩm!";
+                                Swal.fire('Lỗi', msg, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+             $(".btn-proceed-checkout").on("click", function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Xác nhận',
+                    text: "Bạn có muốn tiến hành thanh toán?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Thanh toán',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "https://localhost:7267/api/Checkout/checkout",
+                            method: "POST",
+                            xhrFields: { withCredentials: true },
+                            success: function (response) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công',
+                                    text: "Thanh toán thành công!"
+                                }).then(() => {
+                                    window.location.href = "/cart"; // Chuyển hướng đến trang lịch sử mua hàng
+                                });
+                            },
+                            error: function (xhr) {
+                                const msg = xhr.responseJSON?.message || "Thanh toán thất bại!";
                                 Swal.fire('Lỗi', msg, 'error');
                             }
                         });

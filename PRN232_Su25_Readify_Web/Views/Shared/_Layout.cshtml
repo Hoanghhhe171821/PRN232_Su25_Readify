@@ -79,7 +79,9 @@
                                             <h6 class="title">@User.Identity.Name </h6>
                                             <span>
                                                 @User.FindFirst("email")?.Value
-                                                Points: @(int.TryParse(User.FindFirst("Points")?.Value, out var p) ? (p / 1000).ToString() : "0")
+                                            </span>
+                                            <span id="userPoints">
+                                                Points: 0
                                             </span>
 
                                         </div>
@@ -484,77 +486,137 @@
     <script src="~/js/dz.ajax.js"></script><!-- AJAX -->
     <script src="~/js/custom.js"></script><!-- CUSTOM JS -->
     <script>
-        $(document).ready(function () {
+                $(document).ready(function () {
             console.log("Add-to-cart script is loaded");
-                $(document).on("click", ".add-to-cart-btn", function (e) {
+
+            $(document).on("click", ".add-to-cart-btn", function (e) {
                 e.preventDefault();
 
                 const bookId = $(this).data("book-id");
-                console.log(bookId);
+                console.log("Book ID:", bookId);
+
+                // 1. Kiểm tra sách đã mua chưa
                 $.ajax({
-                    url: "https://localhost:7267/api/Cart", // ⚠️ nhớ sửa lại URL
-                    method: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({ bookId: bookId }),
-                    xhrFields: {
-                        withCredentials: true
-                    },
-                    success: function (response) {
-                        Swal.fire({
-                                icon: 'success',
-                                title: 'Successs',
-                                text:  "Đã thêm vào giỏ hàng!"
-                            })
+                    url: `https://localhost:7267/api/Books/checkBookLicence/${bookId}`,
+                    method: "GET",
+                    xhrFields: { withCredentials: true },
+                    success: function (isLicensed) {
+                        if (isLicensed === true) {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Thông báo',
+                                text: 'Bạn đã sở hữu cuốn sách này, không thể thêm vào giỏ hàng!'
+                            });
+                            return; // Dừng không gọi AddToCart
+                        }
+
+                        // 2. Nếu chưa sở hữu sách -> gọi API thêm vào giỏ hàng
+                        $.ajax({
+                            url: "https://localhost:7267/api/Cart",
+                            method: "POST",
+                            contentType: "application/json",
+                            data: JSON.stringify({ bookId: bookId }),
+                            xhrFields: { withCredentials: true },
+                            success: function (response) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công',
+                                    text: "Đã thêm vào giỏ hàng!"
+                                });
+                            },
+                            error: function (xhr) {
+                                const status = xhr.status;
+                                const response = xhr.responseJSON;
+
+                                switch (status) {
+                                    case 400:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Yêu cầu không hợp lệ!"
+                                        });
+                                        break;
+                                    case 401:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Bạn cần đăng nhập để thêm vào giỏ hàng!"
+                                        }).then(() => {
+                                            window.location.href = "/auths/Login";
+                                        });
+                                        break;
+                                    case 404:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Không tìm thấy tài nguyên!"
+                                        });
+                                        break;
+                                    case 409:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Sản phẩm đã có trong giỏ hàng!"
+                                        });
+                                        break;
+                                    case 500:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: "❌ Lỗi máy chủ! Vui lòng thử lại sau."
+                                        });
+                                        break;
+                                    default:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Đã xảy ra lỗi không xác định."
+                                        });
+                                        break;
+                                }
+                            }
+                        });
                     },
                     error: function (xhr) {
-                        const status = xhr.status;
-                const response = xhr.responseJSON;
-
-                switch (status) {
-                    case 400:
-                        Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text:  response?.message || "❌ Yêu cầu không hợp lệ!"
-                        });
-                        break;
-                    case 401:
-                         Swal.fire({
-                                icon: 'error',
-                                title: 'Lỗi',
-                                text: response?.message || "❌ Bạn cần đăng nhập để thêm vào giỏ hàng!"
-                            }).then(() => {
-                                window.location.href = "/auths/Login";
-                            });
-                        break;
-                    case 404:
-                        Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text:  response?.message || "❌ Không tìm thấy tài nguyên!"
-                        });
-                        break;
-                    case 409:
-                        Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text:  response?.message || "❌ Sản phẩm đã có trong giỏ hàng!"
-                        });
-                        break;
-                    case 500:
-                         Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text:  "❌ Lỗi máy chủ! Vui lòng thử lại sau."
-                        });
-                        break;
-                    default:
-                        alert(response?.message || "❌ Đã xảy ra lỗi không xác định.");
-                        break;
-                }
+                        if (xhr.status === 401) {
+                            Swal.fire("Bạn cần đăng nhập để kiểm tra quyền sở hữu sách.")
+                                .then(() => window.location.href = "/auths/Login");
+                        } else {
+                            Swal.fire("❌ Lỗi khi kiểm tra quyền sở hữu sách.");
+                        }
                     }
                 });
             });
+
+        });
+
+                    document.addEventListener("DOMContentLoaded", function () {
+            const pointsElement = document.getElementById("userPoints"); // Thêm id vào span hiển thị Points
+
+            if (!pointsElement) return;
+
+            fetch("https://localhost:7267/api/Auth/get-points", {
+                method: "GET",
+                credentials: "include", // để gửi cookie kèm theo
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Không thể lấy points từ server");
+                    }
+                    return response.json();
+                })
+                .then(points => {
+                    // Giả sử points là số nguyên (points / 1000)
+                    const displayPoints = Math.floor(points / 1000);
+                    pointsElement.innerText = `Points: ${displayPoints}`;
+                })
+                .catch(err => {
+                    console.error(err);
+                    pointsElement.innerText = "Points: 0";
+                });
         });
 
             $(document).ready(function () {

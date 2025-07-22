@@ -202,5 +202,15 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(new { Message = message });
         }
 
+        [HttpGet("get-points")]
+        public async Task<IActionResult> GetPoints()
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) throw new UnauthorEx("Không xác định được người dùng từ token");
+            var user = await _userManager.FindByIdAsync(userId);
+
+            return Ok(user.Points);
+        }
+
     }
 }

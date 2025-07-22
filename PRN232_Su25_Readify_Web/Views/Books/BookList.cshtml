@@ -228,7 +228,10 @@
                                                     <div class="price">
                                                         <span class="price-num">@string.Format("{0:N0} đ", book.Price)</span>
                                                     </div>
-                                                    <a href="shop-cart.html" class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart</a>
+                                                    <button class="add-to-cart-btn btn btn-secondary btnhover btnhover2"
+                                                            data-book-id="@book.Id">
+                                                        <i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
+                                                    </button>
                                                 }
 
                                             </div>
