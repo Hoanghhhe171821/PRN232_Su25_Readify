@@ -37,6 +37,7 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
         public DbSet<TopUpTransaction> TopUpTransactions { get; set; }
         public DbSet<AuthorRevenueSummary> AuthorRevenueSummary { get; set; }
 
+        public DbSet<BookLicense> BookLicense { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -164,6 +165,26 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
                     .WithMany()
                     .HasForeignKey(rt => rt.OrderItemId)
                     .OnDelete(DeleteBehavior.Restrict); // 
+            });
+
+            // book license
+            builder.Entity<BookLicense>(entity =>
+            {
+                entity.ToTable("BookLicenses");
+
+                entity.HasKey(bl => bl.Id);
+
+                // Quan hệ với AppUser
+                entity.HasOne(bl => bl.User)
+                      .WithMany(u => u.BookLicenses)   // AppUser cần có ICollection<BookLicense>
+                      .HasForeignKey(bl => bl.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Quan hệ với OrderItem
+                entity.HasOne(bl => bl.OrderItem)
+                      .WithMany(oi => oi.BookLicenses) // OrderItem cần có ICollection<BookLicense>
+                      .HasForeignKey(bl => bl.OrderItemId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
 
