@@ -37,7 +37,7 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
         public DbSet<TopUpTransaction> TopUpTransactions { get; set; }
         public DbSet<AuthorRevenueSummary> AuthorRevenueSummary { get; set; }
 
-        public DbSet<BookLicense> BookLicense { get; set; }
+        public DbSet<BookLicense> BookLicenses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -174,15 +174,21 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
 
                 entity.HasKey(bl => bl.Id);
 
-                // Quan hệ với AppUser
+                // Quan hệ với AppUser (Cascade khi xóa User)
                 entity.HasOne(bl => bl.User)
-                      .WithMany(u => u.BookLicenses)   // AppUser cần có ICollection<BookLicense>
+                      .WithMany(u => u.BookLicenses)
                       .HasForeignKey(bl => bl.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                // Quan hệ với OrderItem
+                // Quan hệ với Book (Cascade khi xóa Book)
+                entity.HasOne(bl => bl.Book)
+                      .WithMany(b => b.BookLicenses)
+                      .HasForeignKey(bl => bl.BookId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Quan hệ với OrderItem (KHÔNG cascade để tránh multiple paths)
                 entity.HasOne(bl => bl.OrderItem)
-                      .WithMany(oi => oi.BookLicenses) // OrderItem cần có ICollection<BookLicense>
+                      .WithMany(oi => oi.BookLicenses)
                       .HasForeignKey(bl => bl.OrderItemId)
                       .OnDelete(DeleteBehavior.Restrict);
             });

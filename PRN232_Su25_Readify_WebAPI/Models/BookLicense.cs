@@ -10,8 +10,11 @@ namespace PRN232_Su25_Readify_WebAPI.Models
         public string UserId { get; set; } = null!;
         public AppUser? User { get; set; }
 
+        public int BookId { get; set; }
+        public Book? Book { get; set; }
+
         // Tham chiếu OrderItem
-        public int OrderItemId { get; set; }
+        public int? OrderItemId { get; set; }
         public OrderItem? OrderItem { get; set; }
 
     }

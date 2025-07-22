@@ -42,7 +42,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
         {
             var userId = GetCurrentUserId();
             if (userId == null) throw new UnauthorEx("Please login to checkout");
-
+            var user = await _userManager.FindByIdAsync(userId);
             var cart = await _context.Carts.Include(c => c.CartItems)
                             .ThenInclude(ci => ci.Book).ThenInclude(b => b.Author)
                             .FirstOrDefaultAsync(c => c.UserId == userId);
@@ -76,25 +76,50 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                         OrderId = order.Id,
                         BookId = item.Id,
                         Quantity = 1,
-                        UnitPrice = unitPrice
+                        UnitPrice = unitPrice,
+                        CreateDate = DateTime.UtcNow
+
                     };
                     _context.OrderItems.Add(orderItem);
                     totalAmount += unitPrice;
-                    await _context.SaveChangesAsync();
 
+                    await _context.SaveChangesAsync();
+                    var bookLicense = new BookLicense
+                    {
+                        BookId = book.Id,
+                        UserId = userId,
+                        OrderItemId = orderItem.Id
+                    };
+                    _context.BookLicenses.Add(bookLicense);
                     await _royaltyTransaction.CreateRoyaltyTransactionAsync(orderItem);
                     await _bookRevenue.UpdateBookRevenueAsync(book, unitPrice);
                     await _authorRevenue.UpdateAuthorRevenueAsync(book,unitPrice);
                     await _context.SaveChangesAsync();
                 }
+                order.TotalAmount = totalAmount;
+                _context.SaveChanges();
+
+                // Xóa giỏ hàng sau khi thanh toán
+                _context.CartItems.RemoveRange(cart.CartItems);
+                
+                // update points
+
+
+                if(user != null)
+                {
+                    user.Points -= totalAmount;
+                }
+                _context.SaveChanges();
                 _context.Database.CommitTransaction();
 
+                return true;
             }
             catch (Exception ex)
             {
                 await tx.RollbackAsync();
                 throw new BRException(ex.ToString());
             }
+
             return false;
         }
 

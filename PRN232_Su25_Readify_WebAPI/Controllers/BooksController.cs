@@ -9,6 +9,7 @@ using PRN232_Su25_Readify_WebAPI.Models;
 using System.Security.Claims;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using MailKit.Search;
+using Microsoft.AspNetCore.Identity;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -17,10 +18,12 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
     public class BooksController : Controller
     {
         private readonly ReadifyDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
         private List<Book> _books;
-        public BooksController(ReadifyDbContext context)
+        public BooksController(ReadifyDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
         [HttpGet("GetAllBooks")]
         public async Task<IActionResult> GetAllBooks(int page = 1, int pageSize = 12,
@@ -140,7 +143,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (model == null || model.BookId == 0 || string.IsNullOrEmpty(model.UserId))
                 return BadRequest("Invalid data");
             string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if(userId != null)
+            if (userId != null)
             {
                 model.UserId = userId;
             }
@@ -261,7 +264,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                     UserId = recentRead.UserId,
                     ChapterId = recentRead.ChapterId,
                 };
-                 await _context.RecentRead.AddAsync(data);
+                await _context.RecentRead.AddAsync(data);
 
             }
             else
@@ -423,6 +426,19 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return NoContent();
         }
 
+
+        [HttpGet("checkBookLicence/{bookId}")]
+        public async Task<ActionResult<bool>> GetBookLicense(int bookId)
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Unauthorized("Bạn cần đăng nhập.");
+
+            var isBookLicensed = await _context.BookLicenses
+                .AnyAsync(bl => bl.BookId == bookId && bl.UserId == userId);
+
+            return Ok(isBookLicensed);
+        }
 
     }
 }

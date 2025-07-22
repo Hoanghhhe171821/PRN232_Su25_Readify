@@ -1,4 +1,5 @@
-﻿using PRN232_Su25_Readify_WebAPI.DbContext;
+﻿using Microsoft.EntityFrameworkCore;
+using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
@@ -24,20 +25,32 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             
             var summary = await _context.BookRevenueSummaries.
                 FindAsync(book.Id);
-            if(summary == null)
+
+            var authorApp = await _context.Authors
+                .Include(a => a.User)
+                .FirstOrDefaultAsync(a => a.Id == book.AuthorId);
+            int royalty = 0;
+            if (authorApp.UserId != null)
+            {
+                royalty = (int)Math.Round(book.Price *
+                    ((decimal)(100 - book.RoyaltyRate) / 100m),
+                  MidpointRounding.AwayFromZero);
+            }
+            if (summary == null)
             {
                 summary = new BookRevenueSummary
                 {
                     BookId = book.Id,
-                    TotalRevenue = total,
-                    TotalSold = 1
+                    TotalRevenue = authorApp.UserId != null? royalty: total,
+                    TotalSold = 1,
+                    CreateDate = DateTime.UtcNow
                 };
                 _context.BookRevenueSummaries.Add(summary);
             }
             else
             {
                 summary.TotalSold += 1;
-                summary.TotalRevenue += total;
+                summary.TotalRevenue += authorApp.UserId != null ? royalty : total;
             }
         }
     }

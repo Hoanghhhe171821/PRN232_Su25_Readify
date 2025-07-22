@@ -28,7 +28,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             if (orderItem.Book.Author.UserId != null)
             {
                  royalty = (int)Math.Round(orderItem.Book.Price * 
-                    ((decimal)orderItem.Book.RoyaltyRate / 100m),
+                    ((decimal)(100 - orderItem.Book.RoyaltyRate) / 100m),
                   MidpointRounding.AwayFromZero);
             }
 
@@ -36,9 +36,10 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             {
                 BookId = orderItem.BookId,
                 AuthorId = orderItem.Book.AuthorId,
-                IsPaid = orderItem.Book.Author.User == null ? true : false,
-                Amount = orderItem.Book.Author.User == null ? orderItem.UnitPrice : royalty,
+                IsPaid = orderItem.Book.Author.UserId == null ? true : false,
+                Amount = orderItem.Book.Author.UserId == null ? orderItem.UnitPrice : royalty,
                 OrderItemId = orderItem.Id,
+                CreateDate = DateTime.UtcNow
             };
             await _context.RoyaltyTransaction.AddAsync(rt);
         }

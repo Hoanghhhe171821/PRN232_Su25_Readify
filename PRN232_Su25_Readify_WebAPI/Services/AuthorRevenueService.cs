@@ -27,10 +27,11 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                     .FirstOrDefaultAsync(a => a.Id == book.AuthorId)
                     ?? throw new NFoundEx($"Author {book.AuthorId} not found.");
             }
-            if (book.Author.User == null) return;
+            if (book.Author.UserId == null) return;
 
-            int royalty = (int)Math.Round(amount * ((decimal) book.RoyaltyRate / 100m),
-                              MidpointRounding.AwayFromZero);
+            int royalty = (int)Math.Round(book.Price *
+                    ((decimal)(100 - book.RoyaltyRate) / 100m),
+                  MidpointRounding.AwayFromZero);
             if (royalty <= 0) return;
 
             var summary = await _context.AuthorRevenueSummary.FindAsync(book.AuthorId);
@@ -40,7 +41,8 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                 {
                     AuthorId = book.AuthorId,
                     TotalRevenue = royalty,
-                    TotalPaid = 0
+                    TotalPaid = 0,
+                    CreateDate = DateTime.UtcNow
                 };
                 _context.AuthorRevenueSummary.Add(summary);
             }
