@@ -256,8 +256,6 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             var isExisted = await _context.RecentRead
                     .FirstOrDefaultAsync(rd => rd.UserId == recentRead.UserId && rd.BookId == recentRead.BookId);
 
-            if (isExisted == null)
-            {
                 var data = new RecentRead
                 {
                     BookId = recentRead.BookId,
@@ -266,14 +264,6 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 };
                 await _context.RecentRead.AddAsync(data);
 
-            }
-            else
-            {
-                // Cập nhật chương mới và ngày đọc
-                isExisted.ChapterId = recentRead.ChapterId;
-                isExisted.DateRead = DateTime.Now;
-                _context.RecentRead.Update(isExisted);
-            }
             await _context.SaveChangesAsync();
             return Ok();
 

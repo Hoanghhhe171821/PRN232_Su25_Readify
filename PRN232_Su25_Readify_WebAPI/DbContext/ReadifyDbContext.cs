@@ -112,8 +112,11 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
 
             builder.Entity<BookCategory>().HasKey(bc => new { bc.BookId, bc.CategoryId });
             builder.Entity<Favorite>().HasKey(f => new { f.BookId, f.UserId });
-            builder.Entity<RecentRead>().HasKey(rr => new { rr.BookId, rr.UserId });
-
+            builder.Entity<RecentRead>()
+                .HasKey(r => r.Id);
+            builder.Entity<RecentRead>()
+                .HasIndex(r => new { r.UserId, r.BookId, r.ChapterId })
+                .IsUnique();
             builder.Entity<AuthorRequest>().HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

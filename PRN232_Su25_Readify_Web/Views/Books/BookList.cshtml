@@ -37,9 +37,6 @@
                             <input type="hidden" name="page" value="@Model.PagedBooks.PageNumber" />
                             <input type="hidden" name="orderBy" value="@Model.OrderBy" />
                             <input type="hidden" name="userId" value="@userId" />
-
-    @* Thêm id cho trường searchOption ẩn để dễ dàng truy cập bằng JS.
-       Ban đầu nó vẫn giữ giá trị cũ, nhưng JS sẽ xử lý khi người dùng chọn tác giả. *@
                             <input type="hidden" name="searchOption" id="hiddenSearchOption" value="@(Context.Request.Query["searchOption"])" />
 
                             <div class="accordion accordion-filter" id="accordionExample">
@@ -68,16 +65,11 @@
                                     <div id="collapseAuthor" class="accordion-collapse collapse show accordion-body" aria-labelledby="headingAuthor" data-bs-parent="#accordionExample">
                                         <div class="widget dz-widget_services d-flex justify-content-between">
                                             <div class="">
-                                                @* Thêm hidden input cho searchBy = "Author"
-                           Lưu ý: Chúng ta không cần searchBy ẩn trong mỗi radio button.
-                           Thay vào đó, chúng ta sẽ quản lý searchBy bằng JS hoặc một hidden input riêng biệt như thế này. *@
                                                 <input type="hidden" name="searchBy" id="hiddenSearchBy" value="@(Context.Request.Query["searchBy"])" />
 
                                                 @foreach (var author in Model.Authors)
                                                 {
                                                     <div class="form-check search-content">
-                                                        @* Đổi name của radio button để nó không trùng với hidden input searchOption ở trên.
-                                   Chúng ta sẽ sử dụng JS để lấy giá trị này và đặt vào hiddenSearchOption. *@
                                                         <input class="form-check-input author-radio" type="radio" name="authorRadioOption"
                                                                value="@author.Name" id="authorRadio-@author.Id"
                                                         @(Context.Request.Query["searchBy"] == "Author" && Context.Request.Query["searchOption"] == author.Name ? "checked" : "")>
