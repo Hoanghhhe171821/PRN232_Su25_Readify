@@ -33,18 +33,20 @@
                             <h4 class="title">Filter Option</h4>
 
                         </div>
-                        <form asp-controller="Books" asp-action="BookList" method="get">
+                        <form asp-controller="Books" asp-action="BookList" method="get" id="filterForm">
                             <input type="hidden" name="page" value="@Model.PagedBooks.PageNumber" />
                             <input type="hidden" name="orderBy" value="@Model.OrderBy" />
                             <input type="hidden" name="userId" value="@userId" />
-                            <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
+
+    @* Thêm id cho trường searchOption ẩn để dễ dàng truy cập bằng JS.
+       Ban đầu nó vẫn giữ giá trị cũ, nhưng JS sẽ xử lý khi người dùng chọn tác giả. *@
+                            <input type="hidden" name="searchOption" id="hiddenSearchOption" value="@(Context.Request.Query["searchOption"])" />
 
                             <div class="accordion accordion-filter" id="accordionExample">
                                 <div class="accordion-item">
-                                    <button class="accordion-button" id="headingOne" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Shop by Category</button>
-                                    <div id="collapseOne" class="accordion-collapse collapse show accordion-body" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                    <button class="accordion-button" id="headingCategory" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategory" aria-expanded="true" aria-controls="collapseCategory">Shop by Category</button>
+                                    <div id="collapseCategory" class="accordion-collapse collapse show accordion-body" aria-labelledby="headingCategory" data-bs-parent="#accordionExample">
                                         <div class="widget dz-widget_services d-flex justify-content-between">
-
                                             <div class="">
                                                 @foreach (var cate in Model.Categories)
                                                 {
@@ -57,7 +59,33 @@
                                                         </label>
                                                     </div>
                                                 }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <button class="accordion-button" id="headingAuthor" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAuthor" aria-expanded="true" aria-controls="collapseAuthor">Shop by Author</button>
+                                    <div id="collapseAuthor" class="accordion-collapse collapse show accordion-body" aria-labelledby="headingAuthor" data-bs-parent="#accordionExample">
+                                        <div class="widget dz-widget_services d-flex justify-content-between">
+                                            <div class="">
+                                                @* Thêm hidden input cho searchBy = "Author"
+                           Lưu ý: Chúng ta không cần searchBy ẩn trong mỗi radio button.
+                           Thay vào đó, chúng ta sẽ quản lý searchBy bằng JS hoặc một hidden input riêng biệt như thế này. *@
+                                                <input type="hidden" name="searchBy" id="hiddenSearchBy" value="@(Context.Request.Query["searchBy"])" />
 
+                                                @foreach (var author in Model.Authors)
+                                                {
+                                                    <div class="form-check search-content">
+                                                        @* Đổi name của radio button để nó không trùng với hidden input searchOption ở trên.
+                                   Chúng ta sẽ sử dụng JS để lấy giá trị này và đặt vào hiddenSearchOption. *@
+                                                        <input class="form-check-input author-radio" type="radio" name="authorRadioOption"
+                                                               value="@author.Name" id="authorRadio-@author.Id"
+                                                        @(Context.Request.Query["searchBy"] == "Author" && Context.Request.Query["searchOption"] == author.Name ? "checked" : "")>
+                                                        <label class="form-check-label" for="authorRadio-@author.Id">
+                                                            @author.Name
+                                                        </label>
+                                                    </div>
+                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -141,7 +169,7 @@
                                             <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" 
                                             asp-route-userId="@userId"
                                                style="text-decoration: none; color: inherit;">
-                                                <img src="@book.ImageUrl" alt="book">
+                                                <img src="@book.ImageUrl" alt="@book.Title" style="width: 224px;height: 322px;">
                                             </a>
                                         </div>
                                         @*Favorite*@
@@ -379,5 +407,55 @@
                     }
                 });
             }
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const filterForm = document.getElementById('filterForm');
+                const hiddenSearchOption = document.getElementById('hiddenSearchOption');
+                const hiddenSearchBy = document.getElementById('hiddenSearchBy');
+                const authorRadios = document.querySelectorAll('.author-radio');
+                const categoryCheckboxes = document.querySelectorAll('input[name="cateIds"]');
+
+                // Xử lý khi form được submit
+                filterForm.addEventListener('submit', function(event) {
+                    let authorSelected = false;
+                    for (const radio of authorRadios) {
+                        if (radio.checked) {
+                            hiddenSearchOption.value = radio.value;
+                            hiddenSearchBy.value = 'Author'; 
+                            authorSelected = true;
+                            break;
+                        }
+                    }
+
+                    if (!authorSelected) {
+
+                        if (hiddenSearchBy.value === 'Author') {
+                             hiddenSearchBy.value = '';
+                             hiddenSearchOption.value = ''; 
+                        }
+                    }
+                });
+
+                // Xử lý khi các radio button tác giả thay đổi
+                authorRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (this.checked) {
+                            // Khi một tác giả được chọn, đảm bảo searchBy là Author
+                            hiddenSearchBy.value = 'Author';
+                            hiddenSearchOption.value = this.value; // Cập nhật ngay giá trị searchOption
+                        }
+                    });
+                });
+
+                // Xử lý khi các checkbox thể loại thay đổi
+                categoryCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        authorRadios.forEach(radio => radio.checked = false); // Bỏ chọn tất cả radio tác giả
+                        hiddenSearchBy.value = ''; // Reset searchBy
+                        hiddenSearchOption.value = ''; // Reset searchOption
+                    });
+                });
+            });
         </script>
     }

@@ -7,6 +7,7 @@ using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 using Microsoft.AspNetCore.Authorization;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using MailKit.Search;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -22,7 +23,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         }
         [HttpGet("GetAllBooks")]
         public async Task<IActionResult> GetAllBooks(int page = 1, int pageSize = 12,
-            [FromQuery(Name = "searchTitle")] string searchTitle = null,
+            [FromQuery(Name = "searchBy")] string searchBy = null,
+            [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
             [FromQuery(Name = "orderBy")] string orderBy = "Desc",
             [FromQuery(Name = "isFree")] bool isFree = false)
@@ -46,9 +48,22 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             {
                 query = query.OrderByDescending(b => b.UpdateDate ?? b.CreateDate);
             }
-            //Filter by Search Title
-            if (searchTitle != null) query = query.Where(b => b.Title.Contains(searchTitle));
-
+            //Filter by Search
+            if (searchBy != null)
+            {
+                switch (searchBy)
+                {
+                    case "Title":
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                    case "Author":
+                        query = query.Where(b => b.Author.Name.Contains(searchOption));
+                        break;
+                    default:
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                }
+            }
 
             //Count
             var totalItems = await query.CountAsync();
@@ -146,7 +161,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         }
         [HttpGet("GetUserFavorites")]
         public async Task<IActionResult> GetUserFavorites(string userId, int page = 1, int pageSize = 12,
-            [FromQuery(Name = "searchTitle")] string searchTitle = null,
+            [FromQuery(Name = "searchBy")] string searchBy = null,
+            [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
             [FromQuery(Name = "orderBy")] string orderBy = "Desc",
             [FromQuery(Name = "isFree")] bool isFree = false)
@@ -178,9 +194,22 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             {
                 query = query.OrderByDescending(b => b.UpdateDate ?? b.CreateDate);
             }
-            //Filter by Search Title
-            if (searchTitle != null) query = query.Where(b => b.Title.Contains(searchTitle));
-
+            //Filter by Search
+            if (searchBy != null)
+            {
+                switch (searchBy)
+                {
+                    case "Title":
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                    case "Author":
+                        query = query.Where(b => b.Author.Name.Contains(searchOption));
+                        break;
+                    default:
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                }
+            }
 
             //Count
             var totalItems = await query.CountAsync();
@@ -242,7 +271,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         }
         [HttpGet("GetAllRecentRead")]
         public async Task<IActionResult> GetAllRecentRead(string userId, int page = 1, int pageSize = 12,
-            [FromQuery(Name = "searchTitle")] string searchTitle = null,
+            [FromQuery(Name = "searchBy")] string searchBy = null,
+            [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
             [FromQuery(Name = "orderBy")] string orderBy = "Desc",
             [FromQuery(Name = "isFree")] bool isFree = false)
@@ -275,10 +305,22 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (cateIds != null && cateIds.Any())
                 query = query.Where(b => b.BookCategories.Any(bc => cateIds.Contains(bc.CategoryId)));
 
-            // Filter by searchTitle
-            if (!string.IsNullOrEmpty(searchTitle))
-                query = query.Where(b => b.Title.Contains(searchTitle));
-
+            // Filter by searchOption
+            if (searchBy != null)
+            {
+                switch (searchBy)
+                {
+                    case "Title":
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                    case "Author":
+                        query = query.Where(b => b.Author.Name.Contains(searchOption));
+                        break;
+                    default:
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                }
+            }
             // Sort
             bool isAsc = string.Equals(orderBy, "Asc", StringComparison.OrdinalIgnoreCase);
             query = isAsc
@@ -304,11 +346,11 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         [HttpGet("manage")]
         [Authorize(Roles = "Contributor")]
         public async Task<IActionResult> GetManageBooks(int page = 1, int pageSize = 10,
-            [FromQuery(Name = "searchTitle")] string searchTitle = null)
+            [FromQuery(Name = "searchOption")] string searchOption = null)
         {
             var query = _context.Books.Include(b => b.Author).AsQueryable();
 
-            if (searchTitle != null) query = query.Where(b => b.Title.Contains(searchTitle));
+            if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
 
             var totalItems = await query.CountAsync();
             var books = await query

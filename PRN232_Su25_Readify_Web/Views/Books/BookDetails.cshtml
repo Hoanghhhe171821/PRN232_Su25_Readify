@@ -28,12 +28,6 @@
                                         <h6 class="m-b0">4.0</h6>
                                     </div>
                                     <div class="social-area">
-                                        <ul class="dz-social-icon style-3">
-                                            <li><a href="https://www.facebook.com/dexignzone" target="_blank"><i class="fa-brands fa-facebook-f"></i></a></li>
-                                            <li><a href="https://twitter.com/dexignzones" target="_blank"><i class="fa-brands fa-twitter"></i></a></li>
-                                            <li><a href="https://www.whatsapp.com/" target="_blank"><i class="fa-brands fa-whatsapp"></i></a></li>
-                                            <li><a href="https://www.google.com/intl/en-GB/gmail/about/" target="_blank"><i class="fa-solid fa-envelope"></i></a></li>
-                                        </ul>
                                     </div>
                                 </div>
                             </div>
@@ -51,28 +45,6 @@
                                         <li><span>Year</span>@Model.Book.CreateDate.Value.Year</li>
                                     </ul>
                                 </div>
-                                <p class="text-1" style="width: 760px; height: 100px;">@Model.Book.Description</p>
-                                <p class="text-2 promo-links" style="width: 760px; height: 100px;">
-                                    @if (Model.Book.Chapters.Any())
-                                    {
-
-                                        @foreach (var chapter in Model.Book.Chapters.OrderBy(c => c.ChapterOrder)
-                                       .Take(4))
-                                        {
-                                            <a style="color:blue">Chapter @chapter.ChapterOrder - @chapter.Title</a>
-                                        }
-                                        @if (Model.Book.Chapters.Count() > 4)
-                                        {
-                                            <span class="see-more">Xem thêm</span>
-                                        }
-
-                                    }
-                                    else
-                                    {
-                                        <a style="color:gray">Không có chương nào!</a>
-
-                                    }
-                                </p>
                                 <div class="book-footer">
                                     @if (Model.Book.IsFree)
                                     {
@@ -121,7 +93,7 @@
                                                     data-book-id="@Model.Book.Id">
                                                 <i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
                                             </button>
-                                            
+
                                             <div class="bookmark-btn style-1 d-none d-sm-block">
                                                 <input class="form-check-input" type="checkbox"
                                                        id="flexCheckFavorite-@Model.Book.Id"
@@ -135,6 +107,39 @@
                                     }
 
                                 </div>
+                                <h4>Mô tả:</h4>
+                                <p id="bookDescription" class="text-1" style="width: 760px; overflow: hidden;">
+                                    @Model.Book.Description
+                                </p>
+                                <span id="descToggle" class="see-more" style="color: dimgray; cursor: pointer; display: none;">Xem thêm</span>
+                                <h4>Danh sách các chương:</h4>
+                                <p class="text-2 promo-links" style="width: 760px;">
+                                    <div id="chapterList">
+                                        @if (Model.Book.Chapters.Any())
+                                        {
+                                            var chapters = Model.Book.Chapters.OrderBy(c => c.ChapterOrder).ToList();
+                                            for (int i = 0; i < chapters.Count; i++)
+                                            {
+                                                var chapter = chapters[i];
+                                                <a class="chapter-item @(i >= 4 ? "extra-chapter d-none" : "")"
+                                                   style="color:blue"
+                                                   asp-controller="Books" asp-action="Read"
+                                                   asp-route-bookId="@Model.Book.Id"
+                                                   asp-route-chapterOrder="@chapters[i].ChapterOrder"
+                                                   asp-route-userId="@userId">Chapter @chapter.ChapterOrder - @chapter.Title</a>
+                                                   <br/>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <a style="color:gray">Không có chương nào!</a>
+                                        }
+                                    </div>
+                                    @if (Model.Book.Chapters.Count() > 4)
+                                    {
+                                        <span id="chapterToggle" class="see-more" style="color: dimgray; cursor: pointer;">Xem thêm</span>
+                                    }
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -369,6 +374,55 @@
     }
 </style>
 @section Scripts {
+    <script>
+        // Handle Description
+        document.addEventListener("DOMContentLoaded", function () {
+            const desc = document.getElementById("bookDescription");
+            const descToggle = document.getElementById("descToggle");
+
+            // Tạo element ẩn để đo chiều cao thực tế
+            const descClone = desc.cloneNode(true);
+            descClone.style.position = "absolute";
+            descClone.style.visibility = "hidden";
+            descClone.style.height = "auto";
+            descClone.style.maxHeight = "none";
+            descClone.style.overflow = "visible";
+            document.body.appendChild(descClone);
+
+            if (descClone.offsetHeight > 100) {
+                desc.style.maxHeight = "100px";
+                desc.style.overflow = "hidden";
+                descToggle.style.display = "inline";
+
+                let expanded = false;
+                descToggle.addEventListener("click", () => {
+                    expanded = !expanded;
+                    if (expanded) {
+                        desc.style.maxHeight = "none";
+                        descToggle.textContent = "Thu gọn";
+                    } else {
+                        desc.style.maxHeight = "100px";
+                        descToggle.textContent = "Xem thêm";
+                    }
+                });
+            }
+
+            descClone.remove();
+
+            // Handle Chapter
+            const chapterToggle = document.getElementById("chapterToggle");
+            const extraChapters = document.querySelectorAll(".extra-chapter");
+            let chapterExpanded = false;
+
+            if (chapterToggle) {
+                chapterToggle.addEventListener("click", () => {
+                    chapterExpanded = !chapterExpanded;
+                    extraChapters.forEach(ch => ch.classList.toggle("d-none"));
+                    chapterToggle.textContent = chapterExpanded ? "Thu gọn" : "Xem thêm";
+                });
+            }
+        });
+    </script>
     <script>
             function toggleFavorite(bookId,userId) {
             var checkbox = $('#flexCheckFavorite-' + bookId);

@@ -135,16 +135,25 @@
 
                 <!-- header search nav -->
                 <div class="header-search-nav">
-                    <form class="header-item-search" asp-controller="Books" asp-action="BookList" asp-route-userId="@User.FindFirst("userId")?.Value" method="get">
+                    <form class="header-item-search"
+                          asp-controller="Books"
+                          asp-action="BookList"
+                          asp-route-userId="@User.FindFirst("userId")?.Value"
+                          method="get">
                         <div class="input-group search-input">
-                            <select class="default-select">
-                                <option>Title</option>
+                            <select class="default-select" name="searchBy">
+                                <option value="Title" selected>Title</option>
+                                <option value="Author">Author</option>
+                                <!-- thêm nếu muốn -->
                             </select>
-                            <input type="text" class="form-control" aria-label="Text input with dropdown button" placeholder="Search Books Here"
-                                   name="searchTitle" value="@Context.Request.Query["searchTitle"]">
 
-                            <button class="btn" type="button"><i class="flaticon-loupe"></i></button>
-
+                            <input type="text"
+                                   class="form-control"
+                                   name="searchOption"
+                                   placeholder="Search Books Here"
+                                   aria-label="Text input with dropdown button"
+                                   value="@Context.Request.Query["searchOption"]" />
+                            <button class="btn" type="submit"><i class="flaticon-loupe"></i></button>
                         </div>
                     </form>
                 </div>

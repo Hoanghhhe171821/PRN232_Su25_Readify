@@ -33,12 +33,12 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _env = env;
         }
         [HttpGet("BookList")]
-        public async Task<IActionResult> BookList(int page = 1, string searchTitle = null,
+        public async Task<IActionResult> BookList(int page = 1, string searchOption = null, string searchBy = null,
             List<int> cateIds = null, string orderBy = "Desc",bool isFree = false,string userId = null)
         {
             
 
-            var url = $"api/Books/GetAllBooks?page={page}&searchTitle={searchTitle}&orderBy={orderBy}&isFree={isFree}";
+            var url = $"api/Books/GetAllBooks?page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
@@ -53,7 +53,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Get Cate by API
             var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
-
+            //Get Author By API
+            var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
             // Lấy danh sách các Book yêu thích từ API
             List<int> favoriteBookIds = new List<int>();
 
@@ -83,8 +84,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     TotalPage = totalPage
                 },
                 Categories = categories.ToList(),
+                Authors = authors.ToList(),
                 OrderBy = orderBy,
-                SearchTitle = searchTitle,
+                SearchBy= searchBy,
+                SearchOption = searchOption,
                 IsFree = isFree,
                 UserId = userId
             };
@@ -224,11 +227,11 @@ namespace PRN232_Su25_Readify_Web.Controllers
             return View(result);
         }
         [HttpGet("FavoritesList")]
-        public async Task<IActionResult> FavoritesList(string userId,int page = 1, string searchTitle = null,
+        public async Task<IActionResult> FavoritesList(string userId,int page = 1, string searchOption = null, string searchBy = null,
            List<int> cateIds = null, string orderBy = "Desc", bool isFree = false)
         {
             if (userId == null) return RedirectToAction("Index", "Home");
-            var url = $"api/Books/GetUserFavorites?userId={userId}&page={page}&searchTitle={searchTitle}&orderBy={orderBy}&isFree={isFree}";
+            var url = $"api/Books/GetUserFavorites?userId={userId}&page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
@@ -243,7 +246,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Get Cate by API
             var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
-
+            //Get Author By API
+            var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
             // Lấy danh sách các Book yêu thích từ API
             var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
             var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
@@ -268,20 +272,21 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     TotalPage = totalPage
                 },
                 Categories = categories.ToList(),
-                OrderBy = orderBy,
-                SearchTitle = searchTitle,
+                Authors = authors.ToList(),
+                SearchBy=searchBy,
+                SearchOption = searchOption,
                 IsFree = isFree,
                 UserId = userId
             };
             return View(model);
         }
         [HttpGet("RecentList")]
-        public async Task<IActionResult> RecentList(string userId,int page = 1, string searchTitle = null,
+        public async Task<IActionResult> RecentList(string userId,int page = 1, string searchOption = null, string searchBy = null,
             List<int> cateIds = null, string orderBy = "Desc", bool isFree = false)
         {
             if (userId == null) return RedirectToAction("Login", "Auths");
 
-            var url = $"api/Books/GetAllRecentRead?userId={userId}&page={page}&searchTitle={searchTitle}&orderBy={orderBy}&isFree={isFree}";
+            var url = $"api/Books/GetAllRecentRead?userId={userId}&page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
@@ -296,7 +301,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Get Cate by API
             var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
-
+            //Get Author By API
+            var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
             // Lấy danh sách các Book yêu thích từ API
             var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
             var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
@@ -321,8 +327,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     TotalPage = totalPage
                 },
                 Categories = categories.ToList(),
+                Authors = authors.ToList(),
                 OrderBy = orderBy,
-                SearchTitle = searchTitle,
+                SearchBy=searchBy,
+                SearchOption = searchOption,
                 IsFree = isFree,
                 UserId = userId
             };

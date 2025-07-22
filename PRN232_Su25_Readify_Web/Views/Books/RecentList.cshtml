@@ -372,4 +372,54 @@
                 });
             }
         </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const filterForm = document.getElementById('filterForm');
+                const hiddenSearchOption = document.getElementById('hiddenSearchOption');
+                const hiddenSearchBy = document.getElementById('hiddenSearchBy');
+                const authorRadios = document.querySelectorAll('.author-radio');
+                const categoryCheckboxes = document.querySelectorAll('input[name="cateIds"]');
+
+                // Xử lý khi form được submit
+                filterForm.addEventListener('submit', function(event) {
+                    let authorSelected = false;
+                    for (const radio of authorRadios) {
+                        if (radio.checked) {
+                            hiddenSearchOption.value = radio.value;
+                            hiddenSearchBy.value = 'Author';
+                            authorSelected = true;
+                            break;
+                        }
+                    }
+
+                    if (!authorSelected) {
+
+                        if (hiddenSearchBy.value === 'Author') {
+                             hiddenSearchBy.value = '';
+                             hiddenSearchOption.value = '';
+                        }
+                    }
+                });
+
+                // Xử lý khi các radio button tác giả thay đổi
+                authorRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (this.checked) {
+                            // Khi một tác giả được chọn, đảm bảo searchBy là Author
+                            hiddenSearchBy.value = 'Author';
+                            hiddenSearchOption.value = this.value; // Cập nhật ngay giá trị searchOption
+                        }
+                    });
+                });
+
+                // Xử lý khi các checkbox thể loại thay đổi
+                categoryCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        authorRadios.forEach(radio => radio.checked = false); // Bỏ chọn tất cả radio tác giả
+                        hiddenSearchBy.value = ''; // Reset searchBy
+                        hiddenSearchOption.value = ''; // Reset searchOption
+                    });
+                });
+            });
+        </script>
     }
