@@ -8,6 +8,6 @@ namespace PRN232_Su25_Readify_Web.Dtos.Books
         public List<Chapter> Chapters { get; set; }
         public int ChapterOrder { get; set; }
         public string Title { get; set; }
-        public string Content { get; set; }
+        public string PdfPath { get; set; }
     }
 }

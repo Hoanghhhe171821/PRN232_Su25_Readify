@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PRN232_Su25_Readify_Web.Dtos.Books;
@@ -14,6 +15,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
     public class BooksController : Controller
     {
         private readonly HttpClient _httpClient;
+        private readonly IMemoryCache _cache;
+        private readonly IWebHostEnvironment _env;
         private string GetGivenAPIBaseUrl()
         {
             var config = new ConfigurationBuilder()
@@ -22,10 +25,12 @@ namespace PRN232_Su25_Readify_Web.Controllers
             string baseUrl = config["GivenAPIBaseUrl"];
             return baseUrl;
         }
-        public BooksController(IHttpClientFactory factory)
+        public BooksController(IHttpClientFactory factory, IMemoryCache cache, IWebHostEnvironment env)
         {
             _httpClient = factory.CreateClient();
             _httpClient.BaseAddress = new Uri(GetGivenAPIBaseUrl());
+            _cache = cache;
+            _env = env;
         }
         [HttpGet("BookList")]
         public async Task<IActionResult> BookList(int page = 1, string searchTitle = null,
@@ -152,18 +157,57 @@ namespace PRN232_Su25_Readify_Web.Controllers
             var chapters = await GetApiDataAsync<List<Chapter>>($"api/Books/GetAllChapterByBookId/{bookId}");
             if(chapters == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId });
 
-            int chapterId = chapters.FirstOrDefault(c => c.ChapterOrder == chapterOrder).Id;
+            var chapter = chapters.FirstOrDefault(c => c.ChapterOrder == chapterOrder);
+            int chapterId = chapter.Id;
 
-            var query = await GetApiDataAsync<ReadViewModel>($"/api/Chapters/GetChapter?bookId={bookId}&chapterOrder={chapterOrder}");
-            if (query == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId });
-            
+            var fileName = $"{book.Title}_Chapter_{chapterOrder}.pdf";
+            var cacheKey = $"Pdf_{bookId}_{chapterOrder}"; //Khóa cho IMemoryCache
+            var tempPath = Path.Combine(_env.WebRootPath, "temp", fileName);
+
+            byte[] fileBytes;
+            //Kiểm tra IMemoryCache
+            if (_cache.TryGetValue(cacheKey, out fileBytes))
+            {
+                // File đã có trong cache, sử dụng nó
+            }
+            //Khôgn có trong cache, kiểm tra wwwroot/temp
+            else if (System.IO.File.Exists(tempPath))
+            {
+                fileBytes = await System.IO.File.ReadAllBytesAsync(tempPath);
+                //Lưu vào cache 
+                _cache.Set(cacheKey, fileBytes, TimeSpan.FromMinutes(30));
+            }
+            else
+            {
+                var response = await _httpClient.GetAsync($"/api/Chapters/GetChapter?bookId={bookId}&chapterOrder={chapterOrder}");
+                if (!response.IsSuccessStatusCode)
+                    return RedirectToAction("BookDetails", "Books", new { bookId });
+
+                fileBytes = await response.Content.ReadAsByteArrayAsync();
+                // Lưu vào thư mục temp
+                Directory.CreateDirectory(Path.GetDirectoryName(tempPath)!);
+                await System.IO.File.WriteAllBytesAsync(tempPath, fileBytes);
+
+                // Lưu vào cache
+                _cache.Set(cacheKey, fileBytes, TimeSpan.FromMinutes(30)); // Đặt thời gian hết hạn 30 phút
+                //Đặt hẹn xóa file sau 30 phút (nếu vẫn tồn tại)
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(30));
+                    if (System.IO.File.Exists(tempPath))
+                    {
+                        try { System.IO.File.Delete(tempPath); } catch { }
+                    }
+                });
+            }
+
             var result = new ReadViewModel
             {
                 Book = book,
                 ChapterOrder = chapterOrder,
-                Content = query.Content,
-                Title = query.Title,
-                Chapters = chapters
+                Title = chapter.Title,
+                Chapters = chapters,
+                PdfPath = $"/temp/{fileName}"
             };
             //Thêm vào danh sách đã đọc nếu người dùng đã đăng nhập
             if (userId != null)

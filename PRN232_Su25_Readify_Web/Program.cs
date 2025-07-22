@@ -14,6 +14,8 @@ namespace PRN232_Su25_Readify_Web
             builder.Services.AddHttpClient();
             builder.Services.AddScoped<ApiClientHelper>();
             builder.Services.AddHttpContextAccessor();
+            builder.Services.AddMemoryCache();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
