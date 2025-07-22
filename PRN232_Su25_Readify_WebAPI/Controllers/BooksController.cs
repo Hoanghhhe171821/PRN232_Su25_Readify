@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.DbContext;
-using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
-using Microsoft.AspNetCore.Authorization;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
+using PRN232_Su25_Readify_WebAPI.Models;
+using System.Security.Claims;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using MailKit.Search;
 
@@ -138,6 +139,11 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         {
             if (model == null || model.BookId == 0 || string.IsNullOrEmpty(model.UserId))
                 return BadRequest("Invalid data");
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if(userId != null)
+            {
+                model.UserId = userId;
+            }
 
             var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == model.UserId);
             if (user == null) return BadRequest("Pls Login!");

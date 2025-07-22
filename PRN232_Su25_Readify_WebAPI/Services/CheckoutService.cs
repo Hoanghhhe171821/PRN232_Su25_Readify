@@ -15,13 +15,22 @@ namespace PRN232_Su25_Readify_WebAPI.Services
         private readonly ReadifyDbContext _context;
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IRoyaltyTransactionService _royaltyTransaction;
+        private readonly IAuthorRevenueService _authorRevenue;
+        private readonly IBookRevenueService _bookRevenue;
 
         public CheckoutService(ReadifyDbContext context, IHttpContextAccessor contextAccessor,
+            IBookRevenueService bookRevenue,
+            IAuthorRevenueService authorRevenue,
+            IRoyaltyTransactionService royaltyTransaction,
             UserManager<AppUser> userManager)
         {
             _context = context;
             _contextAccessor = contextAccessor;
             _userManager = userManager;
+            _royaltyTransaction = royaltyTransaction;
+            _authorRevenue = authorRevenue;
+            _bookRevenue = bookRevenue;
         }
 
         private string GetCurrentUserId()
@@ -44,11 +53,48 @@ namespace PRN232_Su25_Readify_WebAPI.Services
 
             var listBookAuthor = listBookBuy.Where(a => a.Author.UserId != null).ToList();
 
-            if(listBookAuthor.Count() > 0)
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            try
             {
-                Console.WriteLine(listBookAuthor.Count());
-            }
+                var order = new Order
+                {
+                    UserId = userId,
+                    CreateDate = DateTime.Now,
+                    Status = StatusOrder.Completed
+                };
 
+                _context.Order.Add(order);
+                await _context.SaveChangesAsync();
+                int totalAmount = 0;
+                foreach (var item in listBookBuy)
+                {
+                    var book = item;
+                    var unitPrice = item.Price;
+
+                    var orderItem = new OrderItem
+                    {
+                        OrderId = order.Id,
+                        BookId = item.Id,
+                        Quantity = 1,
+                        UnitPrice = unitPrice
+                    };
+                    _context.OrderItems.Add(orderItem);
+                    totalAmount += unitPrice;
+                    await _context.SaveChangesAsync();
+
+                    await _royaltyTransaction.CreateRoyaltyTransactionAsync(orderItem);
+                    await _bookRevenue.UpdateBookRevenueAsync(book, unitPrice);
+                    await _authorRevenue.UpdateAuthorRevenueAsync(book,unitPrice);
+                    await _context.SaveChangesAsync();
+                }
+                _context.Database.CommitTransaction();
+
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                throw new BRException(ex.ToString());
+            }
             return false;
         }
 
