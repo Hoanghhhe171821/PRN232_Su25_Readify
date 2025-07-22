@@ -1,6 +1,6 @@
 ﻿namespace PRN232_Su25_Readify_Web.Models
 {
-    public class Pagination<T>
+    public class PageResult<T>
     {
         // Danh sách dữ liệu trên trang hiện tại
         public List<T> Items { get; private set; }
@@ -24,7 +24,7 @@
         public bool HasNextPage => CurrentPage < TotalPages;
 
         // Constructor
-        public Pagination(List<T> items, int totalCount, int currentPage, int pageSize)
+        public PageResult(List<T> items, int totalCount, int currentPage, int pageSize)
         {
             Items = items;
             TotalCount = totalCount;

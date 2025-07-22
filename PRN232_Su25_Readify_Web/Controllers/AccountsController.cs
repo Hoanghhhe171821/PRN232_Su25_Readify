@@ -29,12 +29,12 @@ namespace PRN232_Su25_Readify_Web.Controllers
             }
 
             var fullUrl = $"{baseUrl}{query}";
-            var response = await client.GetFromJsonAsync<Pagination<AccountDto>>(fullUrl);
+            var response = await client.GetFromJsonAsync<PageResult<AccountDto>>(fullUrl);
             var roleResponse = await client.GetFromJsonAsync<List<string>>(fullUrlRoles);
             ViewBag.Roles = roleResponse;
             ViewBag.CurrentPage = page;
 
-            return View(response ?? new Pagination<AccountDto>(
+            return View(response ?? new PageResult<AccountDto>(
              new List<AccountDto>(), totalCount: 0, currentPage: page, pageSize: pageSize));
         }
         [HttpPost("setRoles")]
