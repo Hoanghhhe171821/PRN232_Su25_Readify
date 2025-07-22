@@ -29,7 +29,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             var client = _apiClientHelper.CreateClientWithToken();
             var query = $"?page={page}&pageSize={pageSize}";
-            var response = await client.GetFromJsonAsync<Pagination<BookViewModel>>($"/api/Cart{query}");
+            var response = await client.GetFromJsonAsync<PageResult<BookViewModel>>($"/api/Cart{query}");
            
             if(response != null)
             {
@@ -38,7 +38,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 ViewBag.TotalAmount = totalAmount;
             }
 
-            return View(response ?? new Pagination<BookViewModel>(
+            return View(response ?? new PageResult<BookViewModel>(
              new List<BookViewModel>(), totalCount: 0, currentPage: page, pageSize: pageSize));
         }
 
