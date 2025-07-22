@@ -155,19 +155,26 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        [HttpGet("GetRecentedRead")]
-        public async Task<IActionResult> GetRecentedRead(string userId, int bookId)
+        [HttpGet("GetRecentedReadChapters")]
+        public async Task<IActionResult> GetRecentedReadChapters(string userId, int bookId)
         {
             if (userId == null) return BadRequest("Pls login");
             var isExistedBook =await _context.Books.AnyAsync(b => b.Id == bookId);
             if(!isExistedBook) return BadRequest("Book not exist!");
 
-            var recentRead = await _context.RecentRead
-                .FirstOrDefaultAsync(rd => rd.UserId.Equals(userId) && rd.BookId == bookId);
-            if(recentRead== null) return BadRequest("Khôn tồn tại");
-
-            var chapterId = recentRead.ChapterId;
-            return Ok(chapterId);
+            var readChapterInfo = await _context.RecentRead
+        .Where(rd => rd.UserId.Equals(userId) && rd.BookId == bookId)
+        .Join(_context.Chapters,
+              recentRead => recentRead.ChapterId,
+              chapter => chapter.Id,
+              (recentRead, chapter) => new 
+              {
+                  recentRead.ChapterId,
+                  recentRead.DateRead,
+                  chapter.ChapterOrder 
+              })
+        .ToListAsync();
+            return Ok(readChapterInfo);
         }
     }
 }

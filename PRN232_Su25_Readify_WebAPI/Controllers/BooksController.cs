@@ -253,17 +253,26 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             }
 
-            var isExisted = await _context.RecentRead
-                    .FirstOrDefaultAsync(rd => rd.UserId == recentRead.UserId && rd.BookId == recentRead.BookId);
-
+            var existing = await _context.RecentRead
+                                    .FirstOrDefaultAsync(rd =>
+                                        rd.UserId == recentRead.UserId &&
+                                        rd.BookId == recentRead.BookId &&
+                                        rd.ChapterId == recentRead.ChapterId);
+            if (existing == null)
+            {
                 var data = new RecentRead
                 {
                     BookId = recentRead.BookId,
                     UserId = recentRead.UserId,
                     ChapterId = recentRead.ChapterId,
+                    DateRead = DateTime.Now
                 };
                 await _context.RecentRead.AddAsync(data);
-
+            }
+            else
+            {
+                existing.DateRead = DateTime.Now;
+            }
             await _context.SaveChangesAsync();
             return Ok();
 

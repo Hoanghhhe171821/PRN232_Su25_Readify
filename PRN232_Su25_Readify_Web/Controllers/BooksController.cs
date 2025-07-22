@@ -120,12 +120,33 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     favoriteBookIds = favoriteBooks.Select(b => b.Id).ToList();
                 }
             }
-
-            
+ 
             var isFavor = false;
             if (favoriteBookIds.Contains(bookId)) isFavor = true;
-
             var chapterQuan = book.Chapters.Count();
+
+            // Lấy danh sách chương đã đọc
+            List<int> chapterIds = new List<int>();
+            var lastedRead = new RecentedReadChapters();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var recentedReadChapters = await GetApiDataAsync<List<RecentedReadChapters>>($"api/Chapters/GetRecentedReadChapters?userId={userId}&bookId={bookId}");
+                foreach(var recent in recentedReadChapters)
+                {
+                    chapterIds.Add(recent.ChapterId);
+                }
+                lastedRead = recentedReadChapters.OrderByDescending(rd => rd.DateRead).FirstOrDefault();
+            }
+            // Chuyển Book.Chapters thành ChapterDto có đánh dấu isRead
+            var chapterDtos = book.Chapters
+                .OrderBy(c => c.ChapterOrder)
+                .Select(c => new ChapterDto
+                {
+                    Chapter = c,
+                    isRead = chapterIds.Contains(c.Id)
+                })
+                .ToList();
+
             var result = new BookDetailsViewModel
             {
                 Book = book,
@@ -133,6 +154,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 isFavorite = isFavor,
                 UserId = userId,
                 RelatedBooks = relatedBooks,
+                ChapterDto = chapterDtos,
+                LastRead = lastedRead,
                 PagedComments = new PagedResult<Comment>
                 {
                     Items = comments,
@@ -158,9 +181,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Lấy chapter
             var chapters = await GetApiDataAsync<List<Chapter>>($"api/Books/GetAllChapterByBookId/{bookId}");
-            if(chapters == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId });
+            if(chapters == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId , userId = userId});
 
             var chapter = chapters.FirstOrDefault(c => c.ChapterOrder == chapterOrder);
+            if(chapter == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId, userId = userId });
             int chapterId = chapter.Id;
 
             var fileName = $"{book.Title}_Chapter_{chapterOrder}.pdf";

@@ -17,7 +17,8 @@
                         <a class="btn btn-secondary" asp-controller="Books" asp-action="Read" 
                         asp-route-bookId="@Model.Book.Id" asp-route-chapterOrder="@(Model.ChapterOrder + 1)"
                            asp-route-userId="@userId">Next &gt;</a>
-                        <a class="btn btn-primary" asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@Model.Book.Id">Home</a>
+                        <a class="btn btn-primary" asp-controller="Books" asp-action="BookDetails"
+                        asp-route-bookId="@Model.Book.Id" asp-route-userId="@userId">Home</a>
                     </div>
                     <div>
                         <form class="header-item-search" asp-controller="Books" asp-action="Read" method="get">
@@ -57,7 +58,8 @@
                         <a class="btn btn-secondary" asp-controller="Books" asp-action="Read" 
                         asp-route-bookId="@Model.Book.Id" asp-route-chapterOrder="@(Model.ChapterOrder + 1)"
                            asp-route-userId="@userId" >Next &gt;</a>
-                        <a class="btn btn-primary" asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@Model.Book.Id">Home</a>
+                        <a class="btn btn-primary" asp-controller="Books" asp-action="BookDetails"
+                           asp-route-bookId="@Model.Book.Id" asp-route-userId="@userId">Home</a>
                     </div>
                     <div>
                         <form class="header-item-search" asp-controller="Books" asp-action="Read" method="get">

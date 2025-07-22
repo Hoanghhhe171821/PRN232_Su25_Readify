@@ -1,7 +1,7 @@
 ﻿@using PRN232_Su25_Readify_Web.Dtos.Books
 @model BookDetailsViewModel
 @{
-    var userId = User.FindFirst("userId")?.Value;
+    var userId = @User.FindFirst("userId")?.Value;
 }
 <div class="page-content">
     <section class="content-inner-1">
@@ -55,12 +55,18 @@
                                         <div class="product-num">
                                             <div class="quantity btn-quantity style-1 me-3">
                                             </div>
-                                            <a id="recentReadBtn"
-                                               href="#"
-                                               class="btn btn-warning btnhover btnhover2 d-none"
-                                               style="pointer-events: none;">
-                                                <i class="flaticon-shopping-cart-1 m-r10"></i> Recented Read
-                                            </a>
+                                            @if (Model.LastRead != null)
+                                            {
+                                                
+                                                <a asp-controller="Books" asp-action="Read"
+                                                   asp-route-bookId="@Model.Book.Id"
+                                                   asp-route-chapterOrder="@Model.LastRead.ChapterOrder"
+                                                   asp-route-userId="@userId"
+                                                   class="btn btn-warning btnhover btnhover2">
+                                                    <i class="flaticon-shopping-cart-1 m-r10"></i> Recented Read
+                                                </a>
+                                            }
+                                            
                                             <a asp-controller="Books" asp-action="Read"
                                                asp-route-bookId="@Model.Book.Id"
                                                asp-route-chapterOrder="1"
@@ -115,18 +121,18 @@
                                 <h4>Danh sách các chương:</h4>
                                 <p class="text-2 promo-links" style="width: 760px;">
                                     <div id="chapterList">
-                                        @if (Model.Book.Chapters.Any())
+                                        @if (Model.ChapterDto.Any())
                                         {
-                                            var chapters = Model.Book.Chapters.OrderBy(c => c.ChapterOrder).ToList();
+                                            var chapters = Model.ChapterDto.ToList();
                                             for (int i = 0; i < chapters.Count; i++)
                                             {
                                                 var chapter = chapters[i];
                                                 <a class="chapter-item @(i >= 4 ? "extra-chapter d-none" : "")"
-                                                   style="color:blue"
+                                                   style="color:@(chapters[i].isRead ? "gray" : "blue")"
                                                    asp-controller="Books" asp-action="Read"
                                                    asp-route-bookId="@Model.Book.Id"
-                                                   asp-route-chapterOrder="@chapters[i].ChapterOrder"
-                                                   asp-route-userId="@userId">Chapter @chapter.ChapterOrder - @chapter.Title</a>
+                                                   asp-route-chapterOrder="@chapters[i].Chapter.ChapterOrder"
+                                                   asp-route-userId="@userId">Chapter @chapters[i].Chapter.ChapterOrder - @chapters[i].Chapter.Title</a>
                                                    <br/>
                                             }
                                         }
@@ -449,32 +455,5 @@
             });
         }
     </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-            const btn = document.getElementById("recentReadBtn");
-            const userId = '@User.FindFirst("userId")?.Value';
-            const bookId = '@Model.Book.Id';
 
-            try {
-                const response = await fetch(`https://localhost:7267/api/Chapters/GetRecentedRead?userId=${userId}&bookId=${bookId}`);
-                if (!response.ok) throw new Error("Bad request");
-
-                const chapterOrder = await response.json(); // Giả sử API trả về int (ví dụ: 2)
-
-                // Cập nhật href
-                const newUrl = `/Books/Read?bookId=${bookId}&chapterOrder=${chapterOrder}&userId=${userId}`;
-                btn.href = newUrl;
-
-                // Bật nút (hiện và cho phép bấm)
-                btn.classList.remove("d-none");
-                btn.style.pointerEvents = "auto";
-
-            } catch (error) {
-                // Ẩn hoàn toàn và disable
-                btn.removeAttribute("href");
-                btn.style.pointerEvents = "none";
-                btn.classList.add("d-none");
-            }
-        });
-    </script>
 }
