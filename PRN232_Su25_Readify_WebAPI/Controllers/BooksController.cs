@@ -138,26 +138,19 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         }
 
         [HttpPost("AddToFavorite")]
-        public async Task<IActionResult> AddToFavorite([FromBody] FavoriteModel model)
+        public async Task<IActionResult> AddToFavorite(int bookId)
         {
-            if (model == null || model.BookId == 0 || string.IsNullOrEmpty(model.UserId))
-                return BadRequest("Invalid data");
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId != null)
-            {
-                model.UserId = userId;
-            }
 
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == model.UserId);
-            if (user == null) return BadRequest("Pls Login!");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
 
-            var book = await _context.Books.SingleOrDefaultAsync(b => b.Id == model.BookId);
+            var book = await _context.Books.SingleOrDefaultAsync(b => b.Id == bookId);
             if (book == null) return BadRequest("Book not found");
 
-            var isFavor = await _context.Favorite.SingleOrDefaultAsync(f => f.BookId == model.BookId && f.UserId == model.UserId);
+            var isFavor = await _context.Favorite.SingleOrDefaultAsync(f => f.BookId == bookId && f.UserId == userId);
             if (isFavor == null)
             {
-                _context.Favorite.Add(new Favorite { BookId = model.BookId, UserId = model.UserId });
+                _context.Favorite.Add(new Favorite { BookId = bookId, UserId = userId });
                 await _context.SaveChangesAsync();
                 return Ok(new { isFavorite = true });
             }
@@ -169,7 +162,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             }
         }
         [HttpGet("GetUserFavorites")]
-        public async Task<IActionResult> GetUserFavorites(string userId, int page = 1, int pageSize = 12,
+        public async Task<IActionResult> GetUserFavorites( int page = 1, int pageSize = 12,
             [FromQuery(Name = "searchBy")] string searchBy = null,
             [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
@@ -179,9 +172,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (page <= 0) page = 1;
             if (pageSize <= 1) pageSize = 12;
             //Validate
-            if (userId == null) return BadRequest("Pls login");
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Id.Equals(userId));
-            if (user == null) return BadRequest("Invalid User");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
 
             //Get List Favor Book Id
             var favorBookIds = await _context.Favorite.Where(f => f.UserId.Equals(userId)).Select(f => f.BookId).ToListAsync();
@@ -240,11 +232,12 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         [HttpPost("AddToRecentRead")]
         public async Task<IActionResult> AddToRecentRead([FromBody] RecentReadModel recentRead)
         {
-            var isUserExisted = await _context.Users.AnyAsync(u => u.Id.Equals(recentRead.UserId));
-            if (!isUserExisted) return BadRequest("Pls login!");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
 
             var isBookExisted = await _context.Books.AnyAsync(b => b.Id == recentRead.BookId);
             if (!isBookExisted) return BadRequest("Book not existed!");
+
             if (recentRead.ChapterId != null)
             {
                 var isChapterExisted = await _context.Chapters.Include(c => c.Book)
@@ -255,7 +248,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             var existing = await _context.RecentRead
                                     .FirstOrDefaultAsync(rd =>
-                                        rd.UserId == recentRead.UserId &&
+                                        rd.UserId == userId &&
                                         rd.BookId == recentRead.BookId &&
                                         rd.ChapterId == recentRead.ChapterId);
             if (existing == null)
@@ -263,7 +256,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 var data = new RecentRead
                 {
                     BookId = recentRead.BookId,
-                    UserId = recentRead.UserId,
+                    UserId = userId,
                     ChapterId = recentRead.ChapterId,
                     DateRead = DateTime.Now
                 };
@@ -278,7 +271,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
         }
         [HttpGet("GetAllRecentRead")]
-        public async Task<IActionResult> GetAllRecentRead(string userId, int page = 1, int pageSize = 12,
+        public async Task<IActionResult> GetAllRecentRead( int page = 1, int pageSize = 12,
             [FromQuery(Name = "searchBy")] string searchBy = null,
             [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
@@ -286,9 +279,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             [FromQuery(Name = "isFree")] bool isFree = false)
         {
             // Validate user
-            if (string.IsNullOrEmpty(userId)) return BadRequest("Pls login!");
-            var isExistedUser = await _context.Users.AnyAsync(u => u.Id == userId);
-            if (!isExistedUser) return BadRequest("Invalid user!");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
 
             // Validate paging
             if (page <= 0) page = 1;

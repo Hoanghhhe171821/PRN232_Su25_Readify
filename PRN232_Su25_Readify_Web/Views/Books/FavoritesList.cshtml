@@ -3,7 +3,6 @@
 @model BookListViewModel
 @{
     var selectedCateIds = Context.Request.Query["cateIds"].Select(int.Parse).ToList();
-    var userId = @User.FindFirst("userId")?.Value;
 }
 <div class="page-content bg-grey">
     <div class="content-inner-1 border-bottom">
@@ -118,7 +117,7 @@
                                 <div class="col-book style-2">
                                     <div class="dz-shop-card style-1">
                                         <div class="dz-media">
-                                            <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
+                                            <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
                                                style="text-decoration: none; color: inherit;">
                                                 <img src="@book.ImageUrl" alt="book">
                                             </a>
@@ -127,15 +126,15 @@
                                             <input class="form-check-input" type="checkbox"
                                                    id="flexCheckFavorite-@book.Id"
                                             @(book.IsFavorite ? "checked" : "")
-                                                   onclick="toggleFavorite(@book.Id,'@Model.UserId')">
+                                                   onclick="toggleFavorite(@book.Id)">
                                             <label class="form-check-label" for="flexCheckFavorite-@book.Id">
                                                 <i id="favoriteIcon-@book.Id" class="flaticon-heart @(book.IsFavorite ? "text-pink" : "")"></i>
                                             </label>
                                         </div>
                                         <div class="dz-content">
                                             <h5 class="title">
-                                                <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
-                                                   style="text-decoration: none; color: inherit;">@book.Title</a>
+                                                <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                                style="text-decoration: none; color: inherit;">@book.Title</a>
                                             </h5>
                                             <ul class="dz-tags">
                                                 @if (book.BookCategories != null && book.BookCategories.Any())
@@ -167,8 +166,8 @@
                                                         <span class="price-num">Miễn phí</span>
                                                         <del>@string.Format("{0:N0} đ", book.Price)</del>
                                                     </div>
-                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
-                                                       class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
+                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                                    class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
 
                                                 }
                                                 else
@@ -348,7 +347,7 @@
     </div>
     @section Scripts {
         <script>
-                function toggleFavorite(bookId,userId) {
+                function toggleFavorite(bookId) {
                 var checkbox = $('#flexCheckFavorite-' + bookId);
                 var isChecked = checkbox.is(':checked');
                 $.ajax({
@@ -356,8 +355,7 @@
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({
-                        BookId: bookId,
-                        UserId: userId
+                        BookId: bookId
                     }),
                     success: function (res) {
                         if (res.isFavorite) {
