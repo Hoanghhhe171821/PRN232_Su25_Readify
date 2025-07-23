@@ -34,6 +34,7 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<ITopUpTransService, TopUpTransService>();
 builder.Services.AddScoped<IRoyaltyTransactionService, RoyaltyTransactionService>();
 builder.Services.AddScoped<IAuthorRevenueService, AuthorRevenueService>();
 builder.Services.AddScoped<IBookRevenueService, BookRevenueService>();
