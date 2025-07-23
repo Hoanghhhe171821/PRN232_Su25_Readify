@@ -46,10 +46,26 @@
                                 <div class="book-footer">
                                     @if (Model.Book.IsFree || Model.IsLicensed)
                                     {
-                                        <div class="price">
-                                            <h5>Miễn phí</h5>
-                                            <p class="p-lr10">@string.Format("{0:N0} đ", Model.Book.Price)</p>
-                                        </div>
+                                        @if(Model.Book.Price == 0){
+                                            <div class="price">
+                                                <h5>Miễn phí</h5>
+                                                
+                                            </div>
+                                        }
+                                        else if (Model.Book.Price != 0 || Model.IsLicensed)
+                                        {
+                                            <div class="price">
+                                                <h5>Đã mua</h5>
+                                                <p class="p-lr10">@string.Format("{0:N0} đ", Model.Book.Price)</p>
+                                            </div>
+                                        }
+                                        else if (Model.Book.Price != 0 || Model.Book.IsFree){
+                                            <div class="price">
+                                                <h5>Miễn phí</h5>
+                                                <p class="p-lr10">@string.Format("{0:N0} đ", Model.Book.Price)</p>
+                                            </div>
+                                        }
+                                        
                                         <div class="product-num">
                                             <div class="quantity btn-quantity style-1 me-3">
                                             </div>
@@ -85,12 +101,9 @@
                                     {
                                         <div class="price">
                                             <h5>@string.Format("{0:N0} đ", Model.Book.Price)</h5>
-                                            <p class="p-lr10">$70.00</p>
+                                            <p class="p-lr10">100,000 đ</p>
                                         </div>
                                         <div class="product-num">
-                                            <div class="quantity btn-quantity style-1 me-3">
-                                                <input id="demo_vertical2" type="text" value="1" name="demo_vertical2" />
-                                            </div>
                                             <button class="add-to-cart-btn btn btn-secondary btnhover btnhover2"
                                                     data-book-id="@Model.Book.Id">
                                                 <i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart

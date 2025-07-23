@@ -209,6 +209,16 @@
                                                        class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
 
                                                 }
+                                                else if (!book.IsFree && book.IsLicense)
+                                                {
+                                                    <div class="price">
+                                                        <span class="price-num">Đã mua</span>
+                                                        <del>@string.Format("{0:N0} đ", book.Price)</del>
+                                                    </div>
+                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                                       class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
+
+                                                }
                                                 else
                                                 {
                                                     <div class="price">
@@ -382,6 +392,9 @@
                     data: JSON.stringify({
                         BookId: bookId
                     }),
+                     xhrFields: {
+                        withCredentials: true 
+                    },
                     success: function (res) {
                         if (res.isFavorite) {
                             $('#favoriteIcon-' + bookId).addClass('text-pink');
@@ -390,7 +403,10 @@
                         }
                     },
                     error: function (xhr) {
-                        alert('pls login to use');
+                        alert(xhr.responseText);
+                        console.log("XHR Status:", xhr.status);              // Mã trạng thái HTTP
+                        console.log("XHR Response Text:", xhr.responseText); // Nội dung phản hồi lỗi (nếu có)
+                        console.log("XHR Response JSON:", xhr.responseJSON);
                         checkbox.prop('checked', !isChecked);
                     }
                 });

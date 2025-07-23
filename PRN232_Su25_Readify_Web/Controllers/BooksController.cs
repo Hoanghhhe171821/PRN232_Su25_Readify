@@ -5,10 +5,12 @@ using Newtonsoft.Json.Linq;
 using PRN232_Su25_Readify_Web.Dtos.Books;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 using PRN232_Su25_Readify_WebAPI.Models;
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.RegularExpressions;
 using static System.Reflection.Metadata.BlobBuilder;
 
 namespace PRN232_Su25_Readify_Web.Controllers
@@ -76,7 +78,12 @@ namespace PRN232_Su25_Readify_Web.Controllers
             foreach (var book in books)
             {
                 book.IsFavorite = favoriteBookIds.Contains(book.Id);
+                //Kiểm tra sách đã mua
+                var isLicense = await GetAuthorizedApiDataAsync<bool>($"api/Books/checkBookLicence/{book.Id}");
+                if (isLicense) book.IsLicense = true;
+
             }
+
             var model = new BookListViewModel
             {
                 PagedBooks = new PagedResult<BookViewModel>
@@ -189,7 +196,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
             if (chapter == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId});
             int chapterId = chapter.Id;
 
-            var fileName = $"{book.Title}_Chapter_{chapterOrder}.pdf";
+            var safeTitle = ToSafeFileName(book.Title);
+            var fileName = $"{safeTitle}_Chapter_{chapterOrder}.pdf";
             var cacheKey = $"Pdf_{bookId}_{chapterOrder}"; //Khóa cho IMemoryCache
             var tempPath = Path.Combine(_env.WebRootPath, "temp", fileName);
 
@@ -260,7 +268,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
             }
 
             //Get Book by API
-            var booksJsonResult = await GetApiDataAsync<JObject>(url);
+            var booksJsonResult = await GetAuthorizedApiDataAsync<JObject>(url);
+            if (booksJsonResult == null) return RedirectToAction("Login", "Auths");
             var books = booksJsonResult["items"].ToObject<List<BookViewModel>>();
             var totalItems = booksJsonResult["totalItems"].ToObject<int>();
             var pageSize = booksJsonResult["pageSize"].ToObject<int>();
@@ -281,6 +290,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
             foreach (var book in books)
             {
                 book.IsFavorite = favoriteBookIds.Contains(book.Id);
+                //Kiểm tra sách đã mua
+                var isLicense = await GetAuthorizedApiDataAsync<bool>($"api/Books/checkBookLicence/{book.Id}");
+                if (isLicense) book.IsLicense = true;
             }
 
             var model = new BookListViewModel
@@ -313,7 +325,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
             }
 
             //Get Book by API
-            var booksJsonResult = await GetApiDataAsync<JObject>(url);
+            var booksJsonResult = await GetAuthorizedApiDataAsync<JObject>(url);
+            if (booksJsonResult == null) return RedirectToAction( "Login", "Auths");
             var books = booksJsonResult["items"].ToObject<List<BookViewModel>>();
             var totalItems = booksJsonResult["totalItems"].ToObject<int>();
             var pageSize = booksJsonResult["pageSize"].ToObject<int>();
@@ -334,6 +347,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
             foreach (var book in books)
             {
                 book.IsFavorite = favoriteBookIds.Contains(book.Id);
+                //Kiểm tra sách đã mua
+                var isLicense = await GetAuthorizedApiDataAsync<bool>($"api/Books/checkBookLicence/{book.Id}");
+                if (isLicense) book.IsLicense = true;
             }
 
             var model = new BookListViewModel
@@ -437,6 +453,13 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             return resultData;
         }
-
+        private static string ToSafeFileName(string title)
+        {
+            var normalized = title.Normalize(NormalizationForm.FormD);
+            var chars = normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
+            var clean = new string(chars.ToArray());
+            clean = Regex.Replace(clean, @"[^a-zA-Z0-9_\- ]", ""); // loại bỏ ký tự đặc biệt
+            return clean.Replace(" ", "_"); // thay khoảng trắng bằng _
+        }
     }
 }

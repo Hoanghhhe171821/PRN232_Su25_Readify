@@ -138,19 +138,19 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         }
 
         [HttpPost("AddToFavorite")]
-        public async Task<IActionResult> AddToFavorite(int bookId)
+        public async Task<IActionResult> AddToFavorite([FromBody]FavoriteModel favoriteModel)
         {
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized();
 
-            var book = await _context.Books.SingleOrDefaultAsync(b => b.Id == bookId);
+            var book = await _context.Books.SingleOrDefaultAsync(b => b.Id == favoriteModel.BookId);
             if (book == null) return BadRequest("Book not found");
 
-            var isFavor = await _context.Favorite.SingleOrDefaultAsync(f => f.BookId == bookId && f.UserId == userId);
+            var isFavor = await _context.Favorite.SingleOrDefaultAsync(f => f.BookId == favoriteModel.BookId && f.UserId == userId);
             if (isFavor == null)
             {
-                _context.Favorite.Add(new Favorite { BookId = bookId, UserId = userId });
+                _context.Favorite.Add(new Favorite { BookId = favoriteModel.BookId, UserId = userId });
                 await _context.SaveChangesAsync();
                 return Ok(new { isFavorite = true });
             }
@@ -352,7 +352,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (createBookDto == null) throw new BRException("Book data is required.");
 
 
-            if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
+            //if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
 
             // Lấy ID người dùng hiện tại từ token
             var userId = User?.Identity?.Name;
