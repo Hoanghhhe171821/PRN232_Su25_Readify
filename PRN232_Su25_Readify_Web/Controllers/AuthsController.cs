@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using PRN232_Su25_Readify_Web.Dtos;
 using PRN232_Su25_Readify_Web.Dtos.TopUps;
 using PRN232_Su25_Readify_Web.Models.Auth;
 using PRN232_Su25_Readify_Web.Services;
@@ -11,10 +13,12 @@ namespace PRN232_Su25_Readify_Web.Controllers
     public class AuthsController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApiClientHelper _apiClientHelper;
 
-        public AuthsController(IHttpClientFactory httpClientFactory)
+        public AuthsController(IHttpClientFactory httpClientFactory,ApiClientHelper apiClientHelper)
         {
             _httpClientFactory = httpClientFactory;
+            _apiClientHelper = apiClientHelper;
         }
         public IActionResult Index()
         {
@@ -219,6 +223,26 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             TempData["ErrorMessage"] = "Thanh toán chưa hoàn tất. Vui lòng thử lại sau.";
             return RedirectToAction("ConfirmTopUp", new { id });
+        }
+        [Authorize]
+        public async Task<IActionResult> HistoryTopUp(int pageIndex = 1, int pageSize = 5)
+        {
+            var accessToken = Request.Cookies["access_Token"];
+            var sessionId = Request.Cookies["session_Id"];
+            var client = _apiClientHelper.CreateClientWithToken();
+
+            var query = $"?pageIndex={pageIndex}&pageSize={pageSize}";
+            var response = await client.GetFromJsonAsync
+                <PagedResult<TopUpTransactionsDto>>($"/api/Payment/TopUp/History{query}");
+
+            return View(response ?? new PagedResult<TopUpTransactionsDto>
+            {
+                Items = new List<TopUpTransactionsDto>(),
+                TotalItems = 0,
+                CurrentPage = pageIndex,
+                PageSize = pageSize
+            });
+
         }
 
 
