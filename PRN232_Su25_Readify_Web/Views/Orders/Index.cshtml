@@ -1,0 +1,99 @@
+﻿@model PRN232_Su25_Readify_Web.Dtos.PagedResult<PRN232_Su25_Readify_Web.Dtos.Order.OrderDto>
+@{
+    ViewData["Title"] = "Danh sách đơn hàng";
+    Layout = "_Layout"; // Hoặc layout bạn đang dùng
+}
+<div class="page-content">
+    <!-- inner page banner -->
+    <div class="dz-bnr-inr overlay-secondary-dark dz-bnr-inr-sm" style="background-image:url(images/background/bg3.jpg);">
+
+        <div class="container">
+            <div class="dz-bnr-inr-entry">
+                <h1>Order</h1>
+                <nav aria-label="breadcrumb" class="breadcrumb-row">
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="index.html"> Home</a></li>
+                        <li class="breadcrumb-item">Order</li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+    <section class="content-inner shop-account">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-lg-12">
+                    <h3 class="mb-4">Danh sách đơn hàng</h3>
+                    <div class="table-responsive">
+                        <table class="table table-bordered check-tbl table-hover text-center">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày tạo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Items != null && Model.Items.Any())
+                                {
+                                    foreach (var order in Model.Items)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a asp-action="OrderItems" asp-route-id="@order.Id" class="text-decoration-none text-primary fw-bold">
+                                                    @order.Id
+                                                </a>
+                                            </td>
+                                            <td>@($"{order.TotalAmount:N0} đ")</td>
+                                            <td>
+                                                <span class="badge @(order.Status == "Completed" ? "bg-success" : "bg-warning")">
+                                                    @order.Status
+                                                </span>
+                                            </td>
+                                            <td>@order.CreateDate</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center">Không có đơn hàng nào</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phân trang -->
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            @if (Model.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { pageIndex = Model.CurrentPage - 1, pageSize = Model.PageSize })">«</a>
+                                </li>
+                            }
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { pageIndex = i, pageSize = Model.PageSize })">@i</a>
+                                </li>
+                            }
+                            @if (Model.CurrentPage < Model.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { pageIndex = Model.CurrentPage + 1, pageSize = Model.PageSize })">»</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </section>

@@ -4,11 +4,12 @@
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IHttpContextAccessor _contextAccessor;
-
-        public ApiClientHelper(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
+        private readonly IConfiguration _configuration;
+        public ApiClientHelper(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
             _contextAccessor = httpContextAccessor;
+            _configuration = configuration;
         }
 
         public HttpClient CreateClientWithToken()
@@ -21,6 +22,7 @@
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers
                     .AuthenticationHeaderValue("Bearer", token);
             }
+            var baseUrl = _configuration["ApiBaseUrl"] ?? "https://localhost:7267";
             client.BaseAddress = new Uri("https://localhost:7267");
             return client;
         }

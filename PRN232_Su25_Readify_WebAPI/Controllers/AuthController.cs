@@ -46,7 +46,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 throw new ValidationEx(errors);
             }
             var userAgent = Request.Headers["User-Agent"].ToString();
-            var result = await _authService.LoginAsync(login,userAgent);
+            var result = await _authService.LoginAsync(login, userAgent);
 
             return Ok(result);
         }
@@ -147,7 +147,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             }
             var userAgent = Request.Headers["User-Agent"].ToString();
 
-            var newAccessToken = await _jwtService.RefreshAccessToken(dto.SessionsId,userAgent);
+            var newAccessToken = await _jwtService.RefreshAccessToken(dto.SessionsId, userAgent);
 
             return Ok(new AuthResult
             {
@@ -156,42 +156,37 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 ExpriseAt = newAccessToken.expriseAt
             });
         }
-      
-        [HttpPost("logout")]        
+
+        [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             var accessToken = Request.Cookies["access_Token"];
             var sessionId = Request.Cookies["session_Id"];
             var userAgent = Request.Headers["User-Agent"].ToString();
 
-            if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(sessionId))
+            Response.Cookies.Delete("access_Token");
+            Response.Cookies.Delete("session_Id");
+
+            if (string.IsNullOrWhiteSpace(sessionId))
             {
-                return Unauthorized("Invalid session or token.");
+                return Ok(new { message = "Logout successful" });
             }
 
-            var principal = await _jwtService.ValidateToken(accessToken);
-            if (principal == null)
-                return Unauthorized("Invalid token");
+            string? userId = null;
 
-            var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized("Invalid user");
-
-            var result = await _context.RefreshTokens
-                .Where(r => r.UserId == userId
-                    && r.SessionId == sessionId
-                    && r.UserAgent == userAgent
-                    && !r.IsRevoked)
+            var token = await _context.RefreshTokens
+                .Where(r =>
+                    r.SessionId == sessionId &&
+                    r.UserAgent == userAgent &&
+                    !r.IsRevoked)
                 .FirstOrDefaultAsync();
 
-            if (result != null)
+            if (token != null)
             {
-                result.IsRevoked = true;
+                token.IsRevoked = true;
                 await _context.SaveChangesAsync();
             }
 
-            Response.Cookies.Delete("access_Token");
-            Response.Cookies.Delete("session_Id");
             return Ok(new { message = "Logout successful" });
         }
 
@@ -206,6 +201,16 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             var message = await _authService.TopUpCoints(request.Points, userId);
             return Ok(new { Message = message });
         }
-        
+
+        [HttpGet("get-points")]
+        public async Task<IActionResult> GetPoints()
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) throw new UnauthorEx("Không xác định được người dùng từ token");
+            var user = await _userManager.FindByIdAsync(userId);
+
+            return Ok(user.Points);
+        }
+
     }
 }

@@ -11,17 +11,7 @@
     <link rel="icon" type="image/x-icon" href="images/favicon.png" />
 
     <!-- STYLESHEETS -->
-    <link rel="stylesheet" type="text/css" href="~/vendor/bootstrap-select/dist/css/bootstrap-select.min.css">
-    <link rel="stylesheet" type="text/css" href="~/icons/fontawesome/css/all.min.css">
-    <link rel="stylesheet" type="text/css" href="~/vendor/swiper/swiper-bundle.min.css">
-    <link rel="stylesheet" type="text/css" href="~/vendor/animate/animate.css">
-    <link rel="stylesheet" type="text/css" href="~/css/style.css">
-
-    <!-- GOOGLE FONTS-->
-    <link rel="preconnect" href="https://fonts.googleapis.com/">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&amp;family=Poppins:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
-    <!-- STYLESHEETS -->
+    <link rel="stylesheet" type="text/css" href="~/icons/themify/themify-icons.css">
     <link rel="stylesheet" type="text/css" href="~/vendor/bootstrap-select/dist/css/bootstrap-select.min.css">
     <link rel="stylesheet" type="text/css" href="~/icons/fontawesome/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="~/vendor/swiper/swiper-bundle.min.css">
@@ -57,69 +47,20 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none" /><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z" /></svg>
                                         <span class="badge">@await Component.InvokeAsync("FavoriteCount", new { userId = userId })</span>
                                     </a>
-                                }else{
+                                }
+                                else
+                                {
                                     <a class="nav-link">
                                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none" /><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z" /></svg>
                                         <span class="badge"></span>
-                                    </a>                                    
+                                    </a>
                                 }
                             </li>
                             <li class="nav-item">
-                                <button type="button" class="nav-link box cart-btn">
+                                <a type="button" href="/cart" class="nav-link box cart-btn">
                                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none" /><path d="M15.55 13c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.37-.66-.11-1.48-.87-1.48H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2h7.45zM6.16 6h12.15l-2.76 5H8.53L6.16 6zM7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" /></svg>
                                     <span class="badge">5</span>
-                                </button>
-                                <ul class="dropdown-menu cart-list">
-                                    <li class="cart-item">
-                                        <div class="media">
-                                            <div class="media-left">
-                                                <a href="books-detail.html">
-                                                    <img alt="" class="media-object" src="~/images/books/small/pic1.jpg">
-                                                </a>
-                                            </div>
-                                            <div class="media-body">
-                                                <h6 class="dz-title"><a href="books-detail.html" class="media-heading">Real Life</a></h6>
-                                                <span class="dz-price">$28.00</span>
-                                                <span class="item-close">&times;</span>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="cart-item">
-                                        <div class="media">
-                                            <div class="media-left">
-                                                <a href="books-detail.html">
-                                                    <img alt="" class="media-object" src="~/images/books/small/pic2.jpg">
-                                                </a>
-                                            </div>
-                                            <div class="media-body">
-                                                <h6 class="dz-title"><a href="books-detail.html" class="media-heading">Home</a></h6>
-                                                <span class="dz-price">$28.00</span>
-                                                <span class="item-close">&times;</span>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="cart-item">
-                                        <div class="media">
-                                            <div class="media-left">
-                                                <a href="books-detail.html">
-                                                    <img alt="" class="media-object" src="~/images/books/small/pic3.jpg">
-                                                </a>
-                                            </div>
-                                            <div class="media-body">
-                                                <h6 class="dz-title"><a href="books-detail.html" class="media-heading">Such a fun age</a></h6>
-                                                <span class="dz-price">$28.00</span>
-                                                <span class="item-close">&times;</span>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="cart-item text-center">
-                                        <h6 class="text-secondary">Totle = $500</h6>
-                                    </li>
-                                    <li class="text-center d-flex">
-                                        <a href="shop-cart.html" class="btn btn-sm btn-primary me-2 btnhover w-100">View Cart</a>
-                                        <a href="shop-checkout.html" class="btn btn-sm btn-outline-primary btnhover w-100">Checkout</a>
-                                    </li>
-                                </ul>
+                                </a>
                             </li>
                             @if (!User.Identity.IsAuthenticated)
                             {
@@ -135,9 +76,14 @@
                                     <a class="nav-link" href="javascript:void(0);" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <img src="images/profile1.jpg" alt="/">
                                         <div class="profile-info">
+                                            <h6 class="title">@User.Identity.Name </h6>
+                                            <span>
+                                                @User.FindFirst("email")?.Value
+                                            </span>
+                                            <span id="userPoints">
+                                                Points: 0
+                                            </span>
 
-                                            <h6 class="title">@User.Identity.Name</h6>
-                                            <span>@User.FindFirst("email")?.Value</span>
                                         </div>
                                     </a>
                                     <div class="dropdown-menu py-0 dropdown-menu-end">
@@ -146,13 +92,13 @@
                                             <span>@User.FindFirst("email")?.Value</span>
                                         </div>
                                         <div class="dropdown-body">
-                                            <a href="my-profile.html" class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
+                                            <a asp-controller="auths" asp-action="HistoryTopUp" class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
                                                 <div>
                                                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none" /><path d="M12 6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2m0 10c2.7 0 5.8 1.29 6 2H6c.23-.72 3.31-2 6-2m0-12C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
-                                                    <span class="ms-2">Profile</span>
+                                                    <span class="ms-2">History Top up</span>
                                                 </div>
                                             </a>
-                                            <a href="shop-cart.html" class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
+                                            <a asp-controller="Orders" asp-action="index" class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
                                                 <div>
                                                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none" /><path d="M15.55 13c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.37-.66-.11-1.48-.87-1.48H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2h7.45zM6.16 6h12.15l-2.76 5H8.53L6.16 6zM7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" /></svg>
                                                     <span class="ms-2">My Order</span>
@@ -164,12 +110,14 @@
                                                     <span class="ms-2">Wishlist</span>
                                                 </div>
                                             </a>
-                                            <a asp-controller="accounts" asp-action="index" class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
-                                                <div>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none" /><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z" /></svg>
-                                                    <span class="ms-2">Dashboard</span>
-                                                </div>
-                                            </a>
+                                            <role-access roles="Admin">
+                                                <a asp-controller="accounts" asp-action="index" class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
+                                                    <div>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none" /><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z" /></svg>
+                                                        <span class="ms-2">Dashboard</span>
+                                                    </div>
+                                                </a>
+                                            </role-access>
                                             <a asp-controller="auths" asp-action="TopUpCoints" class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
                                                 <div>
                                                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none" /><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z" /></svg>
@@ -180,7 +128,7 @@
                                         </div>
                                         <div class="dropdown-footer">
                                             <a class="btn btn-primary w-100 btnhover btn-sm"
-                                               asp-controller="auths" asp-action="logout">Log Out</a>
+                                               id="btnLogout">Log Out</a>
                                         </div>
                                     </div>
                                 </li>
@@ -191,16 +139,25 @@
 
                 <!-- header search nav -->
                 <div class="header-search-nav">
-                    <form class="header-item-search" asp-controller="Books" asp-action="BookList" asp-route-userId="@User.FindFirst("userId")?.Value" method="get">
+                    <form class="header-item-search"
+                          asp-controller="Books"
+                          asp-action="BookList"
+                          asp-route-userId="@User.FindFirst("userId")?.Value"
+                          method="get">
                         <div class="input-group search-input">
-                            <select class="default-select">
-                                <option>Title</option>
+                            <select class="default-select" name="searchBy">
+                                <option value="Title" selected>Title</option>
+                                <option value="Author">Author</option>
+                                <!-- thêm nếu muốn -->
                             </select>
-                            <input type="text" class="form-control" aria-label="Text input with dropdown button" placeholder="Search Books Here"
-                                   name="searchTitle" value="@Context.Request.Query["searchTitle"]">
 
-                            <button class="btn" type="button"><i class="flaticon-loupe"></i></button>
-
+                            <input type="text"
+                                   class="form-control"
+                                   name="searchOption"
+                                   placeholder="Search Books Here"
+                                   aria-label="Text input with dropdown button"
+                                   value="@Context.Request.Query["searchOption"]" />
+                            <button class="btn" type="submit"><i class="flaticon-loupe"></i></button>
                         </div>
                     </form>
                 </div>
@@ -517,7 +474,9 @@
         <!-- Footer Bottom End -->
 
     </footer>
+
     <!-- JAVASCRIPT FILES ========================================= -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/jquery.min.js"></script><!-- JQUERY MIN JS -->
     <script src="~/vendor/wow/wow.min.js"></script><!-- WOW JS -->
     <script src="~/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script><!-- BOOTSTRAP MIN JS -->
@@ -528,7 +487,160 @@
     <script src="~/js/dz.carousel.js"></script><!-- DZ CAROUSEL JS -->
     <script src="~/js/dz.ajax.js"></script><!-- AJAX -->
     <script src="~/js/custom.js"></script><!-- CUSTOM JS -->
-    @await RenderSectionAsync("Scripts", required: false)
+    <script>
+                $(document).ready(function () {
+            console.log("Add-to-cart script is loaded");
 
+            $(document).on("click", ".add-to-cart-btn", function (e) {
+                e.preventDefault();
+
+                const bookId = $(this).data("book-id");
+                console.log("Book ID:", bookId);
+
+                // 1. Kiểm tra sách đã mua chưa
+                $.ajax({
+                    url: `https://localhost:7267/api/Books/checkBookLicence/${bookId}`,
+                    method: "GET",
+                    xhrFields: { withCredentials: true },
+                    success: function (isLicensed) {
+                        if (isLicensed === true) {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Thông báo',
+                                text: 'Bạn đã sở hữu cuốn sách này, không thể thêm vào giỏ hàng!'
+                            });
+                            return; // Dừng không gọi AddToCart
+                        }
+
+                        // 2. Nếu chưa sở hữu sách -> gọi API thêm vào giỏ hàng
+                        $.ajax({
+                            url: "https://localhost:7267/api/Cart",
+                            method: "POST",
+                            contentType: "application/json",
+                            data: JSON.stringify({ bookId: bookId }),
+                            xhrFields: { withCredentials: true },
+                            success: function (response) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công',
+                                    text: "Đã thêm vào giỏ hàng!"
+                                });
+                            },
+                            error: function (xhr) {
+                                const status = xhr.status;
+                                const response = xhr.responseJSON;
+
+                                switch (status) {
+                                    case 400:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Yêu cầu không hợp lệ!"
+                                        });
+                                        break;
+                                    case 401:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Bạn cần đăng nhập để thêm vào giỏ hàng!"
+                                        }).then(() => {
+                                            window.location.href = "/auths/Login";
+                                        });
+                                        break;
+                                    case 404:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Không tìm thấy tài nguyên!"
+                                        });
+                                        break;
+                                    case 409:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Sản phẩm đã có trong giỏ hàng!"
+                                        });
+                                        break;
+                                    case 500:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: "❌ Lỗi máy chủ! Vui lòng thử lại sau."
+                                        });
+                                        break;
+                                    default:
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi',
+                                            text: response?.message || "❌ Đã xảy ra lỗi không xác định."
+                                        });
+                                        break;
+                                }
+                            }
+                        });
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 401) {
+                            Swal.fire("Bạn cần đăng nhập để kiểm tra quyền sở hữu sách.")
+                                .then(() => window.location.href = "/auths/Login");
+                        } else {
+                            Swal.fire("❌ Lỗi khi kiểm tra quyền sở hữu sách.");
+                        }
+                    }
+                });
+            });
+
+        });
+
+                    document.addEventListener("DOMContentLoaded", function () {
+            const pointsElement = document.getElementById("userPoints"); // Thêm id vào span hiển thị Points
+
+            if (!pointsElement) return;
+
+            fetch("https://localhost:7267/api/Auth/get-points", {
+                method: "GET",
+                credentials: "include", // để gửi cookie kèm theo
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Không thể lấy points từ server");
+                    }
+                    return response.json();
+                })
+                .then(points => {
+                    // Giả sử points là số nguyên (points / 1000)
+                    const displayPoints = Math.floor(points / 1000);
+                    pointsElement.innerText = `Points: ${displayPoints}`;
+                })
+                .catch(err => {
+                    console.error(err);
+                    pointsElement.innerText = "Points: 0";
+                });
+        });
+
+            $(document).ready(function () {
+            $("#btnLogout").on("click", function (e) {
+                e.preventDefault();
+
+                $.ajax({
+                    url: "https://localhost:7267/api/auth/logout",
+                    method: "POST",
+                    xhrFields: {
+                        withCredentials: true 
+                    },
+                    success: function (response) {
+                        window.location.href = "/auths/login";
+                    },
+                    error: function (xhr, status, error) {
+                        alert("Đăng xuất thất bại: " + xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

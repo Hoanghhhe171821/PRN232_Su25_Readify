@@ -3,6 +3,7 @@
 @model BookListViewModel
 @{
     var selectedCateIds = Context.Request.Query["cateIds"].Select(int.Parse).ToList();
+    var userId = @User.FindFirst("userId")?.Value;
 }
 <div class="page-content bg-grey">
     <div class="content-inner-1 border-bottom">
@@ -117,7 +118,7 @@
                                 <div class="col-book style-2">
                                     <div class="dz-shop-card style-1">
                                         <div class="dz-media">
-                                            <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                            <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
                                                style="text-decoration: none; color: inherit;">
                                                 <img src="@book.ImageUrl" alt="book">
                                             </a>
@@ -133,7 +134,7 @@
                                         </div>
                                         <div class="dz-content">
                                             <h5 class="title">
-                                                <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                                <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
                                                    style="text-decoration: none; color: inherit;">@book.Title</a>
                                             </h5>
                                             <ul class="dz-tags">
@@ -166,7 +167,7 @@
                                                         <span class="price-num">Miễn phí</span>
                                                         <del>@string.Format("{0:N0} đ", book.Price)</del>
                                                     </div>
-                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
                                                        class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
 
                                                 }
@@ -371,5 +372,55 @@
                     }
                 });
             }
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const filterForm = document.getElementById('filterForm');
+                const hiddenSearchOption = document.getElementById('hiddenSearchOption');
+                const hiddenSearchBy = document.getElementById('hiddenSearchBy');
+                const authorRadios = document.querySelectorAll('.author-radio');
+                const categoryCheckboxes = document.querySelectorAll('input[name="cateIds"]');
+
+                // Xử lý khi form được submit
+                filterForm.addEventListener('submit', function(event) {
+                    let authorSelected = false;
+                    for (const radio of authorRadios) {
+                        if (radio.checked) {
+                            hiddenSearchOption.value = radio.value;
+                            hiddenSearchBy.value = 'Author';
+                            authorSelected = true;
+                            break;
+                        }
+                    }
+
+                    if (!authorSelected) {
+
+                        if (hiddenSearchBy.value === 'Author') {
+                             hiddenSearchBy.value = '';
+                             hiddenSearchOption.value = '';
+                        }
+                    }
+                });
+
+                // Xử lý khi các radio button tác giả thay đổi
+                authorRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (this.checked) {
+                            // Khi một tác giả được chọn, đảm bảo searchBy là Author
+                            hiddenSearchBy.value = 'Author';
+                            hiddenSearchOption.value = this.value; // Cập nhật ngay giá trị searchOption
+                        }
+                    });
+                });
+
+                // Xử lý khi các checkbox thể loại thay đổi
+                categoryCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        authorRadios.forEach(radio => radio.checked = false); // Bỏ chọn tất cả radio tác giả
+                        hiddenSearchBy.value = ''; // Reset searchBy
+                        hiddenSearchOption.value = ''; // Reset searchOption
+                    });
+                });
+            });
         </script>
     }

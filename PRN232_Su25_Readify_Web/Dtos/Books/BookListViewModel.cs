@@ -6,8 +6,10 @@ namespace PRN232_Su25_Readify_Web.Dtos.Books
     {
         public PagedResult<BookViewModel> PagedBooks { get; set; }
         public List<Category> Categories { get; set; }
+        public List<Author> Authors { get; set; }
         public string OrderBy { get; set; }
-        public string SearchTitle { get; set; }
+        public string SearchBy { get; set; }
+        public string SearchOption { get; set; }
         public bool IsFree { get; set; }
         public string UserId { get; set; }
     }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Octokit;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Chapters;
@@ -44,97 +45,136 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        [HttpPost("AddNewChapter")]
-        public async Task<IActionResult> CreateChapterByBookId([FromForm] ChapterUploadRequest request)
+        [HttpPost("AddOrUpdateChapter")]
+        public async Task<IActionResult> CreateOrUpdateChapterByBookId([FromForm] ChapterUploadRequest request)
         {
-            //Validate file
             if (request.File == null || request.File.Length == 0)
                 return BadRequest("File is required.");
-            //Validate extension
-            var extension = Path.GetExtension(request.File.FileName).ToLower();
 
-            if (extension != ".docx" && extension != ".txt")
-                return BadRequest("Only .docx or .txt files are allowed.");
-            //Find Book
-            var book = await _context.Books.SingleOrDefaultAsync(b=> b.Id == request.BookId);
+            var extension = Path.GetExtension(request.File.FileName).ToLower();
+            if (extension != ".pdf")
+                return BadRequest("Only .pdf files are allowed.");
+
+            var book = await _context.Books.SingleOrDefaultAsync(b => b.Id == request.BookId);
             if (book == null)
                 return BadRequest("BookId not found.");
-            //Folder form: [Book_Name]/[Book_Name]_Chapter_[int].[.txt / .docx]
-            var fileExtension = Path.GetExtension(request.File.FileName).ToLower();
+
             var bookName = book.Title.Replace(" ", "_");
             var folderPath = bookName;
-            var fileName = $"{bookName}_Chapter_{request.ChapterOrder}{fileExtension}";
+            var fileName = $"{bookName}_Chapter_{request.ChapterOrder}{extension}";
             var repoFilePath = $"{folderPath}/{fileName}";
 
+            // Convert file to base64
             string base64Content;
             using (var ms = new MemoryStream())
             {
                 await request.File.CopyToAsync(ms);
                 base64Content = Convert.ToBase64String(ms.ToArray());
             }
-            //Kiểm tra folder tồn tại?
+
+            // Check if file exists on GitHub
+            bool fileExists = false;
+            string existingSha = null;
             try
             {
-                await _client.Repository.Content.GetAllContentsByRef(_owner, _repo, folderPath, "main");
+                var existingContent = await _client.Repository.Content.GetAllContentsByRef(_owner, _repo, repoFilePath, "main");
+                fileExists = true;
+                existingSha = existingContent.First().Sha;
             }
             catch (NotFoundException)
             {
-                // Folder chưa có - không cần tạo folder riêng, GitHub hiểu path khi tạo file
+                // File does not exist – proceed to create
             }
-            var createRequest = new CreateFileRequest($"Add {fileName}", base64Content, "main");
-            var result = await _client.Repository.Content.CreateFile(_owner, _repo, repoFilePath, createRequest);
 
-            //Lưu vào database
-            var chapter = new Chapter
+            if (fileExists)
             {
-                Title = request.ChapterTitle,
-                FilePath = repoFilePath,
-                ChapterOrder = request.ChapterOrder,
-                BookId = request.BookId,
-                IsActive = true,
-                CreateDate = DateTime.Now
-            };
-            _context.Chapters.Add(chapter);
+                // Update file
+                var updateRequest = new UpdateFileRequest($"Update {fileName}", base64Content, existingSha, "main");
+                await _client.Repository.Content.UpdateFile(_owner, _repo, repoFilePath, updateRequest);
+            }
+            else
+            {
+                // Create new file
+                var createRequest = new CreateFileRequest($"Add {fileName}", base64Content, "main");
+                await _client.Repository.Content.CreateFile(_owner, _repo, repoFilePath, createRequest);
+            }
+
+            // Update or insert chapter metadata in DB
+            var existingChapter = await _context.Chapters
+                .FirstOrDefaultAsync(c => c.BookId == request.BookId && c.ChapterOrder == request.ChapterOrder);
+
+            if (existingChapter != null)
+            {
+                existingChapter.Title = request.ChapterTitle;
+                existingChapter.FilePath = repoFilePath;
+                existingChapter.UpdateDate = DateTime.Now;
+                _context.Chapters.Update(existingChapter);
+            }
+            else
+            {
+                var newChapter = new Chapter
+                {
+                    Title = request.ChapterTitle,
+                    FilePath = repoFilePath,
+                    ChapterOrder = request.ChapterOrder,
+                    BookId = request.BookId,
+                    IsActive = true,
+                    CreateDate = DateTime.Now
+                };
+                _context.Chapters.Add(newChapter);
+            }
+
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Chapter created successfully", path = repoFilePath });
+            return Ok(new { message = fileExists ? "Chapter updated" : "Chapter created", path = repoFilePath });
         }
+
+
         [HttpGet("GetChapter")]
         public async Task<IActionResult> GetChapter(int bookId, int chapterOrder)
         {
-            Chapter chapter =await _context.Chapters.Include(c => c.Book).FirstOrDefaultAsync(c => c.BookId == bookId && c.Id == chapterOrder);
-            if (chapter == null) return NotFound();
+            var chapter = await _context.Chapters.Include(c => c.Book)
+                .FirstOrDefaultAsync(c => c.BookId == bookId && c.ChapterOrder == chapterOrder);
+
+            if (chapter == null)
+                return NotFound("Chapter not found.");
 
             try
             {
-                var fileContent = await _client.Repository.Content.GetAllContentsByRef(
-                                            _owner, _repo, chapter.FilePath, "main");
-                var base64Content = fileContent.First().Content;
-                var fileBytes = Convert.FromBase64String(base64Content);
-                var text = System.Text.Encoding.UTF8.GetString(fileBytes);
-                return Ok(new { chapter.Title, content = text });
+                var content = await _client.Repository.Content.GetAllContentsByRef(_owner, _repo, chapter.FilePath, "main");
+                var base64 = content.First().Content;
+                var fileBytes = Convert.FromBase64String(base64);
+
+                return File(fileBytes, "application/pdf", Path.GetFileName(chapter.FilePath));
             }
             catch (NotFoundException)
             {
-                return NotFound("File not found in GitHub repository.");
+                return NotFound("File not found in GitHub.");
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { message = ex.Message });
             }
         }
-        [HttpGet("GetRecentedRead")]
-        public async Task<IActionResult> GetRecentedRead(string userId, int bookId)
+        [HttpGet("GetRecentedReadChapters")]
+        public async Task<IActionResult> GetRecentedReadChapters(string userId, int bookId)
         {
             if (userId == null) return BadRequest("Pls login");
             var isExistedBook =await _context.Books.AnyAsync(b => b.Id == bookId);
             if(!isExistedBook) return BadRequest("Book not exist!");
 
-            var recentRead = await _context.RecentRead
-                .FirstOrDefaultAsync(rd => rd.UserId.Equals(userId) && rd.BookId == bookId);
-            if(recentRead== null) return BadRequest("Khôn tồn tại");
-
-            var chapterId = recentRead.ChapterId;
-            return Ok(chapterId);
+            var readChapterInfo = await _context.RecentRead
+        .Where(rd => rd.UserId.Equals(userId) && rd.BookId == bookId)
+        .Join(_context.Chapters,
+              recentRead => recentRead.ChapterId,
+              chapter => chapter.Id,
+              (recentRead, chapter) => new 
+              {
+                  recentRead.ChapterId,
+                  recentRead.DateRead,
+                  chapter.ChapterOrder 
+              })
+        .ToListAsync();
+            return Ok(readChapterInfo);
         }
     }
 }

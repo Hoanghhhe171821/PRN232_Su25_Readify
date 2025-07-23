@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PRN232_Su25_Readify_WebAPI.DbContext;
+using PRN232_Su25_Readify_WebAPI.Middlewares;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
@@ -15,6 +16,8 @@ builder.Services.AddControllers()
                      options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
                      options.JsonSerializerOptions.WriteIndented = true;
                  });
+builder.Services.Configure<MoMoConfig>(
+    builder.Configuration.GetSection("MoMo"));
 
 builder.Services.AddDbContext<ReadifyDbContext>(options =>
 {
@@ -23,10 +26,19 @@ builder.Services.AddDbContext<ReadifyDbContext>(options =>
 var emailConfig = configuration.GetSection("EmailConfiguration")
                                            .Get<EmailConfiguration>();
 builder.Services.AddSingleton(emailConfig);
-
+builder.Services.AddHttpClient();
 // DI Service
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<ITopUpTransService, TopUpTransService>();
+builder.Services.AddScoped<IRoyaltyTransactionService, RoyaltyTransactionService>();
+builder.Services.AddScoped<IAuthorRevenueService, AuthorRevenueService>();
+builder.Services.AddScoped<IBookRevenueService, BookRevenueService>();
+
 builder.Services.AddScoped<IMail, MailService>();
 builder.Services.AddIdentity<AppUser, IdentityRole>()
     .AddEntityFrameworkStores<ReadifyDbContext>()
@@ -77,7 +89,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowMvcApp",
         builder => builder.WithOrigins("https://localhost:7154")
                           .AllowAnyHeader()
-                          .AllowAnyMethod());
+                          .AllowAnyMethod()
+                          .AllowCredentials());
 });
 builder.Services.AddAuthentication(options =>
 {
@@ -121,9 +134,10 @@ app.Use(async (context, next) =>
 });
 app.UseRouting();
 app.UseCors("AllowMvcApp");
+app.UseMiddleware<ExceptionMid>();
+app.UseMiddleware<JwtMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
-//app.UseMiddleware<ExceptionMid>();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();

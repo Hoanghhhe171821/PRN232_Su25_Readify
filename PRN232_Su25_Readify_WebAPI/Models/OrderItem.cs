@@ -10,6 +10,7 @@
 
         public int BookId { get; set; }
         public Book? Book { get; set; }
-    
+        
+        public ICollection<BookLicense>? BookLicenses { get; set; }
     }
 }

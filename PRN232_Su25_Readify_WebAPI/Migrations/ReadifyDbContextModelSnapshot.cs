@@ -374,7 +374,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.ToTable("RevenueSummaries");
+                    b.ToTable("AuthorRevenueSummary");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Book", b =>
@@ -446,6 +446,35 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.ToTable("BookCategories");
                 });
 
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.BookLicense", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OrderItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("OrderItemId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("BookLicenses", (string)null);
+                });
+
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.BookRevenueSummary", b =>
                 {
                     b.Property<int>("Id")
@@ -477,6 +506,72 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.HasIndex("BookId");
 
                     b.ToTable("BookRevenueSummaries");
+                });
+
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Cart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CreateDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Carts", (string)null);
+                });
+
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.CartItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreateDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("CartId", "BookId")
+                        .IsUnique();
+
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Category", b =>
@@ -770,11 +865,14 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.RecentRead", b =>
                 {
-                    b.Property<int>("BookId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
 
                     b.Property<int?>("ChapterId")
                         .HasColumnType("int");
@@ -782,11 +880,19 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Property<DateTime>("DateRead")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("BookId", "UserId");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
 
                     b.HasIndex("ChapterId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "BookId", "ChapterId")
+                        .IsUnique()
+                        .HasFilter("[ChapterId] IS NOT NULL");
 
                     b.ToTable("RecentRead");
                 });
@@ -949,6 +1055,59 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.ToTable("RoyaltyTransaction", (string)null);
                 });
 
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.TopUpTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AppUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MoMoOrderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MoMoRequestId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<string>("QrCodeUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TopUpTransactions");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1078,6 +1237,32 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.BookLicense", b =>
+                {
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.Book", "Book")
+                        .WithMany("BookLicenses")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.OrderItem", "OrderItem")
+                        .WithMany("BookLicenses")
+                        .HasForeignKey("OrderItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.AppUser", "User")
+                        .WithMany("BookLicenses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("OrderItem");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.BookRevenueSummary", b =>
                 {
                     b.HasOne("PRN232_Su25_Readify_WebAPI.Models.Book", "Book")
@@ -1087,6 +1272,36 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Book");
+                });
+
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Cart", b =>
+                {
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.AppUser", "AppUser")
+                        .WithOne()
+                        .HasForeignKey("PRN232_Su25_Readify_WebAPI.Models.Cart", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppUser");
+                });
+
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.CartItem", b =>
+                {
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.Cart", "Cart")
+                        .WithMany("CartItems")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("Cart");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Chapter", b =>
@@ -1297,11 +1512,28 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Navigation("OrderItem");
                 });
 
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.TopUpTransaction", b =>
+                {
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.AppUser", null)
+                        .WithMany("TopUpTransactions")
+                        .HasForeignKey("AppUserId");
+
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.AppUser", b =>
                 {
                     b.Navigation("Author");
 
                     b.Navigation("AuthorRequests");
+
+                    b.Navigation("BookLicenses");
 
                     b.Navigation("Favorites");
 
@@ -1310,6 +1542,8 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Navigation("RecentRead");
 
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("TopUpTransactions");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Author", b =>
@@ -1321,11 +1555,18 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                 {
                     b.Navigation("BookCategories");
 
+                    b.Navigation("BookLicenses");
+
                     b.Navigation("Chapters");
 
                     b.Navigation("Comments");
 
                     b.Navigation("RoyaltyTransactions");
+                });
+
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Cart", b =>
+                {
+                    b.Navigation("CartItems");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Category", b =>
@@ -1336,6 +1577,11 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Chapter", b =>
                 {
                     b.Navigation("Errors");
+                });
+
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.OrderItem", b =>
+                {
+                    b.Navigation("BookLicenses");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.RoyaltyPayoutRequest", b =>

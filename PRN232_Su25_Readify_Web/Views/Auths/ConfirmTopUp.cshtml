@@ -1,0 +1,26 @@
+﻿@model PRN232_Su25_Readify_Web.Dtos.TopUps.TopUpCheckVM
+
+<div class="container mt-5 text-center">
+    <h3 class="mb-4">Quét mã để thanh toán</h3>
+    <img src="@Model.QrCodeUrl" alt="QR MoMo" width="300" />
+    <p class="mt-3">Hoặc nhấn vào nút bên dưới để mở ứng dụng MoMo</p>
+    <a href="@Model.PayUrl" class="btn btn-success" target="_blank">Thanh toán bằng MoMo</a>
+
+    <div class="mt-4">
+        <form asp-action="CheckTransactionStatus" asp-controller="auths" method="post">
+            <input type="hidden" name="id" value="@Model.TransactionId" />
+            <button type="submit" class="btn btn-primary">Tôi đã thanh toán</button>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        var momoQrUrl = "@Model.QrCodeUrl";
+        new QRCode(document.getElementById("qrcode"), {
+            text: momoQrUrl,
+            width: 250,
+            height: 250
+        });
+    </script>
+}

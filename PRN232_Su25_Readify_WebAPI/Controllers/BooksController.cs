@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.DbContext;
-using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
-using Microsoft.AspNetCore.Authorization;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
+using PRN232_Su25_Readify_WebAPI.Models;
+using System.Security.Claims;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using MailKit.Search;
+using Microsoft.AspNetCore.Identity;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -15,14 +18,17 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
     public class BooksController : Controller
     {
         private readonly ReadifyDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
         private List<Book> _books;
-        public BooksController(ReadifyDbContext context)
+        public BooksController(ReadifyDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
         [HttpGet("GetAllBooks")]
         public async Task<IActionResult> GetAllBooks(int page = 1, int pageSize = 12,
-            [FromQuery(Name = "searchTitle")] string searchTitle = null,
+            [FromQuery(Name = "searchBy")] string searchBy = null,
+            [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
             [FromQuery(Name = "orderBy")] string orderBy = "Desc",
             [FromQuery(Name = "isFree")] bool isFree = false)
@@ -46,9 +52,22 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             {
                 query = query.OrderByDescending(b => b.UpdateDate ?? b.CreateDate);
             }
-            //Filter by Search Title
-            if (searchTitle != null) query = query.Where(b => b.Title.Contains(searchTitle));
-
+            //Filter by Search
+            if (searchBy != null)
+            {
+                switch (searchBy)
+                {
+                    case "Title":
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                    case "Author":
+                        query = query.Where(b => b.Author.Name.Contains(searchOption));
+                        break;
+                    default:
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                }
+            }
 
             //Count
             var totalItems = await query.CountAsync();
@@ -123,6 +142,11 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         {
             if (model == null || model.BookId == 0 || string.IsNullOrEmpty(model.UserId))
                 return BadRequest("Invalid data");
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId != null)
+            {
+                model.UserId = userId;
+            }
 
             var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == model.UserId);
             if (user == null) return BadRequest("Pls Login!");
@@ -146,7 +170,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         }
         [HttpGet("GetUserFavorites")]
         public async Task<IActionResult> GetUserFavorites(string userId, int page = 1, int pageSize = 12,
-            [FromQuery(Name = "searchTitle")] string searchTitle = null,
+            [FromQuery(Name = "searchBy")] string searchBy = null,
+            [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
             [FromQuery(Name = "orderBy")] string orderBy = "Desc",
             [FromQuery(Name = "isFree")] bool isFree = false)
@@ -178,9 +203,22 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             {
                 query = query.OrderByDescending(b => b.UpdateDate ?? b.CreateDate);
             }
-            //Filter by Search Title
-            if (searchTitle != null) query = query.Where(b => b.Title.Contains(searchTitle));
-
+            //Filter by Search
+            if (searchBy != null)
+            {
+                switch (searchBy)
+                {
+                    case "Title":
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                    case "Author":
+                        query = query.Where(b => b.Author.Name.Contains(searchOption));
+                        break;
+                    default:
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                }
+            }
 
             //Count
             var totalItems = await query.CountAsync();
@@ -215,26 +253,25 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             }
 
-            var isExisted = await _context.RecentRead
-                    .FirstOrDefaultAsync(rd => rd.UserId == recentRead.UserId && rd.BookId == recentRead.BookId);
-
-            if (isExisted == null)
+            var existing = await _context.RecentRead
+                                    .FirstOrDefaultAsync(rd =>
+                                        rd.UserId == recentRead.UserId &&
+                                        rd.BookId == recentRead.BookId &&
+                                        rd.ChapterId == recentRead.ChapterId);
+            if (existing == null)
             {
                 var data = new RecentRead
                 {
                     BookId = recentRead.BookId,
                     UserId = recentRead.UserId,
                     ChapterId = recentRead.ChapterId,
+                    DateRead = DateTime.Now
                 };
-                 await _context.RecentRead.AddAsync(data);
-
+                await _context.RecentRead.AddAsync(data);
             }
             else
             {
-                // Cập nhật chương mới và ngày đọc
-                isExisted.ChapterId = recentRead.ChapterId;
-                isExisted.DateRead = DateTime.Now;
-                _context.RecentRead.Update(isExisted);
+                existing.DateRead = DateTime.Now;
             }
             await _context.SaveChangesAsync();
             return Ok();
@@ -242,7 +279,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         }
         [HttpGet("GetAllRecentRead")]
         public async Task<IActionResult> GetAllRecentRead(string userId, int page = 1, int pageSize = 12,
-            [FromQuery(Name = "searchTitle")] string searchTitle = null,
+            [FromQuery(Name = "searchBy")] string searchBy = null,
+            [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
             [FromQuery(Name = "orderBy")] string orderBy = "Desc",
             [FromQuery(Name = "isFree")] bool isFree = false)
@@ -275,10 +313,22 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (cateIds != null && cateIds.Any())
                 query = query.Where(b => b.BookCategories.Any(bc => cateIds.Contains(bc.CategoryId)));
 
-            // Filter by searchTitle
-            if (!string.IsNullOrEmpty(searchTitle))
-                query = query.Where(b => b.Title.Contains(searchTitle));
-
+            // Filter by searchOption
+            if (searchBy != null)
+            {
+                switch (searchBy)
+                {
+                    case "Title":
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                    case "Author":
+                        query = query.Where(b => b.Author.Name.Contains(searchOption));
+                        break;
+                    default:
+                        query = query.Where(b => b.Title.Contains(searchOption));
+                        break;
+                }
+            }
             // Sort
             bool isAsc = string.Equals(orderBy, "Asc", StringComparison.OrdinalIgnoreCase);
             query = isAsc
@@ -303,13 +353,19 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
         [HttpPost("CreateBook")]
         [Authorize(Roles = "Contributor")]
+
         public async Task<IActionResult> CreateBook([FromBody] CreateBookDto createBookDto)
+
         {
             if (createBookDto == null) throw new BRException("Book data is required.");
+
+
+            if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
 
             // Lấy ID người dùng hiện tại từ token
             var userId = User?.Identity?.Name;
             if (string.IsNullOrEmpty(userId)) throw new UnauthorEx("User not authenticated.");
+
 
             // Map từ DTO sang entity Book
             var book = new Book
@@ -389,6 +445,19 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(new { message = $"Book has been {status}.", isActive = book.IsActive });
         }
 
+
+        [HttpGet("checkBookLicence/{bookId}")]
+        public async Task<ActionResult<bool>> GetBookLicense(int bookId)
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Unauthorized("Bạn cần đăng nhập.");
+
+            var isBookLicensed = await _context.BookLicenses
+                .AnyAsync(bl => bl.BookId == bookId && bl.UserId == userId);
+
+            return Ok(isBookLicensed);
+        }
 
     }
 }

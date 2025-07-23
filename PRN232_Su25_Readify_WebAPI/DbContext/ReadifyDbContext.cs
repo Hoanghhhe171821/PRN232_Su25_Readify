@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.Models;
+using System.Reflection.Emit;
 
 namespace PRN232_Su25_Readify_WebAPI.DbContext
 {
@@ -31,12 +32,60 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
         public DbSet<RoyaltyPayoutTransaction> RoyaltyPayoutTransaction { get; set; }
         public DbSet<RoyaltyTransaction> RoyaltyTransaction { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<TopUpTransaction> TopUpTransactions { get; set; }
+        public DbSet<AuthorRevenueSummary> AuthorRevenueSummary { get; set; }
 
-
+        public DbSet<BookLicense> BookLicenses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.Entity<Cart>(entity =>
+            {
+                entity.ToTable("Carts");
+
+                entity.HasKey(c => c.Id);
+
+                entity.HasIndex(c => c.UserId).IsUnique(); // Mỗi User chỉ có 1 Cart
+
+                entity.Property(c => c.CreateDate)
+                      .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(c => c.AppUser)
+                      .WithOne()
+                      .HasForeignKey<Cart>(c => c.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+            builder.Entity<TopUpTransaction>()
+               .HasOne(t => t.User)
+               .WithMany() 
+               .HasForeignKey(t => t.UserId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<CartItem>(entity =>
+            {
+                entity.ToTable("CartItems");
+
+                entity.HasKey(ci => ci.Id);
+
+                entity.Property(ci => ci.CreateDate)
+                      .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(ci => ci.Cart)
+                      .WithMany(c => c.CartItems)
+                      .HasForeignKey(ci => ci.CartId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(ci => ci.Book)
+                      .WithMany()
+                      .HasForeignKey(ci => ci.BookId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Đảm bảo không có trùng sách trong giỏ của 1 user
+                entity.HasIndex(ci => new { ci.CartId, ci.BookId }).IsUnique();
+            });
             builder.Entity<IdentityRole>().HasData(
              new IdentityRole
              {
@@ -63,8 +112,11 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
 
             builder.Entity<BookCategory>().HasKey(bc => new { bc.BookId, bc.CategoryId });
             builder.Entity<Favorite>().HasKey(f => new { f.BookId, f.UserId });
-            builder.Entity<RecentRead>().HasKey(rr => new { rr.BookId, rr.UserId });
-
+            builder.Entity<RecentRead>()
+                .HasKey(r => r.Id);
+            builder.Entity<RecentRead>()
+                .HasIndex(r => new { r.UserId, r.BookId, r.ChapterId })
+                .IsUnique();
             builder.Entity<AuthorRequest>().HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -116,6 +168,32 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
                     .WithMany()
                     .HasForeignKey(rt => rt.OrderItemId)
                     .OnDelete(DeleteBehavior.Restrict); // 
+            });
+
+            // book license
+            builder.Entity<BookLicense>(entity =>
+            {
+                entity.ToTable("BookLicenses");
+
+                entity.HasKey(bl => bl.Id);
+
+                // Quan hệ với AppUser (Cascade khi xóa User)
+                entity.HasOne(bl => bl.User)
+                      .WithMany(u => u.BookLicenses)
+                      .HasForeignKey(bl => bl.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Quan hệ với Book (Cascade khi xóa Book)
+                entity.HasOne(bl => bl.Book)
+                      .WithMany(b => b.BookLicenses)
+                      .HasForeignKey(bl => bl.BookId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Quan hệ với OrderItem (KHÔNG cascade để tránh multiple paths)
+                entity.HasOne(bl => bl.OrderItem)
+                      .WithMany(oi => oi.BookLicenses)
+                      .HasForeignKey(bl => bl.OrderItemId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
 

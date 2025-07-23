@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PRN232_Su25_Readify_Web.Dtos.Books;
@@ -14,6 +15,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
     public class BooksController : Controller
     {
         private readonly HttpClient _httpClient;
+        private readonly IMemoryCache _cache;
+        private readonly IWebHostEnvironment _env;
         private string GetGivenAPIBaseUrl()
         {
             var config = new ConfigurationBuilder()
@@ -22,18 +25,20 @@ namespace PRN232_Su25_Readify_Web.Controllers
             string baseUrl = config["GivenAPIBaseUrl"];
             return baseUrl;
         }
-        public BooksController(IHttpClientFactory factory)
+        public BooksController(IHttpClientFactory factory, IMemoryCache cache, IWebHostEnvironment env)
         {
             _httpClient = factory.CreateClient();
             _httpClient.BaseAddress = new Uri(GetGivenAPIBaseUrl());
+            _cache = cache;
+            _env = env;
         }
         [HttpGet("BookList")]
-        public async Task<IActionResult> BookList(int page = 1, string searchTitle = null,
+        public async Task<IActionResult> BookList(int page = 1, string searchOption = null, string searchBy = null,
             List<int> cateIds = null, string orderBy = "Desc",bool isFree = false,string userId = null)
         {
             
 
-            var url = $"api/Books/GetAllBooks?page={page}&searchTitle={searchTitle}&orderBy={orderBy}&isFree={isFree}";
+            var url = $"api/Books/GetAllBooks?page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
@@ -48,7 +53,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Get Cate by API
             var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
-
+            //Get Author By API
+            var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
             // Lấy danh sách các Book yêu thích từ API
             List<int> favoriteBookIds = new List<int>();
 
@@ -78,8 +84,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     TotalPage = totalPage
                 },
                 Categories = categories.ToList(),
+                Authors = authors.ToList(),
                 OrderBy = orderBy,
-                SearchTitle = searchTitle,
+                SearchBy= searchBy,
+                SearchOption = searchOption,
                 IsFree = isFree,
                 UserId = userId
             };
@@ -112,12 +120,33 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     favoriteBookIds = favoriteBooks.Select(b => b.Id).ToList();
                 }
             }
-
-            
+ 
             var isFavor = false;
             if (favoriteBookIds.Contains(bookId)) isFavor = true;
-
             var chapterQuan = book.Chapters.Count();
+
+            // Lấy danh sách chương đã đọc
+            List<int> chapterIds = new List<int>();
+            var lastedRead = new RecentedReadChapters();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var recentedReadChapters = await GetApiDataAsync<List<RecentedReadChapters>>($"api/Chapters/GetRecentedReadChapters?userId={userId}&bookId={bookId}");
+                foreach(var recent in recentedReadChapters)
+                {
+                    chapterIds.Add(recent.ChapterId);
+                }
+                lastedRead = recentedReadChapters.OrderByDescending(rd => rd.DateRead).FirstOrDefault();
+            }
+            // Chuyển Book.Chapters thành ChapterDto có đánh dấu isRead
+            var chapterDtos = book.Chapters
+                .OrderBy(c => c.ChapterOrder)
+                .Select(c => new ChapterDto
+                {
+                    Chapter = c,
+                    isRead = chapterIds.Contains(c.Id)
+                })
+                .ToList();
+
             var result = new BookDetailsViewModel
             {
                 Book = book,
@@ -125,6 +154,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 isFavorite = isFavor,
                 UserId = userId,
                 RelatedBooks = relatedBooks,
+                ChapterDto = chapterDtos,
+                LastRead = lastedRead,
                 PagedComments = new PagedResult<Comment>
                 {
                     Items = comments,
@@ -150,20 +181,60 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Lấy chapter
             var chapters = await GetApiDataAsync<List<Chapter>>($"api/Books/GetAllChapterByBookId/{bookId}");
-            if(chapters == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId });
+            if(chapters == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId , userId = userId});
 
-            int chapterId = chapters.FirstOrDefault(c => c.ChapterOrder == chapterOrder).Id;
+            var chapter = chapters.FirstOrDefault(c => c.ChapterOrder == chapterOrder);
+            if(chapter == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId, userId = userId });
+            int chapterId = chapter.Id;
 
-            var query = await GetApiDataAsync<ReadViewModel>($"/api/Chapters/GetChapter?bookId={bookId}&chapterOrder={chapterOrder}");
-            if (query == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId });
-            
+            var fileName = $"{book.Title}_Chapter_{chapterOrder}.pdf";
+            var cacheKey = $"Pdf_{bookId}_{chapterOrder}"; //Khóa cho IMemoryCache
+            var tempPath = Path.Combine(_env.WebRootPath, "temp", fileName);
+
+            byte[] fileBytes;
+            //Kiểm tra IMemoryCache
+            if (_cache.TryGetValue(cacheKey, out fileBytes))
+            {
+                // File đã có trong cache, sử dụng nó
+            }
+            //Khôgn có trong cache, kiểm tra wwwroot/temp
+            else if (System.IO.File.Exists(tempPath))
+            {
+                fileBytes = await System.IO.File.ReadAllBytesAsync(tempPath);
+                //Lưu vào cache 
+                _cache.Set(cacheKey, fileBytes, TimeSpan.FromMinutes(30));
+            }
+            else
+            {
+                var response = await _httpClient.GetAsync($"/api/Chapters/GetChapter?bookId={bookId}&chapterOrder={chapterOrder}");
+                if (!response.IsSuccessStatusCode)
+                    return RedirectToAction("BookDetails", "Books", new { bookId });
+
+                fileBytes = await response.Content.ReadAsByteArrayAsync();
+                // Lưu vào thư mục temp
+                Directory.CreateDirectory(Path.GetDirectoryName(tempPath)!);
+                await System.IO.File.WriteAllBytesAsync(tempPath, fileBytes);
+
+                // Lưu vào cache
+                _cache.Set(cacheKey, fileBytes, TimeSpan.FromMinutes(30)); // Đặt thời gian hết hạn 30 phút
+                //Đặt hẹn xóa file sau 30 phút (nếu vẫn tồn tại)
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(30));
+                    if (System.IO.File.Exists(tempPath))
+                    {
+                        try { System.IO.File.Delete(tempPath); } catch { }
+                    }
+                });
+            }
+
             var result = new ReadViewModel
             {
                 Book = book,
                 ChapterOrder = chapterOrder,
-                Content = query.Content,
-                Title = query.Title,
-                Chapters = chapters
+                Title = chapter.Title,
+                Chapters = chapters,
+                PdfPath = $"/temp/{fileName}"
             };
             //Thêm vào danh sách đã đọc nếu người dùng đã đăng nhập
             if (userId != null)
@@ -180,11 +251,11 @@ namespace PRN232_Su25_Readify_Web.Controllers
             return View(result);
         }
         [HttpGet("FavoritesList")]
-        public async Task<IActionResult> FavoritesList(string userId,int page = 1, string searchTitle = null,
+        public async Task<IActionResult> FavoritesList(string userId,int page = 1, string searchOption = null, string searchBy = null,
            List<int> cateIds = null, string orderBy = "Desc", bool isFree = false)
         {
             if (userId == null) return RedirectToAction("Index", "Home");
-            var url = $"api/Books/GetUserFavorites?userId={userId}&page={page}&searchTitle={searchTitle}&orderBy={orderBy}&isFree={isFree}";
+            var url = $"api/Books/GetUserFavorites?userId={userId}&page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
@@ -199,7 +270,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Get Cate by API
             var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
-
+            //Get Author By API
+            var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
             // Lấy danh sách các Book yêu thích từ API
             var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
             var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
@@ -224,20 +296,21 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     TotalPage = totalPage
                 },
                 Categories = categories.ToList(),
-                OrderBy = orderBy,
-                SearchTitle = searchTitle,
+                Authors = authors.ToList(),
+                SearchBy=searchBy,
+                SearchOption = searchOption,
                 IsFree = isFree,
                 UserId = userId
             };
             return View(model);
         }
         [HttpGet("RecentList")]
-        public async Task<IActionResult> RecentList(string userId,int page = 1, string searchTitle = null,
+        public async Task<IActionResult> RecentList(string userId,int page = 1, string searchOption = null, string searchBy = null,
             List<int> cateIds = null, string orderBy = "Desc", bool isFree = false)
         {
             if (userId == null) return RedirectToAction("Login", "Auths");
 
-            var url = $"api/Books/GetAllRecentRead?userId={userId}&page={page}&searchTitle={searchTitle}&orderBy={orderBy}&isFree={isFree}";
+            var url = $"api/Books/GetAllRecentRead?userId={userId}&page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
@@ -252,7 +325,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Get Cate by API
             var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
-
+            //Get Author By API
+            var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
             // Lấy danh sách các Book yêu thích từ API
             var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
             var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
@@ -277,8 +351,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     TotalPage = totalPage
                 },
                 Categories = categories.ToList(),
+                Authors = authors.ToList(),
                 OrderBy = orderBy,
-                SearchTitle = searchTitle,
+                SearchBy=searchBy,
+                SearchOption = searchOption,
                 IsFree = isFree,
                 UserId = userId
             };
