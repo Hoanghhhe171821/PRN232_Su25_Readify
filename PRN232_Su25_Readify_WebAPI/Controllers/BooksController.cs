@@ -350,79 +350,99 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             return Ok(result);
         }
-        // Các endpoint mới cho "Manage Books" (Contributor)
-        [HttpGet("manage")]
+
+        [HttpPost("CreateBook")]
         [Authorize(Roles = "Contributor")]
-        public async Task<IActionResult> GetManageBooks(int page = 1, int pageSize = 10,
-            [FromQuery(Name = "searchOption")] string searchOption = null)
+
+        public async Task<IActionResult> CreateBook([FromBody] CreateBookDto createBookDto)
+
         {
-            var query = _context.Books.Include(b => b.Author).AsQueryable();
+            if (createBookDto == null) throw new BRException("Book data is required.");
+
 
             if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
 
-            var totalItems = await query.CountAsync();
-            var books = await query
-                .Skip((page - 1) * pageSize).Take(pageSize)
-                .ToListAsync();
-            var result = new
-            {
-                TotalItems = totalItems,
-                PageSize = pageSize,
-                PageNumber = page,
-                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize),
-                Items = books
-            };
-            return Ok(result);
-        }
-
-
-        [HttpPost("manage")]
-        [Authorize(Roles = "Contributor")]
-        public async Task<IActionResult> CreateBook([FromBody] Book book)
-        {
-            if (book == null) throw new BRException("Book data is required.");
-
-            // Đảm bảo AuthorId và UploadedBy được gán (có thể lấy từ user hiện tại)
-            var userId = User?.Identity?.Name; // Lấy ID người dùng hiện tại từ token
+            // Lấy ID người dùng hiện tại từ token
+            var userId = User?.Identity?.Name;
             if (string.IsNullOrEmpty(userId)) throw new UnauthorEx("User not authenticated.");
-            book.UploadedBy = userId;
+
+
+            // Map từ DTO sang entity Book
+            var book = new Book
+            {
+                Title = createBookDto.Title,
+                Description = createBookDto.Description,
+                IsFree = createBookDto.IsFree,
+                Price = createBookDto.Price,
+                UnitInOrder = createBookDto.UnitInOrder,
+                ImageUrl = createBookDto.ImageUrl,
+                RoyaltyRate = createBookDto.RoyaltyRate,
+                AuthorId = createBookDto.AuthorId,
+                UploadedBy = userId,
+                CreateDate = DateTime.Now,
+                UpdateDate = createBookDto.UpdateDate,
+                IsActive = false // luôn gán false khi tạo mới, chờ manager duyệt
+            };
 
             _context.Books.Add(book);
             await _context.SaveChangesAsync();
+
             return CreatedAtAction(nameof(GetBookById), new { bookId = book.Id }, book);
         }
 
-        [HttpPut("manage/{id}")]
-        [Authorize(Roles = "Contributor")]
-        public async Task<IActionResult> UpdateBook(int id, [FromBody] Book book)
-        {
-            if (book == null || id != book.Id) throw new BRException("Invalid book data.");
-
-            var existingBook = await _context.Books.FindAsync(id);
-            if (existingBook == null) throw new NFoundEx("Book not found.");
-
-            existingBook.Title = book.Title;
-            existingBook.Description = book.Description;
-            existingBook.IsFree = book.IsFree;
-            existingBook.Price = book.Price;
-            existingBook.ImageUrl = book.ImageUrl;
-            existingBook.RoyaltyRate = book.RoyaltyRate;
-
-            _context.Entry(existingBook).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-
-        [HttpDelete("manage/{id}")]
-        [Authorize(Roles = "Contributor")]
-        public async Task<IActionResult> DeleteBook(int id)
+        [HttpPut("ApproveBook/{id}")]
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> ApproveBook(int id)
         {
             var book = await _context.Books.FindAsync(id);
-            if (book == null) throw new NFoundEx("Book not found.");
+            if (book == null) return NotFound("Book not found");
 
-            _context.Books.Remove(book);
+            book.IsActive = true;
+            book.UpdateDate = DateTime.Now;
+
             await _context.SaveChangesAsync();
-            return NoContent();
+
+            return Ok(new { message = "Book approved and now visible." });
+        }
+
+        [HttpPut("UpdateBook")]
+        [Authorize(Roles = "Contributor")]
+        public async Task<IActionResult> UpdateBook([FromBody] UpdateBookDto updateBookDto)
+        {
+            var book = await _context.Books.FindAsync(updateBookDto.Id);
+            if (book == null) return NotFound("Book not found");
+
+            // Gán giá trị cập nhật từ DTO sang entity
+            book.Title = updateBookDto.Title;
+            book.Description = updateBookDto.Description;
+            book.IsFree = updateBookDto.IsFree;
+            book.Price = updateBookDto.Price;
+            book.UnitInOrder = updateBookDto.UnitInOrder;
+            book.ImageUrl = updateBookDto.ImageUrl;
+            book.RoyaltyRate = updateBookDto.RoyaltyRate;
+            book.AuthorId = updateBookDto.AuthorId;
+            book.UpdateDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(book);
+        }
+
+        [HttpPut("ToggleBookStatus/{id}")]
+        [Authorize(Roles = "Contributor")]
+        public async Task<IActionResult> ToggleBookStatus(int id)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book == null) return NotFound("Book not found");
+
+            // Đảo trạng thái: nếu đang active → inactive, và ngược lại
+            book.IsActive = !book.IsActive;
+            book.UpdateDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            string status = book.IsActive ? "activated" : "deactivated";
+            return Ok(new { message = $"Book has been {status}.", isActive = book.IsActive });
         }
 
 
