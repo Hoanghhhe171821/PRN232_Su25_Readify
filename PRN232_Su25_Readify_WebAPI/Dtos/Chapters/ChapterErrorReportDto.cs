@@ -2,8 +2,12 @@
 {
     public class ChapterErrorReportDto
     {
-        public int ChapterId { get; set; }
-        public int ErrorTypeId { get; set; }
-        public string Description { get; set; }
+        public int Id { get; set; }
+        public string? Description { get; set; }
+        public string Status { get; set; } = "Pending";
+        public string ChapterTitle { get; set; } = string.Empty;
+        public string ErrorTypeName { get; set; } = string.Empty;
+        public string UserEmail { get; set; } = string.Empty;
     }
+
 }

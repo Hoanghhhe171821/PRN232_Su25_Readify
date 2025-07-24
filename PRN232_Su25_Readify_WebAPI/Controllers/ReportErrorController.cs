@@ -6,7 +6,6 @@ using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Chapters;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Models.Enum;
-using System;
 using System.Security.Claims;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
@@ -23,7 +22,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ReportChapterError([FromBody] ChapterErrorReportDto dto)
+        public async Task<IActionResult> ReportChapterError([FromBody] ChapterErrorReportRequestDto dto)
         {
             // Kiểm tra chapter tồn tại
             var chapter = await _context.Chapters.FindAsync(dto.ChapterId);
@@ -55,7 +54,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             return Ok(new { message = "Error reported successfully", errorId = error.Id });
         }
-        // API: /api/ReportError/GetAllReports
+
         [HttpGet("GetAllReports")]
         public async Task<IActionResult> GetAllReports()
         {
@@ -64,14 +63,14 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 .Include(e => e.ErrorType)
                 .Include(e => e.User)
                 .OrderByDescending(e => e.Id)
-                .Select(e => new
+                .Select(e => new ChapterErrorReportDto
                 {
-                    e.Id,
-                    e.Description,
-                    e.Status,
-                    ChapterTitle = e.Chapter.Title,
-                    ErrorTypeName = e.ErrorType.Name,
-                    UserEmail = e.User.Email
+                    Id = e.Id,
+                    Description = e.Description,
+                    Status = e.Status.ToString(),
+                    ChapterTitle = e.Chapter.Title ?? string.Empty,
+                    ErrorTypeName = e.ErrorType.Name ?? string.Empty,
+                    UserEmail = e.User.Email ?? string.Empty
                 })
                 .ToListAsync();
 
