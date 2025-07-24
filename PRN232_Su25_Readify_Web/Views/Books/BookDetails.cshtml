@@ -1,8 +1,6 @@
 ﻿@using PRN232_Su25_Readify_Web.Dtos.Books
 @model BookDetailsViewModel
-@{
-    var userId = @User.FindFirst("userId")?.Value;
-}
+
 <div class="page-content">
     <section class="content-inner-1">
         <div class="container">
@@ -46,12 +44,28 @@
                                     </ul>
                                 </div>
                                 <div class="book-footer">
-                                    @if (Model.Book.IsFree)
+                                    @if (Model.Book.IsFree || Model.IsLicensed)
                                     {
-                                        <div class="price">
-                                            <h5>Miễn phí</h5>
-                                            <p class="p-lr10">@string.Format("{0:N0} đ", Model.Book.Price)</p>
-                                        </div>
+                                        @if(Model.Book.Price == 0){
+                                            <div class="price">
+                                                <h5>Miễn phí</h5>
+                                                
+                                            </div>
+                                        }
+                                        else if (Model.Book.Price != 0 || Model.IsLicensed)
+                                        {
+                                            <div class="price">
+                                                <h5>Đã mua</h5>
+                                                <p class="p-lr10">@string.Format("{0:N0} đ", Model.Book.Price)</p>
+                                            </div>
+                                        }
+                                        else if (Model.Book.Price != 0 || Model.Book.IsFree){
+                                            <div class="price">
+                                                <h5>Miễn phí</h5>
+                                                <p class="p-lr10">@string.Format("{0:N0} đ", Model.Book.Price)</p>
+                                            </div>
+                                        }
+                                        
                                         <div class="product-num">
                                             <div class="quantity btn-quantity style-1 me-3">
                                             </div>
@@ -61,7 +75,6 @@
                                                 <a asp-controller="Books" asp-action="Read"
                                                    asp-route-bookId="@Model.Book.Id"
                                                    asp-route-chapterOrder="@Model.LastRead.ChapterOrder"
-                                                   asp-route-userId="@userId"
                                                    class="btn btn-warning btnhover btnhover2">
                                                     <i class="flaticon-shopping-cart-1 m-r10"></i> Recented Read
                                                 </a>
@@ -70,7 +83,6 @@
                                             <a asp-controller="Books" asp-action="Read"
                                                asp-route-bookId="@Model.Book.Id"
                                                asp-route-chapterOrder="1"
-                                               asp-route-userId="@userId"
                                                class="btn btn-secondary btnhover btnhover2">
                                                 <i class="flaticon-shopping-cart-1 m-r10"></i> Read
                                             </a>
@@ -78,7 +90,7 @@
                                                 <input class="form-check-input" type="checkbox"
                                                        id="flexCheckFavorite-@Model.Book.Id"
                                                 @(Model.isFavorite ? "checked" : "")
-                                                       onclick="toggleFavorite(@Model.Book.Id,'@userId')">
+                                                       onclick="toggleFavorite(@Model.Book.Id)">
                                                 <label class="form-check-label" for="flexCheckFavorite-@Model.Book.Id">
                                                     <i id="favoriteIcon-@Model.Book.Id" class="flaticon-heart @(Model.isFavorite ? "text-pink" : "")"></i>
                                                 </label>
@@ -89,12 +101,9 @@
                                     {
                                         <div class="price">
                                             <h5>@string.Format("{0:N0} đ", Model.Book.Price)</h5>
-                                            <p class="p-lr10">$70.00</p>
+                                            <p class="p-lr10">100,000 đ</p>
                                         </div>
                                         <div class="product-num">
-                                            <div class="quantity btn-quantity style-1 me-3">
-                                                <input id="demo_vertical2" type="text" value="1" name="demo_vertical2" />
-                                            </div>
                                             <button class="add-to-cart-btn btn btn-secondary btnhover btnhover2"
                                                     data-book-id="@Model.Book.Id">
                                                 <i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
@@ -104,7 +113,7 @@
                                                 <input class="form-check-input" type="checkbox"
                                                        id="flexCheckFavorite-@Model.Book.Id"
                                                 @(Model.isFavorite ? "checked" : "")
-                                                       onclick="toggleFavorite(@Model.Book.Id,'@userId')">
+                                                       onclick="toggleFavorite(@Model.Book.Id)">
                                                 <label class="form-check-label" for="flexCheckFavorite-@Model.Book.Id">
                                                     <i id="favoriteIcon-@Model.Book.Id" class="flaticon-heart @(Model.isFavorite ? "text-pink" : "")"></i>
                                                 </label>
@@ -131,8 +140,8 @@
                                                    style="color:@(chapters[i].isRead ? "gray" : "blue")"
                                                    asp-controller="Books" asp-action="Read"
                                                    asp-route-bookId="@Model.Book.Id"
-                                                   asp-route-chapterOrder="@chapters[i].Chapter.ChapterOrder"
-                                                   asp-route-userId="@userId">Chapter @chapters[i].Chapter.ChapterOrder - @chapters[i].Chapter.Title</a>
+                                                   asp-route-chapterOrder="@chapters[i].Chapter.ChapterOrder">
+                                                   Chapter @chapters[i].Chapter.ChapterOrder - @chapters[i].Chapter.Title</a>
                                                    <br/>
                                             }
                                         }
@@ -287,7 +296,6 @@
                                             <div class="clearfix">
                                                 <form method="post" asp-controller="Comments" asp-action="Add" class="comment-form">
                                                     <input hidden name="bookId" value="@Model.Book.Id" />
-                                                    <input hidden name="userId" value="@userId" />
                                                     <p class="comment-form-comment">
                                                         <textarea name="content" placeholder="Type Comment Here" class="form-control4" cols="45" rows="3" required="required"></textarea>
                                                     </p>
@@ -430,7 +438,7 @@
         });
     </script>
     <script>
-            function toggleFavorite(bookId,userId) {
+            function toggleFavorite(bookId) {
             var checkbox = $('#flexCheckFavorite-' + bookId);
             var isChecked = checkbox.is(':checked');
             $.ajax({
@@ -438,8 +446,7 @@
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    BookId: bookId,
-                    UserId: userId
+                    BookId: bookId
                 }),
                 success: function (res) {
                     if (res.isFavorite) {

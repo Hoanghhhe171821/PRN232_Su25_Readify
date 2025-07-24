@@ -3,7 +3,22 @@
 @model BookListViewModel
 @{
     var selectedCateIds = Context.Request.Query["cateIds"].Select(int.Parse).ToList();
-    var userId = @User.FindFirst("userId")?.Value;
+}
+@*Create Route value to pagings*@
+@functions {
+    IDictionary<string, string> BuildRouteValues(int page, List<int> cateIds)
+    {
+        var routeValues = new Dictionary<string, string>();
+        routeValues["page"] = page.ToString();
+        routeValues["orderBy"] = Model.OrderBy ?? "";
+        routeValues["searchTitle"] = Context.Request.Query["searchTitle"].ToString() ?? "";
+
+        for (int i = 0; i < cateIds.Count; i++)
+        {
+            routeValues[$"cateIds[{i}]"] = cateIds[i].ToString();
+        }
+        return routeValues;
+    }
 }
 <div class="page-content bg-grey">
     <div class="content-inner-1 border-bottom">
@@ -16,17 +31,16 @@
                             <h4 class="title">Filter Option</h4>
 
                         </div>
-                        <form asp-controller="Books" asp-action="FavoritesList" method="get">
+                        <form asp-controller="Books" asp-action="FavoritesList" method="get" id="filterForm">
                             <input type="hidden" name="page" value="@Model.PagedBooks.PageNumber" />
-                            <input type="hidden" name="page" value="@Model.OrderBy" />
-                            <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
+                            <input type="hidden" name="orderBy" value="@Model.OrderBy" />
+                            <input type="hidden" name="searchOption" id="hiddenSearchOption" value="@(Context.Request.Query["searchOption"])" />
 
                             <div class="accordion accordion-filter" id="accordionExample">
                                 <div class="accordion-item">
-                                    <button class="accordion-button" id="headingOne" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Shop by Category</button>
-                                    <div id="collapseOne" class="accordion-collapse collapse show accordion-body" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                    <button class="accordion-button" id="headingCategory" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategory" aria-expanded="true" aria-controls="collapseCategory">Shop by Category</button>
+                                    <div id="collapseCategory" class="accordion-collapse collapse show accordion-body" aria-labelledby="headingCategory" data-bs-parent="#accordionExample">
                                         <div class="widget dz-widget_services d-flex justify-content-between">
-
                                             <div class="">
                                                 @foreach (var cate in Model.Categories)
                                                 {
@@ -39,7 +53,28 @@
                                                         </label>
                                                     </div>
                                                 }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <button class="accordion-button" id="headingAuthor" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAuthor" aria-expanded="true" aria-controls="collapseAuthor">Shop by Author</button>
+                                    <div id="collapseAuthor" class="accordion-collapse collapse show accordion-body" aria-labelledby="headingAuthor" data-bs-parent="#accordionExample">
+                                        <div class="widget dz-widget_services d-flex justify-content-between">
+                                            <div class="">
+                                                <input type="hidden" name="searchBy" id="hiddenSearchBy" value="@(Context.Request.Query["searchBy"])" />
 
+                                                @foreach (var author in Model.Authors)
+                                                {
+                                                    <div class="form-check search-content">
+                                                        <input class="form-check-input author-radio" type="radio" name="authorRadioOption"
+                                                               value="@author.Name" id="authorRadio-@author.Id"
+                                                        @(Context.Request.Query["searchBy"] == "Author" && Context.Request.Query["searchOption"] == author.Name ? "checked" : "")>
+                                                        <label class="form-check-label" for="authorRadio-@author.Id">
+                                                            @author.Name
+                                                        </label>
+                                                    </div>
+                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -117,24 +152,27 @@
 
                                 <div class="col-book style-2">
                                     <div class="dz-shop-card style-1">
+                                        @*Image*@
                                         <div class="dz-media">
-                                            <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
+                                            <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
                                                style="text-decoration: none; color: inherit;">
-                                                <img src="@book.ImageUrl" alt="book">
+                                                <img src="@book.ImageUrl" alt="@book.Title" style="width: 224px;height: 322px;">
                                             </a>
                                         </div>
+                                        @*Favorite*@
                                         <div class="bookmark-btn style-2">
                                             <input class="form-check-input" type="checkbox"
                                                    id="flexCheckFavorite-@book.Id"
                                             @(book.IsFavorite ? "checked" : "")
-                                                   onclick="toggleFavorite(@book.Id,'@Model.UserId')">
+                                                   onclick="toggleFavorite(@book.Id)">
                                             <label class="form-check-label" for="flexCheckFavorite-@book.Id">
                                                 <i id="favoriteIcon-@book.Id" class="flaticon-heart @(book.IsFavorite ? "text-pink" : "")"></i>
                                             </label>
                                         </div>
+                                        @*Content*@
                                         <div class="dz-content">
                                             <h5 class="title">
-                                                <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
+                                                <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
                                                    style="text-decoration: none; color: inherit;">@book.Title</a>
                                             </h5>
                                             <ul class="dz-tags">
@@ -167,7 +205,17 @@
                                                         <span class="price-num">Miễn phí</span>
                                                         <del>@string.Format("{0:N0} đ", book.Price)</del>
                                                     </div>
-                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
+                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+                                                       class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
+
+                                                }
+                                                else if (!book.IsFree && book.IsLicense)
+                                                {
+                                                    <div class="price">
+                                                        <span class="price-num">Đã mua</span>
+                                                        <del>@string.Format("{0:N0} đ", book.Price)</del>
+                                                    </div>
+                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
                                                        class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
 
                                                 }
@@ -176,7 +224,10 @@
                                                     <div class="price">
                                                         <span class="price-num">@string.Format("{0:N0} đ", book.Price)</span>
                                                     </div>
-                                                    <a href="shop-cart.html" class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart</a>
+                                                    <button class="add-to-cart-btn btn btn-secondary btnhover btnhover2"
+                                                            data-book-id="@book.Id">
+                                                        <i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
+                                                    </button>
                                                 }
 
                                             </div>
@@ -187,7 +238,6 @@
                         }
                     </div>
                     @*Paging*@
-
                     <div class="row page mt-0">
                         <div class="col-md-6">
                             <p class="page-text">
@@ -200,55 +250,40 @@
 
                                     @if (Model.PagedBooks.PageNumber > 1)
                                     {
+                                        var prevRouteValues = BuildRouteValues(Model.PagedBooks.PageNumber - 1, selectedCateIds);
                                         <li class="page-item">
-                                            <form asp-controller="Books" asp-action="FavoritesList" asp-route-page="@(Model.PagedBooks.PageNumber - 1)" method="get" class="d-inline">
-                                                @foreach (var cateId in selectedCateIds)
-                                                {
-                                                    <input type="hidden" name="cateIds" value="@cateId" />
-                                                }
-                                                <input type="hidden" name="page" value="@Model.OrderBy" />
-                                                <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
-
-
-                                                <button type="submit" class="page-link prev">Prev</button>
-                                            </form>
+                                            <a class="page-link prev"
+                                               asp-controller="Books"
+                                               asp-action="FavoritesList"
+                                               asp-all-route-data="prevRouteValues">
+                                                Prev
+                                            </a>
                                         </li>
                                     }
 
                                     @for (int i = 1; i <= Model.PagedBooks.TotalPage; i++)
                                     {
+                                        var pageRouteValues = BuildRouteValues(i, selectedCateIds);
                                         <li class="page-item">
-                                            <form asp-controller="Books" asp-action="FavoritesList" asp-route-page="@i" method="get" class="d-inline">
-                                                @foreach (var cateId in selectedCateIds)
-                                                {
-                                                    <input type="hidden" name="cateIds" value="@cateId" />
-                                                }
-                                                <input type="hidden" name="page" value="@Model.OrderBy" />
-                                                <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
-
-
-                                                <button type="submit" class="page-link @(i == Model.PagedBooks.PageNumber ? "active" : "")">
-                                                    @i
-                                                </button>
-                                            </form>
+                                            <a class="page-link @(i == Model.PagedBooks.PageNumber ? "active" : "")"
+                                               asp-controller="Books"
+                                               asp-action="FavoritesList"
+                                               asp-all-route-data="pageRouteValues">
+                                                @i
+                                            </a>
                                         </li>
                                     }
 
                                     @if (Model.PagedBooks.PageNumber < Model.PagedBooks.TotalPage)
                                     {
+                                        var nextRouteValues = BuildRouteValues(Model.PagedBooks.PageNumber + 1, selectedCateIds);
                                         <li class="page-item">
-
-                                            <form asp-controller="Books" asp-action="FavoritesList" asp-route-page="@(Model.PagedBooks.PageNumber + 1)" method="get" class="d-inline">
-                                                <input type="hidden" type="text" name="searchTitle" value="@(Context.Request.Query["searchTitle"])" />
-
-
-                                                <input type="hidden" name="page" value="@Model.OrderBy" />
-                                                @foreach (var cateId in selectedCateIds)
-                                                {
-                                                    <input type="hidden" name="cateIds" value="@cateId" />
-                                                }
-                                                <button type="submit" class="page-link next">Next</button>
-                                            </form>
+                                            <a class="page-link next"
+                                               asp-controller="Books"
+                                               asp-action="FavoritesList"
+                                               asp-all-route-data="nextRouteValues">
+                                                Next
+                                            </a>
                                         </li>
                                     }
 
@@ -256,7 +291,6 @@
                             </nav>
                         </div>
                     </div>
-
 
                 </div>
             </div>
@@ -348,7 +382,7 @@
     </div>
     @section Scripts {
         <script>
-                function toggleFavorite(bookId,userId) {
+                function toggleFavorite(bookId) {
                 var checkbox = $('#flexCheckFavorite-' + bookId);
                 var isChecked = checkbox.is(':checked');
                 $.ajax({
@@ -356,9 +390,11 @@
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({
-                        BookId: bookId,
-                        UserId: userId
+                        BookId: bookId
                     }),
+                     xhrFields: {
+                        withCredentials: true
+                    },
                     success: function (res) {
                         if (res.isFavorite) {
                             $('#favoriteIcon-' + bookId).addClass('text-pink');
@@ -367,7 +403,10 @@
                         }
                     },
                     error: function (xhr) {
-                        alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                        alert(xhr.responseText);
+                        console.log("XHR Status:", xhr.status);              // Mã trạng thái HTTP
+                        console.log("XHR Response Text:", xhr.responseText); // Nội dung phản hồi lỗi (nếu có)
+                        console.log("XHR Response JSON:", xhr.responseJSON);
                         checkbox.prop('checked', !isChecked);
                     }
                 });

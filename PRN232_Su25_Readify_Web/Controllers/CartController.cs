@@ -2,6 +2,7 @@
 using PRN232_Su25_Readify_Web.Dtos.Books;
 using PRN232_Su25_Readify_Web.Models;
 using PRN232_Su25_Readify_Web.Services;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace PRN232_Su25_Readify_Web.Controllers
@@ -19,6 +20,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
         }
         public async Task<IActionResult> Index(int page = 1, int pageSize = 5)
         {
+            var claims = User.Claims.Select(c => $"{c.Type}: {c.Value}");
+            Console.WriteLine("User Claims: " + string.Join(", ", claims));
+
             var accessToken = Request.Cookies["access_Token"];
             var sessionId = Request.Cookies["session_Id"];
 

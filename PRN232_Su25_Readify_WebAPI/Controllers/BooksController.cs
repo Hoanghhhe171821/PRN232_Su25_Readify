@@ -138,26 +138,19 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         }
 
         [HttpPost("AddToFavorite")]
-        public async Task<IActionResult> AddToFavorite([FromBody] FavoriteModel model)
+        public async Task<IActionResult> AddToFavorite([FromBody]FavoriteModel favoriteModel)
         {
-            if (model == null || model.BookId == 0 || string.IsNullOrEmpty(model.UserId))
-                return BadRequest("Invalid data");
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId != null)
-            {
-                model.UserId = userId;
-            }
 
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == model.UserId);
-            if (user == null) return BadRequest("Pls Login!");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
 
-            var book = await _context.Books.SingleOrDefaultAsync(b => b.Id == model.BookId);
+            var book = await _context.Books.SingleOrDefaultAsync(b => b.Id == favoriteModel.BookId);
             if (book == null) return BadRequest("Book not found");
 
-            var isFavor = await _context.Favorite.SingleOrDefaultAsync(f => f.BookId == model.BookId && f.UserId == model.UserId);
+            var isFavor = await _context.Favorite.SingleOrDefaultAsync(f => f.BookId == favoriteModel.BookId && f.UserId == userId);
             if (isFavor == null)
             {
-                _context.Favorite.Add(new Favorite { BookId = model.BookId, UserId = model.UserId });
+                _context.Favorite.Add(new Favorite { BookId = favoriteModel.BookId, UserId = userId });
                 await _context.SaveChangesAsync();
                 return Ok(new { isFavorite = true });
             }
@@ -169,7 +162,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             }
         }
         [HttpGet("GetUserFavorites")]
-        public async Task<IActionResult> GetUserFavorites(string userId, int page = 1, int pageSize = 12,
+        public async Task<IActionResult> GetUserFavorites( int page = 1, int pageSize = 12,
             [FromQuery(Name = "searchBy")] string searchBy = null,
             [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
@@ -179,9 +172,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (page <= 0) page = 1;
             if (pageSize <= 1) pageSize = 12;
             //Validate
-            if (userId == null) return BadRequest("Pls login");
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Id.Equals(userId));
-            if (user == null) return BadRequest("Invalid User");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
 
             //Get List Favor Book Id
             var favorBookIds = await _context.Favorite.Where(f => f.UserId.Equals(userId)).Select(f => f.BookId).ToListAsync();
@@ -240,11 +232,12 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         [HttpPost("AddToRecentRead")]
         public async Task<IActionResult> AddToRecentRead([FromBody] RecentReadModel recentRead)
         {
-            var isUserExisted = await _context.Users.AnyAsync(u => u.Id.Equals(recentRead.UserId));
-            if (!isUserExisted) return BadRequest("Pls login!");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
 
             var isBookExisted = await _context.Books.AnyAsync(b => b.Id == recentRead.BookId);
             if (!isBookExisted) return BadRequest("Book not existed!");
+
             if (recentRead.ChapterId != null)
             {
                 var isChapterExisted = await _context.Chapters.Include(c => c.Book)
@@ -255,7 +248,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             var existing = await _context.RecentRead
                                     .FirstOrDefaultAsync(rd =>
-                                        rd.UserId == recentRead.UserId &&
+                                        rd.UserId == userId &&
                                         rd.BookId == recentRead.BookId &&
                                         rd.ChapterId == recentRead.ChapterId);
             if (existing == null)
@@ -263,7 +256,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 var data = new RecentRead
                 {
                     BookId = recentRead.BookId,
-                    UserId = recentRead.UserId,
+                    UserId = userId,
                     ChapterId = recentRead.ChapterId,
                     DateRead = DateTime.Now
                 };
@@ -278,7 +271,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
         }
         [HttpGet("GetAllRecentRead")]
-        public async Task<IActionResult> GetAllRecentRead(string userId, int page = 1, int pageSize = 12,
+        public async Task<IActionResult> GetAllRecentRead( int page = 1, int pageSize = 12,
             [FromQuery(Name = "searchBy")] string searchBy = null,
             [FromQuery(Name = "searchOption")] string searchOption = null,
             [FromQuery(Name = "cateIds")] List<int> cateIds = null,
@@ -286,9 +279,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             [FromQuery(Name = "isFree")] bool isFree = false)
         {
             // Validate user
-            if (string.IsNullOrEmpty(userId)) return BadRequest("Pls login!");
-            var isExistedUser = await _context.Users.AnyAsync(u => u.Id == userId);
-            if (!isExistedUser) return BadRequest("Invalid user!");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
 
             // Validate paging
             if (page <= 0) page = 1;
@@ -350,79 +342,99 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             return Ok(result);
         }
-        // Các endpoint mới cho "Manage Books" (Contributor)
-        [HttpGet("manage")]
+
+        [HttpPost("CreateBook")]
         [Authorize(Roles = "Contributor")]
-        public async Task<IActionResult> GetManageBooks(int page = 1, int pageSize = 10,
-            [FromQuery(Name = "searchOption")] string searchOption = null)
+
+        public async Task<IActionResult> CreateBook([FromBody] CreateBookDto createBookDto)
+
         {
-            var query = _context.Books.Include(b => b.Author).AsQueryable();
-
-            if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
-
-            var totalItems = await query.CountAsync();
-            var books = await query
-                .Skip((page - 1) * pageSize).Take(pageSize)
-                .ToListAsync();
-            var result = new
-            {
-                TotalItems = totalItems,
-                PageSize = pageSize,
-                PageNumber = page,
-                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize),
-                Items = books
-            };
-            return Ok(result);
-        }
+            if (createBookDto == null) throw new BRException("Book data is required.");
 
 
-        [HttpPost("manage")]
-        [Authorize(Roles = "Contributor")]
-        public async Task<IActionResult> CreateBook([FromBody] Book book)
-        {
-            if (book == null) throw new BRException("Book data is required.");
+            //if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
 
-            // Đảm bảo AuthorId và UploadedBy được gán (có thể lấy từ user hiện tại)
-            var userId = User?.Identity?.Name; // Lấy ID người dùng hiện tại từ token
+            // Lấy ID người dùng hiện tại từ token
+            var userId = User?.Identity?.Name;
             if (string.IsNullOrEmpty(userId)) throw new UnauthorEx("User not authenticated.");
-            book.UploadedBy = userId;
+
+
+            // Map từ DTO sang entity Book
+            var book = new Book
+            {
+                Title = createBookDto.Title,
+                Description = createBookDto.Description,
+                IsFree = createBookDto.IsFree,
+                Price = createBookDto.Price,
+                UnitInOrder = createBookDto.UnitInOrder,
+                ImageUrl = createBookDto.ImageUrl,
+                RoyaltyRate = createBookDto.RoyaltyRate,
+                AuthorId = createBookDto.AuthorId,
+                UploadedBy = userId,
+                CreateDate = DateTime.Now,
+                UpdateDate = createBookDto.UpdateDate,
+                IsActive = false // luôn gán false khi tạo mới, chờ manager duyệt
+            };
 
             _context.Books.Add(book);
             await _context.SaveChangesAsync();
+
             return CreatedAtAction(nameof(GetBookById), new { bookId = book.Id }, book);
         }
 
-        [HttpPut("manage/{id}")]
-        [Authorize(Roles = "Contributor")]
-        public async Task<IActionResult> UpdateBook(int id, [FromBody] Book book)
-        {
-            if (book == null || id != book.Id) throw new BRException("Invalid book data.");
-
-            var existingBook = await _context.Books.FindAsync(id);
-            if (existingBook == null) throw new NFoundEx("Book not found.");
-
-            existingBook.Title = book.Title;
-            existingBook.Description = book.Description;
-            existingBook.IsFree = book.IsFree;
-            existingBook.Price = book.Price;
-            existingBook.ImageUrl = book.ImageUrl;
-            existingBook.RoyaltyRate = book.RoyaltyRate;
-
-            _context.Entry(existingBook).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-
-        [HttpDelete("manage/{id}")]
-        [Authorize(Roles = "Contributor")]
-        public async Task<IActionResult> DeleteBook(int id)
+        [HttpPut("ApproveBook/{id}")]
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> ApproveBook(int id)
         {
             var book = await _context.Books.FindAsync(id);
-            if (book == null) throw new NFoundEx("Book not found.");
+            if (book == null) return NotFound("Book not found");
 
-            _context.Books.Remove(book);
+            book.IsActive = true;
+            book.UpdateDate = DateTime.Now;
+
             await _context.SaveChangesAsync();
-            return NoContent();
+
+            return Ok(new { message = "Book approved and now visible." });
+        }
+
+        [HttpPut("UpdateBook")]
+        [Authorize(Roles = "Contributor")]
+        public async Task<IActionResult> UpdateBook([FromBody] UpdateBookDto updateBookDto)
+        {
+            var book = await _context.Books.FindAsync(updateBookDto.Id);
+            if (book == null) return NotFound("Book not found");
+
+            // Gán giá trị cập nhật từ DTO sang entity
+            book.Title = updateBookDto.Title;
+            book.Description = updateBookDto.Description;
+            book.IsFree = updateBookDto.IsFree;
+            book.Price = updateBookDto.Price;
+            book.UnitInOrder = updateBookDto.UnitInOrder;
+            book.ImageUrl = updateBookDto.ImageUrl;
+            book.RoyaltyRate = updateBookDto.RoyaltyRate;
+            book.AuthorId = updateBookDto.AuthorId;
+            book.UpdateDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(book);
+        }
+
+        [HttpPut("ToggleBookStatus/{id}")]
+        [Authorize(Roles = "Contributor")]
+        public async Task<IActionResult> ToggleBookStatus(int id)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book == null) return NotFound("Book not found");
+
+            // Đảo trạng thái: nếu đang active → inactive, và ngược lại
+            book.IsActive = !book.IsActive;
+            book.UpdateDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            string status = book.IsActive ? "activated" : "deactivated";
+            return Ok(new { message = $"Book has been {status}.", isActive = book.IsActive });
         }
 
 

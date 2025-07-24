@@ -13,13 +13,15 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         private readonly IPaymentService _payment;
         private readonly IAuthService _authService;
         private readonly ReadifyDbContext _context;
+        private readonly ITopUpTransService _topUpTransService;
 
         public PaymentController(IPaymentService payment, IAuthService authService,
-            ReadifyDbContext context)
+            ReadifyDbContext context, ITopUpTransService topUpTransService)
         {
             _authService = authService;
             _payment = payment;
             _context = context;
+            _topUpTransService = topUpTransService;
         }
 
         [HttpPost("TopUp")]
@@ -50,7 +52,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return Ok(new {
+            return Ok(new
+            {
                 QrCodeUrl = tx.QrCodeUrl,
                 PayUrl = tx.PaymentUrl,
                 TransactionId = tx.Id,
@@ -58,5 +61,14 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             });
         }
 
+        [HttpGet("TopUp/History")]
+        public async Task<IActionResult> GetTopUpHistory(int pageIndex = 1, int pageSize = 5, string? userName = null)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+            var result = await _topUpTransService.GetTopUpTransactionsAsync(pageIndex, pageSize, userName);
+            return Ok(result);
+
+        }
     }
 }

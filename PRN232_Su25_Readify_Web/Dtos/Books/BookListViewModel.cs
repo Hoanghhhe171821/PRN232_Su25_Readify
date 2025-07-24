@@ -11,7 +11,6 @@ namespace PRN232_Su25_Readify_Web.Dtos.Books
         public string SearchBy { get; set; }
         public string SearchOption { get; set; }
         public bool IsFree { get; set; }
-        public string UserId { get; set; }
     }
     public class BookViewModel
     {
@@ -22,6 +21,7 @@ namespace PRN232_Su25_Readify_Web.Dtos.Books
         public bool IsFree { get; set; }
         public List<BookCategory> BookCategories { get; set; }
         public bool IsFavorite { get; set; }
+        public bool IsLicense { get; set; } = false;
     }
 
 }

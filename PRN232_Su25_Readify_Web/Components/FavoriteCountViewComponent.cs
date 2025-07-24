@@ -3,33 +3,49 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PRN232_Su25_Readify_Web.Dtos.Books;
+using System.Net.Http.Headers;
+using System.Net.Http;
+using System.Net;
+using System;
 
 namespace PRN232_Su25_Readify_Web.Components
 {
     public class FavoriteCountViewComponent : ViewComponent
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         public FavoriteCountViewComponent(IHttpClientFactory factory)
         {
-            _httpClient = factory.CreateClient();
-            _httpClient.BaseAddress = new Uri("https://localhost:7267/");
+            _httpClientFactory = factory;
         }
-        public async Task<IViewComponentResult> InvokeAsync(string userId)
+        public async Task<IViewComponentResult> InvokeAsync()
         {            
 
 
-            if (string.IsNullOrEmpty(userId)) return View(0);
-            var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
+            var favoriteResult = await GetAuthorizedApiDataAsync<JObject>("https://localhost:7267/api/Books/GetUserFavorites");
+            if(favoriteResult == null) return View(0);
+
             var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
             var favoritesCount = favoriteBooks.Count();
 
             return View(favoritesCount);
         }
-        //Get data by Api Url
-        private async Task<T> GetApiDataAsync<T>(string url)
+
+        private async Task<T> GetAuthorizedApiDataAsync<T>(string fullUrl)
         {
-            var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode(); // Báo l?i n?u API tr? l?i
+            var token = Request.Cookies["access_Token"];
+            if (string.IsNullOrEmpty(token)) return default;
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync(fullUrl);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return default;
+            }
+
+            response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
             var data = JsonConvert.DeserializeObject<T>(json);
