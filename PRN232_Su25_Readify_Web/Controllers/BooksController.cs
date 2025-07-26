@@ -3,7 +3,9 @@ using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PRN232_Su25_Readify_Web.Dtos.Books;
+using PRN232_Su25_Readify_Web.Models.Account;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
+using PRN232_Su25_Readify_WebAPI.Dtos.Users;
 using PRN232_Su25_Readify_WebAPI.Models;
 using System.Globalization;
 using System.Net;
@@ -135,14 +137,18 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             // Lấy danh sách chương đã đọc
             List<int> chapterIds = new List<int>();
-            var lastedRead = new RecentedReadChapters();
+            var lastedRead = (RecentedReadChapters?)null;
 
                 var recentedReadChapters = await GetAuthorizedApiDataAsync<List<RecentedReadChapters>>($"api/Chapters/GetRecentedReadChapters?bookId={bookId}");
+            if(recentedReadChapters != null)
+            {
                 foreach (var recent in recentedReadChapters)
                 {
                     chapterIds.Add(recent.ChapterId);
                 }
                 lastedRead = recentedReadChapters.OrderByDescending(rd => rd.DateRead).FirstOrDefault();
+            }
+
 
             // Chuyển Book.Chapters thành ChapterDto có đánh dấu isRead
             var chapterDtos = book.Chapters

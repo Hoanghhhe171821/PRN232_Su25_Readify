@@ -156,7 +156,7 @@
                                         <div class="dz-media">
                                             <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" 
                                                style="text-decoration: none; color: inherit;">
-                                                <img src="@book.ImageUrl" alt="@book.Title" style="width: 224px;height: 322px;">
+                                                <img src="@(!string.IsNullOrEmpty(book.ImageUrl) ? book.ImageUrl : "/images/books/book16.png")" alt="@book.Title" style="width: 224px;height: 322px;">
                                             </a>
                                         </div>
                                         @*Favorite*@
