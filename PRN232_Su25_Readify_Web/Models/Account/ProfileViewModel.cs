@@ -8,5 +8,9 @@
         public string PhoneNumber { get; set; }
         public int Points { get; set; }
         public string AvatarUrl { get; set; }
+        public bool IsAuthor { get; set; }
+        public string? Bio { get; set; }
+        public string? PublicEmail { get; set; }
+        public string? PublicPhone { get; set; }
     }
 }

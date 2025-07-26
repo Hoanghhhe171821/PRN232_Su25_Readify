@@ -24,6 +24,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
             return client;
         }
 
+        // ✅ Hiển thị profile
         public async Task<IActionResult> Index()
         {
             var client = CreateClient();
@@ -40,6 +41,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
             return View(profile);
         }
 
+        // ✅ Hiển thị form chỉnh sửa
         [HttpGet]
         public async Task<IActionResult> Edit()
         {
@@ -53,6 +55,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
             return View(model);
         }
 
+        // ✅ Gửi yêu cầu cập nhật thông tin
         [HttpPost]
         public async Task<IActionResult> Edit(ProfileViewModel model, IFormFile? avatar)
         {
@@ -60,12 +63,22 @@ namespace PRN232_Su25_Readify_Web.Controllers
             using var form = new MultipartFormDataContent();
             form.Add(new StringContent(model.UserName ?? ""), "UserName");
             form.Add(new StringContent(model.PhoneNumber ?? ""), "PhoneNumber");
+
+            // 🔴 Thêm các trường mới
+            form.Add(new StringContent(model.Bio ?? ""), "Bio");
+            form.Add(new StringContent(model.PublicEmail ?? ""), "PublicEmail");
+            form.Add(new StringContent(model.PublicPhone ?? ""), "PublicPhone");
+
             if (avatar != null)
             {
-                form.Add(new StreamContent(avatar.OpenReadStream()), "Avatar", avatar.FileName);
+                var stream = avatar.OpenReadStream();
+                var content = new StreamContent(stream);
+                content.Headers.ContentType = new MediaTypeHeaderValue(avatar.ContentType);
+                form.Add(content, "Avatar", avatar.FileName);
             }
 
-            var response = await client.PutAsync($"{apiBaseUrl}/profile", form);
+            var response = await client.PutAsync("https://localhost:7267/api/Users/profile", form);
+
             if (response.IsSuccessStatusCode)
                 return RedirectToAction("Index");
 
@@ -73,6 +86,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
             return View(model);
         }
 
+        // ✅ Đổi mật khẩu
         [HttpGet]
         public IActionResult ChangePassword()
         {
