@@ -250,7 +250,7 @@
 									<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
 									
 									   style="text-decoration: none; color: inherit;">
-										<img src="@book.ImageUrl" alt="book">
+										<img src="@(!string.IsNullOrEmpty(book.ImageUrl) ? book.ImageUrl : "/images/books/book16.png")" alt="book">
 									</a>
 								</div>
 								<div class="dz-content">
@@ -355,7 +355,7 @@
 									<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
 									   
 									   style="text-decoration: none; color: inherit;">
-										<img src="@book.ImageUrl" alt="book">
+										<img src="@(!string.IsNullOrEmpty(book.ImageUrl) ? book.ImageUrl : "/images/books/book16.png")" alt="book">
 									</a>
 								</div>
 								<div class="dz-content">
@@ -374,9 +374,6 @@
 										}
 									</ul>
 									<div class="book-footer">
-										<div class="rate">
-											<i class="flaticon-star"></i> 6.8
-										</div>
 										<div class="price">
 											@if(book.IsFree){
 												<span class="price-num">Miễn Phí</span>

@@ -1,6 +1,9 @@
 ﻿@using PRN232_Su25_Readify_Web.Dtos.Books
 @model BookDetailsViewModel
-
+@{
+    var tab = Context.Request.Query["tab"].ToString();
+    var activeTab = string.IsNullOrEmpty(tab) ? "details" : tab;
+}
 <div class="page-content">
     <section class="content-inner-1">
         <div class="container">
@@ -9,7 +12,7 @@
                 <div class="col">
                     <div class="dz-box">
                         <div class="dz-media">
-                            <img src="@Model.Book.ImageUrl" alt="book">
+                            <img src="@(!string.IsNullOrEmpty(Model.Book.ImageUrl) ? Model.Book.ImageUrl : "/images/books/book16.png")" alt="book">
                         </div>
                         <div class="dz-content">
                             <div class="dz-header">
@@ -169,7 +172,7 @@
                         </ul>
                         <div class="tab-content">
                             @*Book details*@
-                            <div id="graphic-design-1" class="tab-pane show active">
+                            <div id="graphic-design-1" class="tab-pane @(activeTab == "details" ? "show active" : "")">
                                 <table class="table border book-overview">
                                     <tr>
                                         <th>Book Title</th>
@@ -202,7 +205,7 @@
                                 </table>
                             </div>
                             @*Comment*@
-                            <div id="developement-1" class="tab-pane">
+                            <div id="developement-1" class="tab-pane @(activeTab == "comments" ? "show active" : "")">
                                 <div class="clear" id="comment-list">
                                     <div class="post-comments comments-area style-1 clearfix">
                                         <h4 class="comments-title">@Model.PagedComments.TotalItems Comments</h4>
@@ -213,7 +216,7 @@
                                                     <li class="comment even thread-even depth-1 comment" id="comment-@comment.Id">
                                                         <div class="comment-body">
                                                             <div class="comment-author vcard">
-                                                                <img src="~/images/profile2.jpg" alt="" class="avatar" />
+                                                                <img src="@(!string.IsNullOrEmpty(@comment.User.AvatarUrl) ? @comment.User.AvatarUrl : "/images/profile1.jpg")" class="avatar" />
                                                                 <cite class="fn">@comment.User.UserName</cite> <span class="says">says:</span>
                                                                 <div class="comment-meta">
                                                                     <a>@comment.CreateDate?.ToString("dd MMMM, yyyy")</a>
@@ -247,6 +250,7 @@
                                                                 <a class="page-link prev"
                                                                    asp-controller="Books"
                                                                    asp-action="BookDetails"
+                                                                   asp-route-tab="comments"
                                                                    asp-route-bookId="@Model.Book.Id"
                                                                    asp-route-pageNumber="@(Model.PagedComments.PageNumber - 1)">
                                                                     Prev
@@ -260,6 +264,7 @@
                                                                 <a class="page-link @(i == Model.PagedComments.PageNumber ? "active" : "")"
                                                                    asp-controller="Books"
                                                                    asp-action="BookDetails"
+                                                                   asp-route-tab="comments"
                                                                    asp-route-bookId="@Model.Book.Id"
                                                                    asp-route-pageNumber="@i">
                                                                     @i
@@ -273,6 +278,7 @@
                                                                 <a class="page-link next"
                                                                    asp-controller="Books"
                                                                    asp-action="BookDetails"
+                                                                   asp-route-tab="comments"
                                                                    asp-route-bookId="@Model.Book.Id"
                                                                    asp-route-pageNumber="@(Model.PagedComments.PageNumber + 1)">
                                                                     Next
@@ -325,7 +331,7 @@
                                     <div class="dz-shop-card style-5">
                                         <div class="dz-media">
                                             <a asp-controller="Books" asp-route-bookId="@related.Id">
-                                                <img src="@related.ImageUrl" alt="">
+                                                <img src="@(!string.IsNullOrEmpty(related.ImageUrl) ? related.ImageUrl : "/images/books/book16.png")" alt="">
 
                                             </a>
                                         </div>
