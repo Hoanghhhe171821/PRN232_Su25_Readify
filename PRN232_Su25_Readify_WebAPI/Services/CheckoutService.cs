@@ -43,6 +43,10 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             var userId = GetCurrentUserId();
             if (userId == null) throw new UnauthorEx("Please login to checkout");
             var user = await _userManager.FindByIdAsync(userId);
+            if(user.Points <= 0)
+            {
+                throw new BRException("Points is not enough to purchase");
+            }
             var cart = await _context.Carts.Include(c => c.CartItems)
                             .ThenInclude(ci => ci.Book).ThenInclude(b => b.Author)
                             .FirstOrDefaultAsync(c => c.UserId == userId);

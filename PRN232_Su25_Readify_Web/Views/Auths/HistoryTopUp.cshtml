@@ -30,7 +30,7 @@
                                     <th>Mã đơn</th>
                                     <th>Points</th>
                                     <th>Amount</th>
-                                    <th>QR Code</th>
+                                    @* <th>QR Code</th> *@
                                     <th>Payment</th>
                                     <th>Trạng thái</th>
                                     <th>Ngày tạo</th>
@@ -47,7 +47,7 @@
                                             <td>@($"{topUp.Amount:N0} đ")</td>
 
                                             <!-- QR Code Link -->
-                                            <td>
+                                            @* <td>
                                                 @if (!string.IsNullOrEmpty(topUp.QrCodeUrl))
                                                 {
                                                     <a href="@topUp.QrCodeUrl" target="_blank" class="btn btn-sm btn-outline-info">
@@ -59,7 +59,7 @@
                                                     <span class="text-muted">Không có</span>
                                                 }
                                             </td>
-
+ *@
                                             <!-- Payment Link -->
                                             <td>
                                                 @if (!string.IsNullOrEmpty(topUp.PaymentUrl))

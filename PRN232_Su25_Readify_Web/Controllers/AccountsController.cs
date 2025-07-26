@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using PRN232_Su25_Readify_Web.Models;
 using PRN232_Su25_Readify_Web.Models.Account;
 using PRN232_Su25_Readify_Web.Services;
@@ -20,7 +21,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index(string? keyword, int page = 1, int pageSize = 10)
         {
+            var token = Request.Cookies["access_Token"];
             var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             var query = $"?page={page}&pageSize={pageSize}";
             var fullUrlRoles = $"{baseUrl}/get-all-roles";
 
