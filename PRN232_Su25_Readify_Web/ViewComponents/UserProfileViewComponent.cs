@@ -17,26 +17,35 @@ namespace PRN232_Su25_Readify_Web.ViewComponents
 
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            var token = _httpContextAccessor.HttpContext?.Request.Cookies["access_Token"];
-            if (string.IsNullOrEmpty(token))
-                return View<ProfileViewModel>("Default", null);
-
-            var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.GetAsync(apiUrl);
-            if (!response.IsSuccessStatusCode)
-                return View<ProfileViewModel>("Default", null);
-
-            var json = await response.Content.ReadAsStringAsync();
-
-            ProfileViewModel? profile = System.Text.Json.JsonSerializer.Deserialize<ProfileViewModel>(json, new System.Text.Json.JsonSerializerOptions
+            try
             {
-                PropertyNameCaseInsensitive = true
-            });
+                var token = _httpContextAccessor.HttpContext?.Request.Cookies["access_Token"];
+                if (string.IsNullOrEmpty(token))
+                    return View<ProfileViewModel>("Default", null);
 
-            return View<ProfileViewModel>("Default", profile);
+                var client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                var response = await client.GetAsync(apiUrl);
+                if (!response.IsSuccessStatusCode)
+                    return View<ProfileViewModel>("Default", null);
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                var profile = System.Text.Json.JsonSerializer.Deserialize<ProfileViewModel>(json, new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                return View<ProfileViewModel>("Default", profile);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UserProfileVC ERROR] {ex.Message}");
+                return View<ProfileViewModel>("Default", null);
+            }
         }
+
 
     }
 }

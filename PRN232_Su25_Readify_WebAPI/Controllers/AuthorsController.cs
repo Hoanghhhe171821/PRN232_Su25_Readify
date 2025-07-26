@@ -16,6 +16,12 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         {
             _context = context;
         }
+        [HttpGet("GetAllAuthors")]
+        public async Task<IActionResult> GetAllAuthors()
+        {
+            var author = await _context.Authors.ToListAsync();
+            return Ok(author);
+        }
         // Lấy thông tin công khai của 1 tác giả bất kỳ
         [HttpGet("{authorId}/profile")]
         public async Task<IActionResult> GetAuthorProfile(int authorId)
