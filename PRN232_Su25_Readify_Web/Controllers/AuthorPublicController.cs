@@ -15,6 +15,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
         }
 
         [HttpGet]
+        [Route("AuthorPublic/Details/{id}")]
         public async Task<IActionResult> Details(int id)
         {
             var client = _httpClientFactory.CreateClient();

@@ -37,13 +37,23 @@
                                     <ul class="book-info">
                                         <li>
                                             <div class="writer-info">
-                                                <img src="~/images/profile1.jpg" alt="book">
+                                                <img src="@(!string.IsNullOrEmpty(Model.Book.Author.User?.AvatarUrl)
+                            ? Model.Book.Author.User.AvatarUrl
+                            : Url.Content("~/images/profile1.jpg"))"
+                                                     alt="author" width="40" height="40" class="rounded-circle me-2" />
+
                                                 <div>
-                                                    <span>Writen by</span>@Model.Book.Author.Name
+                                                    <span>Writen by </span>
+                                                    <a asp-controller="AuthorPublic" asp-action="Details" asp-route-id="@Model.Book.Author.Id">
+                                                        @Model.Book.Author.Name
+                                                    </a>
                                                 </div>
                                             </div>
                                         </li>
-                                        <li><span>Year</span>@Model.Book.CreateDate.Value.Year</li>
+
+                                        <li>
+                                            <span>Year</span> @Model.Book.CreateDate?.Year
+                                        </li>
                                     </ul>
                                 </div>
                                 <div class="book-footer">
