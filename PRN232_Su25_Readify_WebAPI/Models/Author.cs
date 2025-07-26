@@ -9,11 +9,12 @@ namespace PRN232_Su25_Readify_WebAPI.Models
         public string Name { get; set; }
         public string? Bio { get; set; }
         public string? Website { get; set; }
+        public string? PublicEmail { get; set; }   // Thêm email công khai
+        public string? PublicPhone { get; set; }   // Thêm sđt công khai
 
         public string? UserId { get; set; }
         [ForeignKey("UserId")]
         public AppUser? User { get; set; }
         public ICollection<Book>? Books { get; set; }
-        
     }
 }

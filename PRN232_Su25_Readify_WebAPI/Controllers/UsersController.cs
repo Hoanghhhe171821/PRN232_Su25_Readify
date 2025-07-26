@@ -32,8 +32,9 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-
             if (user == null) return NotFound();
+
+            var author = await _context.Authors.FirstOrDefaultAsync(a => a.UserId == userId);
 
             return Ok(new
             {
@@ -42,7 +43,11 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 user.Email,
                 user.PhoneNumber,
                 user.Points,
-                user.AvatarUrl
+                user.AvatarUrl,
+                IsAuthor = author != null,
+                Bio = author?.Bio,
+                PublicEmail = author?.PublicEmail,
+                PublicPhone = author?.PublicPhone
             });
         }
 
@@ -82,16 +87,25 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (!string.IsNullOrWhiteSpace(dto.UserName)) user.UserName = dto.UserName;
             if (!string.IsNullOrWhiteSpace(dto.PhoneNumber)) user.PhoneNumber = dto.PhoneNumber;
 
+            // Avatar upload
             if (dto.Avatar != null)
             {
                 var avatarUrl = await _imageUploadService.UploadImageAsync(dto.Avatar, "avatars", $"user_{user.Id}");
-                if (avatarUrl != null)
+                if (!string.IsNullOrEmpty(avatarUrl))
                 {
                     user.AvatarUrl = avatarUrl;
                 }
             }
 
-            _context.Users.Update(user);
+            // Nếu user là tác giả thì cập nhật thêm
+            var author = await _context.Authors.FirstOrDefaultAsync(a => a.UserId == userId);
+            if (author != null)
+            {
+                if (!string.IsNullOrWhiteSpace(dto.Bio)) author.Bio = dto.Bio;
+                if (!string.IsNullOrWhiteSpace(dto.PublicEmail)) author.PublicEmail = dto.PublicEmail;
+                if (!string.IsNullOrWhiteSpace(dto.PublicPhone)) author.PublicPhone = dto.PublicPhone;
+            }
+
             await _context.SaveChangesAsync();
 
             return Ok(new
@@ -99,7 +113,10 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 message = "Profile updated",
                 user.UserName,
                 user.PhoneNumber,
-                user.AvatarUrl
+                user.AvatarUrl,
+                Bio = author?.Bio,
+                PublicEmail = author?.PublicEmail,
+                PublicPhone = author?.PublicPhone
             });
         }
 

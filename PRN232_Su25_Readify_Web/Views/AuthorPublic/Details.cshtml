@@ -1,0 +1,22 @@
+﻿@model PRN232_Su25_Readify_Web.Models.Author.AuthorProfileViewModel
+
+<h2>Giới thiệu tác giả: @Model.Name</h2>
+
+<div>
+    <img src="@(!string.IsNullOrEmpty(Model.AvatarUrl) ? Model.AvatarUrl : "/images/profile1.jpg")"
+         width="200" class="img-thumbnail" />
+    <p><strong>Tiểu sử:</strong> @Model.Bio</p>
+    <p><strong>Email:</strong> @Model.ContactEmail</p>
+    <p><strong>Điện thoại:</strong> @Model.ContactPhone</p>
+
+    <h4>Tác phẩm:</h4>
+    <ul>
+        @foreach (var book in Model.Books)
+        {
+            <li>
+                <img src="@book.ImageUrl" width="40" />
+                <span>@book.Title</span>
+            </li>
+        }
+    </ul>
+</div>
