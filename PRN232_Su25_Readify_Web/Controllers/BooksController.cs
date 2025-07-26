@@ -63,8 +63,11 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Get Cate by API
             var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+            if (categories == null) categories = new List<Category>(); 
+
             //Get Author By API
             var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
+            if (authors == null) authors = new List<Author>();  
             // Lấy danh sách các Book yêu thích từ API
             List<int> favoriteBookIds = new List<int>();
 
