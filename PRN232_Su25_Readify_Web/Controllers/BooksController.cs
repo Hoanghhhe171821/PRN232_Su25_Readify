@@ -96,8 +96,8 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     PageNumber = page,
                     TotalPage = totalPage
                 },
-                Categories = categories.ToList(),
-                Authors = authors.ToList(),
+                Categories = categories?.ToList() ?? new List<Category>(),
+                Authors = authors?.ToList() ?? new List<Author>(),
                 OrderBy = orderBy,
                 SearchBy = searchBy,
                 SearchOption = searchOption,
