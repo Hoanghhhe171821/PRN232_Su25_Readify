@@ -2,21 +2,32 @@
 
 <h2>Giới thiệu tác giả: @Model.Name</h2>
 
-<div>
-    <img src="@(!string.IsNullOrEmpty(Model.AvatarUrl) ? Model.AvatarUrl : "/images/profile1.jpg")"
-         width="200" class="img-thumbnail" />
-    <p><strong>Tiểu sử:</strong> @Model.Bio</p>
-    <p><strong>Email:</strong> @Model.ContactEmail</p>
-    <p><strong>Điện thoại:</strong> @Model.ContactPhone</p>
+<div style="display: flex; gap: 40px;">
+    <!-- Thông tin tác giả bên trái -->
+    <div style="flex: 1;">
+        <img src="@(!string.IsNullOrEmpty(Model.AvatarUrl) ? Model.AvatarUrl : "/images/profile1.jpg")"
+             width="200" class="img-thumbnail" />
+        <p><strong>Tiểu sử:</strong> @Model.Bio</p>
+        <p><strong>Email:</strong> @Model.ContactEmail</p>
+        <p><strong>Điện thoại:</strong> @Model.ContactPhone</p>
+    </div>
 
-    <h4>Tác phẩm:</h4>
-    <ul>
-        @foreach (var book in Model.Books)
-        {
-            <li>
-                <img src="@book.ImageUrl" width="40" />
-                <span>@book.Title</span>
-            </li>
-        }
-    </ul>
+    <!-- Danh sách sách bên phải -->
+    <div style="flex: 1; max-height: 400px; overflow-y: auto;">
+        <h4>Tác phẩm:</h4>
+        <ul style="list-style: none; padding: 0;">
+            @foreach (var book in Model.Books)
+            {
+                <li style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <img src="@(!string.IsNullOrEmpty(book.ImageUrl) ? book.ImageUrl : "/images/books/book16.png")"
+                         width="70" style="margin-right: 10px;" />
+                    <a asp-controller="Books" asp-action="BookDetails" asp-route-id="@book.Id"
+                       style="font-size: 1.1rem; font-weight: 500; text-decoration: none;">
+                        @book.Title
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+
 </div>

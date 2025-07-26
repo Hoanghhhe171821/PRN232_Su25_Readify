@@ -12,8 +12,8 @@ using PRN232_Su25_Readify_WebAPI.DbContext;
 namespace PRN232_Su25_Readify_WebAPI.Migrations
 {
     [DbContext(typeof(ReadifyDbContext))]
-    [Migration("20250722113347_UpdateBookLicense")]
-    partial class UpdateBookLicense
+    [Migration("20250726084109_AddAuthorAchievementsAndSocialLink")]
+    partial class AddAuthorAchievementsAndSocialLink
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -192,6 +192,9 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Property<int>("AuthorId")
                         .HasColumnType("int");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -274,6 +277,12 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("PublicEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PublicPhone")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("UpdateDate")
                         .HasColumnType("datetime2");
 
@@ -290,6 +299,43 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("Authors");
+                });
+
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.AuthorAchievement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateAchieved")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("AuthorAchievements");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.AuthorRequest", b =>
@@ -868,11 +914,14 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.RecentRead", b =>
                 {
-                    b.Property<int>("BookId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
 
                     b.Property<int?>("ChapterId")
                         .HasColumnType("int");
@@ -880,14 +929,19 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Property<DateTime>("DateRead")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("BookId", "UserId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
 
                     b.HasIndex("ChapterId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "BookId", "ChapterId")
+                        .IsUnique()
+                        .HasFilter("[ChapterId] IS NOT NULL");
 
                     b.ToTable("RecentRead");
                 });
@@ -1050,6 +1104,41 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.ToTable("RoyaltyTransaction", (string)null);
                 });
 
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.SocialLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("SocialLinks");
+                });
+
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.TopUpTransaction", b =>
                 {
                     b.Property<int>("Id")
@@ -1161,6 +1250,17 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .HasForeignKey("PRN232_Su25_Readify_WebAPI.Models.Author", "UserId");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.AuthorAchievement", b =>
+                {
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.Author", "Author")
+                        .WithMany("Achievements")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.AuthorRequest", b =>
@@ -1507,6 +1607,17 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Navigation("OrderItem");
                 });
 
+            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.SocialLink", b =>
+                {
+                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.Author", "Author")
+                        .WithMany("SocialLinks")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.TopUpTransaction", b =>
                 {
                     b.HasOne("PRN232_Su25_Readify_WebAPI.Models.AppUser", null)
@@ -1543,7 +1654,11 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Author", b =>
                 {
+                    b.Navigation("Achievements");
+
                     b.Navigation("Books");
+
+                    b.Navigation("SocialLinks");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Book", b =>
