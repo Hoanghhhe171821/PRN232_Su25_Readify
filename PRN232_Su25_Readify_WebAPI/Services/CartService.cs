@@ -46,7 +46,8 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                 await _context.SaveChangesAsync();
             }
 
-            bool alreadyCartItem = await _context.CartItems.Include(ci => ci.Book).AnyAsync(ci => ci.BookId == item.BookId);
+            bool alreadyCartItem = await _context.CartItems.Include(ci => ci.Book)
+                .AnyAsync(ci => ci.BookId == item.BookId && ci.CartId == cart.Id);
             if (alreadyCartItem)
             {
                 throw new BRException("Book already in cart");

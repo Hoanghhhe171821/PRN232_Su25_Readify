@@ -109,9 +109,13 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                 // update points
 
 
-                if(user != null)
+                if(user != null && user.Points >= totalAmount)
                 {
                     user.Points -= totalAmount;
+                }
+                else
+                {
+                    throw new BRException("Points is not enough to purchase");
                 }
                 _context.SaveChanges();
                 _context.Database.CommitTransaction();
@@ -121,7 +125,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             catch (Exception ex)
             {
                 await tx.RollbackAsync();
-                throw new BRException(ex.ToString());
+                throw;
             }
 
             return false;

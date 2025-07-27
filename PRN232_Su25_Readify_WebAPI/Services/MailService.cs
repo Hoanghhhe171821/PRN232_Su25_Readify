@@ -187,5 +187,142 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             var message = new Message(new string[] { email }, subject, content);
             await SendEmail(message);
         }
+
+        public async Task SendRoyaltyApprovedMailAsync(string email, string authorName, decimal amount)
+        {
+            var subject = "Thanh toán bản quyền thành công";
+            var content = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""UTF-8"">
+    <title>Thanh toán bản quyền</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f6f6f6;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 600px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }}
+        .header {{
+            font-size: 22px;
+            color: #333333;
+            margin-bottom: 20px;
+        }}
+        .message {{
+            font-size: 16px;
+            color: #555555;
+            line-height: 1.6;
+        }}
+        .amount {{
+            color: #28a745;
+            font-weight: bold;
+            font-size: 18px;
+        }}
+        .footer {{
+            margin-top: 30px;
+            font-size: 12px;
+            color: #999999;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <div class=""header"">Xin chào {authorName},</div>
+        <div class=""message"">
+            Yêu cầu rút tiền bản quyền của bạn đã được <strong>chấp thuận</strong>.<br />
+            Số tiền đã được chuyển là: <span class=""amount"">{amount:N0} ₫</span><br /><br />
+            Vui lòng kiểm tra tài khoản ngân hàng của bạn trong vòng 1-2 ngày làm việc.<br /><br />
+            Cảm ơn bạn đã đồng hành cùng <strong>Readify</strong>!
+        </div>
+        <div class=""footer"">
+            &copy; 2025 PRN222_G4. Mọi quyền được bảo lưu.
+        </div>
+    </div>
+</body>
+</html>";
+
+            var message = new Message(new[] { email }, subject, content);
+            await SendEmail(message);
+        }
+
+        public async Task SendRoyaltyRejectedMailAsync(string email, string authorName, string rejectionReason)
+        {
+            var subject = "Từ chối yêu cầu thanh toán bản quyền";
+            var content = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""UTF-8"">
+    <title>Yêu cầu thanh toán bị từ chối</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f6f6f6;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 600px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }}
+        .header {{
+            font-size: 22px;
+            color: #c0392b;
+            margin-bottom: 20px;
+        }}
+        .message {{
+            font-size: 16px;
+            color: #555555;
+            line-height: 1.6;
+        }}
+        .reason {{
+            font-weight: bold;
+            color: #e74c3c;
+        }}
+        .footer {{
+            margin-top: 30px;
+            font-size: 12px;
+            color: #999999;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <div class=""header"">Xin chào {authorName},</div>
+        <div class=""message"">
+            Yêu cầu rút tiền bản quyền của bạn đã bị <strong>từ chối</strong>.<br />
+            <br />
+            Lý do từ chối: <div class=""reason"">{rejectionReason}</div><br />
+            <br />
+            Nếu bạn có thắc mắc hoặc cần hỗ trợ, vui lòng liên hệ bộ phận hỗ trợ của chúng tôi.<br />
+            <br />
+            Trân trọng,<br />
+            <strong>Đội ngũ Readify</strong>
+        </div>
+        <div class=""footer"">
+            &copy; 2025 PRN222_G4. Mọi quyền được bảo lưu.
+        </div>
+    </div>
+</body>
+</html>";
+
+            var message = new Message(new[] { email }, subject, content);
+            await SendEmail(message);
+        }
+
+
     }
 }
