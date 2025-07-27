@@ -40,6 +40,9 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
         public DbSet<BookLicense> BookLicenses { get; set; }
         public DbSet<ContributorRequest> ContributorRequests { get; set; }
 
+        public DbSet<RequestAuthor> RequestAuthors { get; set; }
+        public DbSet<FeedbackRequest> FeedbackRequests { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

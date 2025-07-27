@@ -1,0 +1,89 @@
+﻿@* Request Author Form *@
+@{
+}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="max-w-md mx-auto bg-white shadow-md p-6 space-y-4 mt-10">
+    <h2 class="text-2xl font-bold text-gray-800 text-center">Request to Become Author</h2>
+
+    <div>
+        <label for="fullname" class="block text-sm font-medium text-gray-700">Full Name</label>
+        <input type="text" id="fullname" class="mt-1 block w-full border border-gray-300 p-2 rounded-md" placeholder="Enter your full name">
+    </div>
+
+    <div>
+        <label for="cccd" class="block text-sm font-medium text-gray-700">CCCD</label>
+        <input type="text" id="cccd" class="mt-1 block w-full border border-gray-300 p-2 rounded-md" placeholder="Enter your CCCD number">
+    </div>
+
+    <div>
+        <label for="birthdate" class="block text-sm font-medium text-gray-700">Birth Date</label>
+        <input type="date" id="birthdate" class="mt-1 block w-full border border-gray-300 p-2 rounded-md">
+    </div>
+
+    <div>
+        <label for="reason" class="block text-sm font-medium text-gray-700">Reason</label>
+        <textarea id="reason" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Why do you want to become an author?"></textarea>
+    </div>
+
+    <div>
+        <label for="bankAccount" class="block text-sm font-medium text-gray-700">Bank Account</label>
+        <input type="text" id="bankAccount" class="mt-1 block w-full border border-gray-300 p-2 rounded-md" placeholder="Enter your bank account number">
+    </div>
+
+    <button id="submitRequest" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+        Submit Request
+    </button>
+</div>
+
+<script>
+    $('#submitRequest').click(function () {
+        const fullName = $('#fullname').val().trim();
+        const cccd = $('#cccd').val().trim();
+        const birthDate = $('#birthdate').val();
+        const reason = $('#reason').val().trim();
+        const bankAccount = $('#bankAccount').val().trim();
+
+        if (!fullName || !cccd || !birthDate || !reason || !bankAccount) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete Form',
+                text: 'Please fill in all fields.'
+            });
+            return;
+        }
+
+        $.ajax({
+            url: 'https://localhost:7267/api/RequestAuthors',
+            method: 'POST',
+            contentType: 'application/json',
+            xhrFields: {
+                withCredentials: true
+            },
+            data: JSON.stringify({
+                fullName: fullName,
+                cccd: cccd,
+                birthDate: birthDate,
+                reason: reason,
+                bankAccount: bankAccount,
+            }),
+            success: function () {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Submitted!',
+                    text: 'Your request has been submitted successfully.'
+                });
+                $('#fullname, #cccd, #birthdate, #reason').val('');
+            },
+            error: function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Failed',
+                    text: 'There was an error submitting your request.'
+                });
+            }
+        });
+    });
+</script>

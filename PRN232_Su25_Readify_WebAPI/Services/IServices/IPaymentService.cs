@@ -6,5 +6,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services.IServices
     {
         Task<TopUpResponse> CreateMoMoOrder(int points, string userId);
         Task<string> CheckMoMoTransaction(string orderId);
+        Task<List<PaymentHistoryResponse>> FindAllPaymentHistory();
+        Task<PaymentHistoryResponse> DisbursePayment(int topUpTransactionId, string status);
     }
 }
