@@ -1,20 +1,20 @@
 ﻿@model PRN232_Su25_Readify_Web.Models.Author.AuthorProfileViewModel
 
-<h2>Giới thiệu tác giả: @Model.Name</h2>
+<h2>About the Author: @Model.Name</h2>
 
 <div style="display: flex; gap: 40px;">
-    <!-- Thông tin tác giả bên trái -->
+    <!-- Author information on the left -->
     <div style="flex: 1;">
         <img src="@(!string.IsNullOrEmpty(Model.AvatarUrl) ? Model.AvatarUrl : "/images/profile1.jpg")"
              width="200" class="img-thumbnail" />
-        <p><strong>Tiểu sử:</strong> @Model.Bio</p>
+        <p><strong>Biography:</strong> @Model.Bio</p>
         <p><strong>Email:</strong> @Model.ContactEmail</p>
-        <p><strong>Điện thoại:</strong> @Model.ContactPhone</p>
+        <p><strong>Phone:</strong> @Model.ContactPhone</p>
     </div>
 
-    <!-- Danh sách sách bên phải -->
+    <!-- Book list on the right -->
     <div style="flex: 1; max-height: 400px; overflow-y: auto;">
-        <h4>Tác phẩm:</h4>
+        <h4>Published Books:</h4>
         <ul style="list-style: none; padding: 0;">
             @foreach (var book in Model.Books)
             {
@@ -29,5 +29,4 @@
             }
         </ul>
     </div>
-
 </div>

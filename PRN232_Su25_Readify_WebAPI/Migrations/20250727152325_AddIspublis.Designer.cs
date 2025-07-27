@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 
@@ -11,9 +12,11 @@ using PRN232_Su25_Readify_WebAPI.DbContext;
 namespace PRN232_Su25_Readify_WebAPI.Migrations
 {
     [DbContext(typeof(ReadifyDbContext))]
-    partial class ReadifyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250727152325_AddIspublis")]
+    partial class AddIspublis
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -729,59 +732,6 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.ToTable("Comment");
                 });
 
-            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.ContributorRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BackIdImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BankAccount")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FrontIdImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsAgreedToPolicy")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PortraitImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ContributorRequests");
-                });
-
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.ErrorType", b =>
                 {
                     b.Property<int>("Id")
@@ -1422,17 +1372,6 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Book");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.ContributorRequest", b =>
-                {
-                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });
