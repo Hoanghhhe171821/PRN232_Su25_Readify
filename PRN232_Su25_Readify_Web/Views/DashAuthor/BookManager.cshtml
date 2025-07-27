@@ -58,10 +58,7 @@
                 <td>@(book.IsActive ? "Active" : "Inactive")</td>
                 <td>@(book.IsPublished ? "Publish" : "Unpublish")</td>
                 <td>
-                    <form method="post" style="display:inline">
-                        <input type="hidden" name="" value="" />
-                        <button type="submit" class="btn btn-danger btn-sm">Xem</button>
-                    </form>
+                    <a type="submit" asp-action="Details" asp-route-bookId="@book.Id" class="btn btn-danger btn-sm">Xem</a>
                 </td>
             </tr>
             y++;

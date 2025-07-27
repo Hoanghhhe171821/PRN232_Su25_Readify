@@ -133,7 +133,19 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 return View(model);
             }
         }
+        public async Task<IActionResult> Details(int bookId)
+        {
+            var book = await GetAuthorizedApiDataAsync<Book>($"api/Authors/GetBookDetailsById/{bookId}");
+            if (book == null) RedirectToAction("BookManager");
 
+            var chapters = await GetApiDataAsync<List<Chapter>>($"api/Books/GetAllChapterByBookId/{bookId}");
+            var bookDetails = new BookDetailsDto
+            {
+                Book = book,
+                Chapters = chapters
+            };
+            return View(bookDetails);
+        }
         public async Task<IActionResult> CreateRequestRoyal()
         {
             return View();
@@ -217,25 +229,6 @@ namespace PRN232_Su25_Readify_Web.Controllers
             var data = JsonConvert.DeserializeObject<T>(json);
 
             return data;
-        }
-        private async Task<T> PostApiDataAsync<T>(string url, object body)
-        {
-            var json = JsonConvert.SerializeObject(body);
-            var contentData = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync(url, contentData);
-
-            if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return default;
-            }
-
-            response.EnsureSuccessStatusCode();
-
-            var resultJson = await response.Content.ReadAsStringAsync();
-            var resultData = JsonConvert.DeserializeObject<T>(resultJson);
-
-            return resultData;
         }
         private async Task<T> GetAuthorizedApiDataAsync<T>(string apiUrl)
         {

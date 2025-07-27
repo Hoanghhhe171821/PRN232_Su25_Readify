@@ -103,6 +103,24 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 Books = books
             });
         }
+        [Authorize(Roles = "Author")]
+        [HttpGet("GetBookDetailsById/{bookId}")]
+        public async Task<IActionResult> GetBookDetailsById(int bookId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var author = await _context.Authors.FirstOrDefaultAsync(b => b.UserId == userId);
+            if (author == null) return Unauthorized();
+
+            var book = await _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
+                .Include(b => b.Chapters).Include(b => b.Author)
+                .Where(b => b.AuthorId == author.Id && b.Id == bookId)
+                .FirstOrDefaultAsync();
+            if (book == null) return NotFound();
+            return Ok(book);
+
+        }
 
         [Authorize(Roles = "Author")]
         [HttpPost("CreateBook")]
@@ -170,15 +188,16 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
         [Authorize(Roles = "Author")]
         [HttpPut("UpdateBook")]
-        public async Task<IActionResult> UpdateBook([FromBody] UpdateBookDto model)
+        public async Task<IActionResult> UpdateBook([FromBody] CreateBookWithFile request)
         {
-            //Validate
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized();
 
             var author = _context.Authors.FirstOrDefault(b => b.UserId == userId);
             if (author == null) return Unauthorized();
 
+            var model = JsonConvert.DeserializeObject<UpdateBookDto>(request.BookData);
+            if (model == null) return BadRequest("Invalid book data");
 
             var book = await _context.Books
                             .Include(b => b.BookCategories)
@@ -191,9 +210,19 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             book.Description = model.Description;
             book.IsFree = model.IsFree;
             book.Price = model.Price;
-            book.ImageUrl = model.ImageUrl;
             book.UpdateDate = DateTime.UtcNow;
+
+            // Nếu có ảnh mới thì upload
+            if (request.ImageFile != null && request.ImageFile.Length > 0)
+            {
+                var safeTitleForFileName = Slugify(model.Title);
+                var newImageUrl = await _imageUploadService.UploadImageAsync(request.ImageFile, "book-covers", safeTitleForFileName);
+                book.ImageUrl = newImageUrl;
+            }
+
+            // Cập nhật category
             _context.BookCategories.RemoveRange(book.BookCategories);
+
             if (model.CategoryIds != null && model.CategoryIds.Any())
             {
                 foreach (var cateId in model.CategoryIds)
@@ -205,6 +234,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                     });
                 }
             }
+
             await _context.SaveChangesAsync();
             return Ok(book);
         }

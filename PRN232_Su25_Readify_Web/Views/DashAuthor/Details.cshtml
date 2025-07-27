@@ -1,0 +1,118 @@
+﻿@using PRN232_Su25_Readify_Web.Dtos.DashboardAuthor;
+@model BookDetailsDto
+@{
+    Layout = "~/Views/Shared/_PartialLayout.cshtml";
+}
+<div class="page-content">
+    <section class="content-inner-1">
+        <div class="container">
+            @*Book*@
+            <div class="row book-grid-row style-4 m-b60">
+                <div class="col">
+                    <div class="dz-box">
+                        <div class="dz-media">
+                            <img src="@(!string.IsNullOrEmpty(Model.Book.ImageUrl) ? Model.Book.ImageUrl : "/images/books/book16.png")" alt="book">
+                        </div>
+                        <div class="dz-content">
+                            <div class="dz-header">
+                                <h3 class="title">@Model.Book.Title</h3>
+                                <div class="shop-item-rating">
+                                    <div class="d-lg-flex d-sm-inline-flex d-flex align-items-center">
+                                    </div>
+                                    <div class="social-area">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dz-body">
+                                <div class="book-detail">
+                                    <ul class="book-info">
+                                        <li>
+                                            <div class="writer-info">
+                                            </div>
+                                        </li>
+
+                                        <li>
+                                            <span>Year</span> @Model.Book.CreateDate?.Year
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="book-footer">                                   
+                                </div>
+                                <h4>Mô tả:</h4>
+                                <p id="bookDescription" class="text-1" style="width: 760px; overflow: hidden;">
+                                    @Model.Book.Description
+                                </p>
+                                <span id="descToggle" class="see-more" style="color: dimgray; cursor: pointer; display: none;">Xem thêm</span>
+                                <h4>Danh sách các chương:</h4>
+                                <p class="text-2 promo-links" style="width: 760px;">
+                                    <div id="chapterList">
+                                        @if (Model.Chapters.Any())
+                                        {
+                                            var chapters = Model.Chapters.ToList();
+                                            for (int i = 0; i < chapters.Count; i++)
+                                            {
+                                                var chapter = chapters[i];
+                                                <a class="chapter-item @(i >= 4 ? "extra-chapter d-none" : "")"
+                                                   asp-controller="Books" asp-action="Read"
+                                                   asp-route-bookId="@Model.Book.Id"
+                                                   asp-route-chapterOrder="@chapters[i].ChapterOrder">
+                                                    Chapter @chapters[i].ChapterOrder - @chapters[i].Title
+                                                </a>
+                                                <br />
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <a style="color:gray">Không có chương nào!</a>
+                                        }
+                                    </div>
+                                    @if (Model.Book.Chapters.Count() > 4)
+                                    {
+                                        <span id="chapterToggle" class="see-more" style="color: dimgray; cursor: pointer;">Xem thêm</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xl-8">
+                    <div class="product-description tabs-site-button">
+                        <ul class="nav nav-tabs">
+                            <li><a data-bs-toggle="tab" href="#graphic-design-1" class="active">Details Product</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            @*Book details*@
+                            <div id="graphic-design-1" class="tab-pane show active">
+                                <table class="table border book-overview">
+                                    <tr>
+                                        <th>Book Title</th>
+                                        <td>@Model.Book.Title</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Author</th>
+                                        <td>@Model.Book.Author.Name</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Date Published</th>
+                                        <td>@Model.Book.CreateDate?.ToString("dd MMMM, yyyy")</td>
+                                    </tr>
+                                    <tr class="tags">
+                                        <th>Tags</th>
+                                        <td>
+                                            @foreach (var cate in Model.Book.BookCategories)
+                                            {
+                                                <a class="badge">@cate.Category.Name</a>
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div                          
+                        </div>
+                    </div>
+                </div>               
+            </div>
+        </div>
+    </section>
+</div>
