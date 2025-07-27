@@ -3,10 +3,16 @@ using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PRN232_Su25_Readify_Web.Dtos.Books;
+using PRN232_Su25_Readify_Web.Models.Account;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
+using PRN232_Su25_Readify_WebAPI.Dtos.Users;
 using PRN232_Su25_Readify_WebAPI.Models;
+using System.Globalization;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.RegularExpressions;
 using static System.Reflection.Metadata.BlobBuilder;
 
 namespace PRN232_Su25_Readify_Web.Controllers
@@ -17,6 +23,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
         private readonly HttpClient _httpClient;
         private readonly IMemoryCache _cache;
         private readonly IWebHostEnvironment _env;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly string _uri = "https://localhost:7267/";
+
         private string GetGivenAPIBaseUrl()
         {
             var config = new ConfigurationBuilder()
@@ -31,12 +40,13 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _httpClient.BaseAddress = new Uri(GetGivenAPIBaseUrl());
             _cache = cache;
             _env = env;
+            _httpClientFactory = factory;
         }
         [HttpGet("BookList")]
         public async Task<IActionResult> BookList(int page = 1, string searchOption = null, string searchBy = null,
-            List<int> cateIds = null, string orderBy = "Desc",bool isFree = false,string userId = null)
+            List<int> cateIds = null, string orderBy = "Desc", bool isFree = false)
         {
-            
+
 
             var url = $"api/Books/GetAllBooks?page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
@@ -53,24 +63,30 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             //Get Cate by API
             var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+            if (categories == null) categories = new List<Category>(); 
+
             //Get Author By API
             var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
+            if (authors == null) authors = new List<Author>();  
             // Lấy danh sách các Book yêu thích từ API
             List<int> favoriteBookIds = new List<int>();
 
-            if (!string.IsNullOrEmpty(userId))
-            {
-                var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
+
+                var favoriteResult = await GetAuthorizedApiDataAsync<JObject>($"api/Books/GetUserFavorites?");
                 if (favoriteResult != null && favoriteResult["items"] != null)
                 {
                     var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
                     favoriteBookIds = favoriteBooks.Select(b => b.Id).ToList();
                 }
-            }
+
             // Gán IsFavorite
             foreach (var book in books)
             {
                 book.IsFavorite = favoriteBookIds.Contains(book.Id);
+                //Kiểm tra sách đã mua
+                var isLicense = await GetAuthorizedApiDataAsync<bool>($"api/Books/checkBookLicence/{book.Id}");
+                if (isLicense) book.IsLicense = true;
+
             }
 
             var model = new BookListViewModel
@@ -83,21 +99,20 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     PageNumber = page,
                     TotalPage = totalPage
                 },
-                Categories = categories.ToList(),
-                Authors = authors.ToList(),
+                Categories = categories?.ToList() ?? new List<Category>(),
+                Authors = authors?.ToList() ?? new List<Author>(),
                 OrderBy = orderBy,
-                SearchBy= searchBy,
+                SearchBy = searchBy,
                 SearchOption = searchOption,
-                IsFree = isFree,
-                UserId = userId
+                IsFree = isFree
             };
             return View(model);
         }
         [HttpGet("BookDetails/{bookId}")]
-        public async Task<IActionResult> BookDetails(string userId,int bookId, int pageNumber = 1)
+        public async Task<IActionResult> BookDetails(int bookId, int pageNumber = 1)
         {
 
-            var book =await GetApiDataAsync<Book>($"api/Books/GetBookById/{bookId}");
+            var book = await GetApiDataAsync<Book>($"api/Books/GetBookById/{bookId}");
             if (book == null) return RedirectToAction("BookList", "Books");
             //Lấy tất cả comment của sách
             var commentResponse = await GetApiDataAsync<JObject>($"api/Comments/GetCommentsByBookId/{bookId}?pageNumber={pageNumber}&pageSize=5");
@@ -111,32 +126,33 @@ namespace PRN232_Su25_Readify_Web.Controllers
             // Lấy danh sách các Book yêu thích từ API
             List<int> favoriteBookIds = new List<int>();
 
-            if (!string.IsNullOrEmpty(userId))
+            var favoriteResult = await GetAuthorizedApiDataAsync<JObject>($"api/Books/GetUserFavorites");
+            if (favoriteResult != null && favoriteResult["items"] != null)
             {
-                var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
-                if (favoriteResult != null && favoriteResult["items"] != null)
-                {
-                    var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
-                    favoriteBookIds = favoriteBooks.Select(b => b.Id).ToList();
-                }
+                var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
+                favoriteBookIds = favoriteBooks.Select(b => b.Id).ToList();
             }
- 
+
+
             var isFavor = false;
             if (favoriteBookIds.Contains(bookId)) isFavor = true;
             var chapterQuan = book.Chapters.Count();
 
             // Lấy danh sách chương đã đọc
             List<int> chapterIds = new List<int>();
-            var lastedRead = new RecentedReadChapters();
-            if (!string.IsNullOrEmpty(userId))
+            var lastedRead = (RecentedReadChapters?)null;
+
+                var recentedReadChapters = await GetAuthorizedApiDataAsync<List<RecentedReadChapters>>($"api/Chapters/GetRecentedReadChapters?bookId={bookId}");
+            if(recentedReadChapters != null)
             {
-                var recentedReadChapters = await GetApiDataAsync<List<RecentedReadChapters>>($"api/Chapters/GetRecentedReadChapters?userId={userId}&bookId={bookId}");
-                foreach(var recent in recentedReadChapters)
+                foreach (var recent in recentedReadChapters)
                 {
                     chapterIds.Add(recent.ChapterId);
                 }
                 lastedRead = recentedReadChapters.OrderByDescending(rd => rd.DateRead).FirstOrDefault();
             }
+
+
             // Chuyển Book.Chapters thành ChapterDto có đánh dấu isRead
             var chapterDtos = book.Chapters
                 .OrderBy(c => c.ChapterOrder)
@@ -146,16 +162,18 @@ namespace PRN232_Su25_Readify_Web.Controllers
                     isRead = chapterIds.Contains(c.Id)
                 })
                 .ToList();
+            //Kiểm tra sách đã mua
+            var isLicense = await GetAuthorizedApiDataAsync<bool>($"api/Books/checkBookLicence/{bookId}");
 
             var result = new BookDetailsViewModel
             {
                 Book = book,
                 ChapterQuantity = chapterQuan,
                 isFavorite = isFavor,
-                UserId = userId,
                 RelatedBooks = relatedBooks,
                 ChapterDto = chapterDtos,
                 LastRead = lastedRead,
+                IsLicensed = isLicense,
                 PagedComments = new PagedResult<Comment>
                 {
                     Items = comments,
@@ -168,26 +186,27 @@ namespace PRN232_Su25_Readify_Web.Controllers
             return View(result);
         }
         [HttpGet("Read")]
-        public async Task<IActionResult> Read(string userId, int bookId, int chapterOrder)
+        public async Task<IActionResult> Read(int bookId, int chapterOrder)
         {
 
             if (bookId == null && chapterOrder == null) return RedirectToAction("BookDetails", "Books");
 
             var book = await GetApiDataAsync<Book>($"api/Books/GetBookById/{bookId}");
-            if (book == null ) return RedirectToAction("BookList", "Books");
-
+            if (book == null) return RedirectToAction("BookList", "Books");
+            var isLicensed = await GetAuthorizedApiDataAsync<bool>($"api/Books/checkBookLicence/{bookId}");
             //Kiểm tra sách free hoặc đã mua
-            if (book.IsFree == false) return RedirectToAction("BookList", "Books");
+            if (book.IsFree == false && !isLicensed) return RedirectToAction("BookList", "Books");
 
             //Lấy chapter
             var chapters = await GetApiDataAsync<List<Chapter>>($"api/Books/GetAllChapterByBookId/{bookId}");
-            if(chapters == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId , userId = userId});
+            if (chapters == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId});
 
             var chapter = chapters.FirstOrDefault(c => c.ChapterOrder == chapterOrder);
-            if(chapter == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId, userId = userId });
+            if (chapter == null) return RedirectToAction("BookDetails", "Books", new { bookId = bookId});
             int chapterId = chapter.Id;
 
-            var fileName = $"{book.Title}_Chapter_{chapterOrder}.pdf";
+            var safeTitle = ToSafeFileName(book.Title);
+            var fileName = $"{safeTitle}_Chapter_{chapterOrder}.pdf";
             var cacheKey = $"Pdf_{bookId}_{chapterOrder}"; //Khóa cho IMemoryCache
             var tempPath = Path.Combine(_env.WebRootPath, "temp", fileName);
 
@@ -237,32 +256,29 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 PdfPath = $"/temp/{fileName}"
             };
             //Thêm vào danh sách đã đọc nếu người dùng đã đăng nhập
-            if (userId != null)
-            {
                 var add = new RecentReadModel
                 {
                     BookId = bookId,
-                    UserId = userId,
                     ChapterId = chapterId
                 };
-                var addToRecent = await PostApiDataAsync<RecentReadModel>($"api/Books/AddToRecentRead", add);
+                var addToRecent = await PostAuthorizedApiDataAsync<RecentReadModel>($"api/Books/AddToRecentRead", add);
 
-            }
+            
             return View(result);
         }
         [HttpGet("FavoritesList")]
-        public async Task<IActionResult> FavoritesList(string userId,int page = 1, string searchOption = null, string searchBy = null,
+        public async Task<IActionResult> FavoritesList( int page = 1, string searchOption = null, string searchBy = null,
            List<int> cateIds = null, string orderBy = "Desc", bool isFree = false)
         {
-            if (userId == null) return RedirectToAction("Index", "Home");
-            var url = $"api/Books/GetUserFavorites?userId={userId}&page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
+            var url = $"api/Books/GetUserFavorites?page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
             }
 
             //Get Book by API
-            var booksJsonResult = await GetApiDataAsync<JObject>(url);
+            var booksJsonResult = await GetAuthorizedApiDataAsync<JObject>(url);
+            if (booksJsonResult == null) return RedirectToAction("Login", "Auths");
             var books = booksJsonResult["items"].ToObject<List<BookViewModel>>();
             var totalItems = booksJsonResult["totalItems"].ToObject<int>();
             var pageSize = booksJsonResult["pageSize"].ToObject<int>();
@@ -273,7 +289,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
             //Get Author By API
             var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
             // Lấy danh sách các Book yêu thích từ API
-            var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
+            var favoriteResult = await GetAuthorizedApiDataAsync<JObject>($"api/Books/GetUserFavorites?");
             var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
 
             // Lấy danh sách Id của các Book yêu thích
@@ -283,6 +299,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
             foreach (var book in books)
             {
                 book.IsFavorite = favoriteBookIds.Contains(book.Id);
+                //Kiểm tra sách đã mua
+                var isLicense = await GetAuthorizedApiDataAsync<bool>($"api/Books/checkBookLicence/{book.Id}");
+                if (isLicense) book.IsLicense = true;
             }
 
             var model = new BookListViewModel
@@ -297,27 +316,26 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 },
                 Categories = categories.ToList(),
                 Authors = authors.ToList(),
-                SearchBy=searchBy,
+                SearchBy = searchBy,
                 SearchOption = searchOption,
-                IsFree = isFree,
-                UserId = userId
+                IsFree = isFree
             };
             return View(model);
         }
         [HttpGet("RecentList")]
-        public async Task<IActionResult> RecentList(string userId,int page = 1, string searchOption = null, string searchBy = null,
+        public async Task<IActionResult> RecentList( int page = 1, string searchOption = null, string searchBy = null,
             List<int> cateIds = null, string orderBy = "Desc", bool isFree = false)
         {
-            if (userId == null) return RedirectToAction("Login", "Auths");
 
-            var url = $"api/Books/GetAllRecentRead?userId={userId}&page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
+            var url = $"api/Books/GetAllRecentRead?page={page}&searchBy={searchBy}&searchOption={searchOption}&orderBy={orderBy}&isFree={isFree}";
             if (cateIds != null && cateIds.Any())
             {
                 url += "&" + string.Join("&", cateIds.Select(id => $"cateIds={id}"));
             }
 
             //Get Book by API
-            var booksJsonResult = await GetApiDataAsync<JObject>(url);
+            var booksJsonResult = await GetAuthorizedApiDataAsync<JObject>(url);
+            if (booksJsonResult == null) return RedirectToAction( "Login", "Auths");
             var books = booksJsonResult["items"].ToObject<List<BookViewModel>>();
             var totalItems = booksJsonResult["totalItems"].ToObject<int>();
             var pageSize = booksJsonResult["pageSize"].ToObject<int>();
@@ -328,7 +346,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
             //Get Author By API
             var authors = await GetApiDataAsync<List<Author>>("api/Authors/GetAllAuthors");
             // Lấy danh sách các Book yêu thích từ API
-            var favoriteResult = await GetApiDataAsync<JObject>($"api/Books/GetUserFavorites?userId={userId}");
+            var favoriteResult = await GetAuthorizedApiDataAsync<JObject>($"api/Books/GetUserFavorites?");
             var favoriteBooks = favoriteResult["items"].ToObject<List<BookViewModel>>();
 
             // Lấy danh sách Id của các Book yêu thích
@@ -338,6 +356,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
             foreach (var book in books)
             {
                 book.IsFavorite = favoriteBookIds.Contains(book.Id);
+                //Kiểm tra sách đã mua
+                var isLicense = await GetAuthorizedApiDataAsync<bool>($"api/Books/checkBookLicence/{book.Id}");
+                if (isLicense) book.IsLicense = true;
             }
 
             var model = new BookListViewModel
@@ -353,10 +374,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 Categories = categories.ToList(),
                 Authors = authors.ToList(),
                 OrderBy = orderBy,
-                SearchBy=searchBy,
+                SearchBy = searchBy,
                 SearchOption = searchOption,
-                IsFree = isFree,
-                UserId = userId
+                IsFree = isFree
             };
             return View(model);
         }
@@ -392,6 +412,63 @@ namespace PRN232_Su25_Readify_Web.Controllers
             var resultData = JsonConvert.DeserializeObject<T>(resultJson);
 
             return resultData;
+        }
+        private async Task<T> GetAuthorizedApiDataAsync<T>(string apiUrl)
+        {
+            string fullUrl = _uri + apiUrl;
+            var token = Request.Cookies["access_Token"];
+            if (string.IsNullOrEmpty(token)) return default;
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync(fullUrl);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return default;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var data = JsonConvert.DeserializeObject<T>(json);
+
+            return data;
+        }
+        private async Task<T> PostAuthorizedApiDataAsync<T>(string apiUrl, object body)
+        {
+            string fullUrl = _uri + apiUrl;
+            var token = Request.Cookies["access_Token"];
+            if (string.IsNullOrEmpty(token)) return default;
+
+            var json = JsonConvert.SerializeObject(body);
+            var contentData = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.PostAsync(fullUrl, contentData);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return default;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var resultJson = await response.Content.ReadAsStringAsync();
+            var resultData = JsonConvert.DeserializeObject<T>(resultJson);
+
+            return resultData;
+        }
+        private static string ToSafeFileName(string title)
+        {
+            var normalized = title.Normalize(NormalizationForm.FormD);
+            var chars = normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
+            var clean = new string(chars.ToArray());
+            clean = Regex.Replace(clean, @"[^a-zA-Z0-9_\- ]", ""); // loại bỏ ký tự đặc biệt
+            return clean.Replace(" ", "_"); // thay khoảng trắng bằng _
         }
     }
 }

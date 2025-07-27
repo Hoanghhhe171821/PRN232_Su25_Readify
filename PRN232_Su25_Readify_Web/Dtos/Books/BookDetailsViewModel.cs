@@ -1,4 +1,5 @@
-﻿using PRN232_Su25_Readify_WebAPI.Models;
+﻿using PRN232_Su25_Readify_WebAPI.Dtos.Users;
+using PRN232_Su25_Readify_WebAPI.Models;
 
 namespace PRN232_Su25_Readify_Web.Dtos.Books
 {
@@ -12,6 +13,7 @@ namespace PRN232_Su25_Readify_Web.Dtos.Books
         public List<ChapterDto> ChapterDto { get; set; }
         public RecentedReadChapters LastRead { get; set; }
         public PagedResult<Comment> PagedComments { get; set; }
+        public bool IsLicensed { get; set; }
     }
     public class ChapterDto
     {

@@ -248,27 +248,30 @@
 							<div class="books-card style-1 wow fadeInUp" data-wow-delay="0.1s">
 								<div class="dz-media">
 									<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
-									asp-route-userId="@User.FindFirst("userId")?.Value"
+									
 									   style="text-decoration: none; color: inherit;">
-										<img src="@book.ImageUrl" alt="book">
+										<img src="@(!string.IsNullOrEmpty(book.ImageUrl) ? book.ImageUrl : "/images/books/book16.png")" alt="book">
 									</a>
 								</div>
 								<div class="dz-content">
 									<h4 class="title">
 										<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
-										   asp-route-userId="@User.FindFirst("userId")?.Value"
+										   
 										   style="text-decoration: none; color: inherit;">@book.Title</a>
 									</h4>
 									@if(book.IsFree){
 										<span class="price">Miễn Phí</span>
+										<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+										   class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
+
 									}else{
 										<span class="price">@string.Format("{0:N0} đ", book.Price)</span>
+										<button class="add-to-cart-btn btn btn-secondary btnhover btnhover2"
+												data-book-id="@book.Id">
+											<i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
+										</button>
 									}
-									<button
-										class="add-to-cart-btn btn btn-secondary btnhover btnhover2"
-										data-book-id="@book.Id">
-										<i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
-									</button>
+									
 
 								</div>
 							</div>
@@ -350,15 +353,15 @@
 							<div class="books-card style-3 wow fadeInUp" data-wow-delay="0.1s">
 								<div class="dz-media">
 									<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
-									   asp-route-userId="@User.FindFirst("userId")?.Value"
+									   
 									   style="text-decoration: none; color: inherit;">
-										<img src="@book.ImageUrl" alt="book">
+										<img src="@(!string.IsNullOrEmpty(book.ImageUrl) ? book.ImageUrl : "/images/books/book16.png")" alt="book">
 									</a>
 								</div>
 								<div class="dz-content">
 									<h5 class="title">
 										<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
-										   asp-route-userId="@User.FindFirst("userId")?.Value"
+										   
 											style="text-decoration: none; color: inherit;">@book.Title</a>
 									</h5>
 									<ul class="dz-tags">
@@ -371,16 +374,20 @@
 										}
 									</ul>
 									<div class="book-footer">
-										<div class="rate">
-											<i class="flaticon-star"></i> 6.8
-										</div>
 										<div class="price">
 											@if(book.IsFree){
 												<span class="price-num">Miễn Phí</span>
 												<del>@book.Price</del>
+												<a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
+												   class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
+
 
 											}else{
 												<span class="price-num">@string.Format("{0:N0} đ", book.Price)</span>
+												<button class="add-to-cart-btn btn btn-secondary btnhover btnhover2"
+														data-book-id="@book.Id">
+													<i class="flaticon-shopping-cart-1 m-r10"></i> Add to cart
+												</button>
 											}
 										</div>
 									</div>

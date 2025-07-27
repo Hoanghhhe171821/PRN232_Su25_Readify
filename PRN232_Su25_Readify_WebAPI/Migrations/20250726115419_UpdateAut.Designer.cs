@@ -12,8 +12,8 @@ using PRN232_Su25_Readify_WebAPI.DbContext;
 namespace PRN232_Su25_Readify_WebAPI.Migrations
 {
     [DbContext(typeof(ReadifyDbContext))]
-    [Migration("20250722113347_UpdateBookLicense")]
-    partial class UpdateBookLicense
+    [Migration("20250726115419_UpdateAut")]
+    partial class UpdateAut
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -192,6 +192,9 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Property<int>("AuthorId")
                         .HasColumnType("int");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -273,6 +276,12 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PublicEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PublicPhone")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdateDate")
                         .HasColumnType("datetime2");
@@ -868,11 +877,14 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.RecentRead", b =>
                 {
-                    b.Property<int>("BookId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
 
                     b.Property<int?>("ChapterId")
                         .HasColumnType("int");
@@ -880,14 +892,19 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Property<DateTime>("DateRead")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("BookId", "UserId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
 
                     b.HasIndex("ChapterId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "BookId", "ChapterId")
+                        .IsUnique()
+                        .HasFilter("[ChapterId] IS NOT NULL");
 
                     b.ToTable("RecentRead");
                 });

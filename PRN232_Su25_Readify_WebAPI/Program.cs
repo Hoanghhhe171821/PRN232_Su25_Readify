@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using CloudinaryDotNet;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Middlewares;
@@ -45,6 +47,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>()
     .AddDefaultTokenProviders();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -115,6 +118,16 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+//Cloudinary Configuration
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection("CloudinarySettings"));
+
+builder.Services.AddSingleton(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<CloudinarySettings>>().Value;
+    return new Cloudinary(new Account(settings.CloudName, settings.ApiKey, settings.ApiSecret));
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -142,4 +155,5 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
 });
+app.MapControllers();
 app.Run();

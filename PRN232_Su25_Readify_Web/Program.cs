@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using PRN232_Su25_Readify_Web.Middlewares;
 using PRN232_Su25_Readify_Web.Services;

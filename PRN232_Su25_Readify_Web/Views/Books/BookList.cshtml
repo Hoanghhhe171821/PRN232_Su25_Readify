@@ -3,7 +3,6 @@
 @model BookListViewModel
 @{
     var selectedCateIds = Context.Request.Query["cateIds"].Select(int.Parse).ToList();
-    var userId = @User.FindFirst("userId")?.Value;
 }
 @*Create Route value to pagings*@
 @functions {
@@ -11,7 +10,6 @@
     {
         var routeValues = new Dictionary<string, string>();
         routeValues["page"] = page.ToString();
-        routeValues["userId"] = User.FindFirst("userId")?.Value ?? "";
         routeValues["orderBy"] = Model.OrderBy ?? "";
         routeValues["searchTitle"] = Context.Request.Query["searchTitle"].ToString() ?? "";
 
@@ -36,7 +34,6 @@
                         <form asp-controller="Books" asp-action="BookList" method="get" id="filterForm">
                             <input type="hidden" name="page" value="@Model.PagedBooks.PageNumber" />
                             <input type="hidden" name="orderBy" value="@Model.OrderBy" />
-                            <input type="hidden" name="userId" value="@userId" />
                             <input type="hidden" name="searchOption" id="hiddenSearchOption" value="@(Context.Request.Query["searchOption"])" />
 
                             <div class="accordion accordion-filter" id="accordionExample">
@@ -102,7 +99,6 @@
                         <div class="grid-area">
                         </div>
                         <form asp-controller="Books" asp-action="BookList" method="get">
-                            <input type="hidden" name="page" value="@userId" />
                             <div class="category">
                                 <div class="form-group d-flex align-items-center">
                                     <div class="form-check form-switch  dropdown  default-select btn  btn-light">
@@ -159,9 +155,8 @@
                                         @*Image*@
                                         <div class="dz-media">
                                             <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" 
-                                            asp-route-userId="@userId"
                                                style="text-decoration: none; color: inherit;">
-                                                <img src="@book.ImageUrl" alt="@book.Title" style="width: 224px;height: 322px;">
+                                                <img src="@(!string.IsNullOrEmpty(book.ImageUrl) ? book.ImageUrl : "/images/books/book16.png")" alt="@book.Title" style="width: 224px;height: 322px;">
                                             </a>
                                         </div>
                                         @*Favorite*@
@@ -169,7 +164,7 @@
                                             <input class="form-check-input" type="checkbox"
                                                    id="flexCheckFavorite-@book.Id"
                                             @(book.IsFavorite ? "checked" : "")
-                                                   onclick="toggleFavorite(@book.Id,'@userId')">
+                                                   onclick="toggleFavorite(@book.Id)">
                                             <label class="form-check-label" for="flexCheckFavorite-@book.Id">
                                                 <i id="favoriteIcon-@book.Id" class="flaticon-heart @(book.IsFavorite ? "text-pink" : "")"></i>
                                             </label>
@@ -178,7 +173,6 @@
                                         <div class="dz-content">
                                             <h5 class="title">
                                                 <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
-                                                   asp-route-userId="@userId"
                                                    style="text-decoration: none; color: inherit;">@book.Title</a>
                                             </h5>
                                             <ul class="dz-tags">
@@ -211,7 +205,17 @@
                                                         <span class="price-num">Miễn phí</span>
                                                         <del>@string.Format("{0:N0} đ", book.Price)</del>
                                                     </div>
-                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" asp-route-userId="@userId"
+                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id" 
+                                                       class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
+
+                                                }
+                                                else if (!book.IsFree && book.IsLicense)
+                                                {
+                                                    <div class="price">
+                                                        <span class="price-num">Đã mua</span>
+                                                        <del>@string.Format("{0:N0} đ", book.Price)</del>
+                                                    </div>
+                                                    <a asp-controller="Books" asp-action="BookDetails" asp-route-bookId="@book.Id"
                                                        class="btn btn-secondary box-btn btnhover btnhover2"><i class="flaticon-shopping-cart-1 m-r10"></i> Read</a>
 
                                                 }
@@ -378,7 +382,7 @@
     </div>
     @section Scripts {
         <script>
-                function toggleFavorite(bookId,userId) {
+                function toggleFavorite(bookId) {
                 var checkbox = $('#flexCheckFavorite-' + bookId);
                 var isChecked = checkbox.is(':checked');
                 $.ajax({
@@ -386,9 +390,11 @@
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({
-                        BookId: bookId,
-                        UserId: userId
+                        BookId: bookId
                     }),
+                     xhrFields: {
+                        withCredentials: true 
+                    },
                     success: function (res) {
                         if (res.isFavorite) {
                             $('#favoriteIcon-' + bookId).addClass('text-pink');
@@ -397,7 +403,10 @@
                         }
                     },
                     error: function (xhr) {
-                        alert('pls login to use');
+                        alert(xhr.responseText);
+                        console.log("XHR Status:", xhr.status);              // Mã trạng thái HTTP
+                        console.log("XHR Response Text:", xhr.responseText); // Nội dung phản hồi lỗi (nếu có)
+                        console.log("XHR Response JSON:", xhr.responseJSON);
                         checkbox.prop('checked', !isChecked);
                     }
                 });

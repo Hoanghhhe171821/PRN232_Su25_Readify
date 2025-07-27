@@ -5,36 +5,34 @@
 namespace PRN232_Su25_Readify_WebAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateUserAgent : Migration
+    public partial class AddPublicContactInfo : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "SessionId",
-                table: "RefreshTokens",
+                name: "PublicEmail",
+                table: "Authors",
                 type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
+                nullable: true);
 
             migrationBuilder.AddColumn<string>(
-                name: "UserAgent",
-                table: "RefreshTokens",
+                name: "PublicPhone",
+                table: "Authors",
                 type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "SessionId",
-                table: "RefreshTokens");
+                name: "PublicEmail",
+                table: "Authors");
 
             migrationBuilder.DropColumn(
-                name: "UserAgent",
-                table: "RefreshTokens");
+                name: "PublicPhone",
+                table: "Authors");
         }
     }
 }

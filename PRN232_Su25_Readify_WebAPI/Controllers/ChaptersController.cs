@@ -5,6 +5,7 @@ using Octokit;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Chapters;
 using PRN232_Su25_Readify_WebAPI.Models;
+using System.Security.Claims;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -156,9 +157,10 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             }
         }
         [HttpGet("GetRecentedReadChapters")]
-        public async Task<IActionResult> GetRecentedReadChapters(string userId, int bookId)
+        public async Task<IActionResult> GetRecentedReadChapters(int bookId)
         {
-            if (userId == null) return BadRequest("Pls login");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
             var isExistedBook =await _context.Books.AnyAsync(b => b.Id == bookId);
             if(!isExistedBook) return BadRequest("Book not exist!");
 
