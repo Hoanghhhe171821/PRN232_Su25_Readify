@@ -1,0 +1,35 @@
+﻿@using PRN232_Su25_Readify_Web.Models.BookReport
+@model ReportBookViewModel
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<h2>Báo cáo sách: @Model.Title</h2>
+
+<form asp-action="Report" method="post">
+    <input type="hidden" asp-for="BookId" />
+    <input type="hidden" asp-for="Title" />
+
+    <div class="form-group">
+        <label>Lý do</label>
+        <select asp-for="Reason" class="form-control">
+            <option value="Vi phạm bản quyền">Vi phạm bản quyền</option>
+            <option value="Nội dung không phù hợp">Nội dung không phù hợp</option>
+            <option value="Spam hoặc giả mạo">Spam hoặc giả mạo</option>
+            <option value="Khác">Khác</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Mô tả chi tiết</label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-danger">Gửi báo cáo</button>
+</form>

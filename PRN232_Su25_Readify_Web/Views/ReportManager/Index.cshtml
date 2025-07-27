@@ -1,0 +1,30 @@
+﻿@model List<PRN232_Su25_Readify_Web.Models.BookReport.ReportManagementViewModel>
+
+<h2>Danh sách Báo cáo</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Sách</th>
+            <th>Người báo cáo</th>
+            <th>Lý do</th>
+            <th>Trạng thái</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            <tr>
+                <td>@(i + 1)</td>
+                <td>@Model[i].BookTitle</td>
+                <td>@Model[i].ReporterName</td>
+                <td>@Model[i].Reason</td>
+                <td>@Model[i].Status</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@Model[i].ReportId" class="btn btn-info btn-sm">Xem</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
