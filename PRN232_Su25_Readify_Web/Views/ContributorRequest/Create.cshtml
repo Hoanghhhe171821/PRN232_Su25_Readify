@@ -1,0 +1,63 @@
+﻿@{
+    Layout = "_Layout";
+}
+<h2>Đăng ký Contributor</h2>
+
+<form id="contributorForm" method="post">
+    <div class="form-group">
+        <label>FullName</label>
+        <input type="text" name="FullName" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Dob</label>
+        <input type="date" name="Dob" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="form-group">
+        <label>CitizenId</label>
+        <input type="text" name="CitizenId" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>PhoneNumber</label>
+        <input type="text" name="PhoneNumber" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Address</label>
+        <input type="text" name="Address" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>BankAccount</label>
+        <input type="text" name="BankAccount" class="form-control" />
+    </div>
+
+    <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="agreeCheckbox">
+        <label class="form-check-label" for="agreeCheckbox">
+            Tôi đồng ý với chính sách 
+        </label>
+        <span id="errorPolicy" style="color: red; display: none;">Bạn phải đồng ý với chính sách</span>
+    </div>
+
+    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Gửi Yêu Cầu</button>
+</form>
+
+@section Scripts {
+    <script>
+        document.getElementById("agreeCheckbox").addEventListener("change", function () {
+            const btn = document.getElementById("submitBtn");
+            const error = document.getElementById("errorPolicy");
+
+            if (this.checked) {
+                btn.disabled = false;
+                error.style.display = "none";
+            } else {
+                btn.disabled = true;
+                error.style.display = "inline";
+            }
+        });
+    </script>
+}

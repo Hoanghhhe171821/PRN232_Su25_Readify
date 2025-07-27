@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 
@@ -11,9 +12,11 @@ using PRN232_Su25_Readify_WebAPI.DbContext;
 namespace PRN232_Su25_Readify_WebAPI.Migrations
 {
     [DbContext(typeof(ReadifyDbContext))]
-    partial class ReadifyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250726080858_Update_ContributorRequest_Fields")]
+    partial class Update_ContributorRequest_Fields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -189,9 +192,6 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                     b.Property<int>("AuthorId")
                         .HasColumnType("int");
 
-                    b.Property<string>("AvatarUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -273,12 +273,6 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("PublicEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PublicPhone")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdateDate")
                         .HasColumnType("datetime2");
@@ -410,9 +404,6 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsFree")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPublished")
                         .HasColumnType("bit");
 
                     b.Property<int>("Price")
