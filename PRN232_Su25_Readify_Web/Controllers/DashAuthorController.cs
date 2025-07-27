@@ -8,6 +8,7 @@ using PRN232_Su25_Readify_WebAPI.Models;
 using Newtonsoft.Json;
 using System.Net;
 using Newtonsoft.Json.Linq;
+using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 
 namespace PRN232_Su25_Readify_Web.Controllers
 {
@@ -76,6 +77,51 @@ namespace PRN232_Su25_Readify_Web.Controllers
             }
 
             return View(pagedResult);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+            ViewBag.Categories = categories ?? new List<Category>();
+
+            var model = new CreateBookDto(); 
+            return View(model);
+        }
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateBookDto model, IFormFile imageFile)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            if (imageFile == null || imageFile.Length == 0)
+            {
+                TempData["Error"] = "Ảnh không được để trống.";
+                return View(model);
+            }
+
+            var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+            ViewBag.Categories = categories ?? new List<Category>();
+
+            // Gửi ảnh sang API (Multipart)
+            using var content = new MultipartFormDataContent();
+            content.Add(new StreamContent(imageFile.OpenReadStream()), "imageFile", imageFile.FileName);
+            content.Add(new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json"), "bookData");
+
+            try
+            {
+                // Gửi MultipartFormDataContent đúng kiểu
+                var result = await PostAuthorizedApiDataAsync<Book>("api/Authors/CreateBook", content);
+
+                TempData["Success"] = "Tạo sách thành công! ";
+
+                return RedirectToAction("BookManager");
+            }
+            catch(Exception ex)
+            {
+                TempData["Error"] = "Lỗi: " + ex.Message;
+                return View(model);
+            }
         }
 
         public async Task<IActionResult> CreateRequestRoyal()
@@ -204,19 +250,16 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             return data;
         }
-        private async Task<T> PostAuthorizedApiDataAsync<T>(string apiUrl, object body)
+        private async Task<T> PostAuthorizedApiDataAsync<T>(string apiUrl, HttpContent bodyContent)
         {
             string fullUrl = _uri + apiUrl;
             var token = Request.Cookies["access_Token"];
             if (string.IsNullOrEmpty(token)) return default;
 
-            var json = JsonConvert.SerializeObject(body);
-            var contentData = new StringContent(json, Encoding.UTF8, "application/json");
-
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await client.PostAsync(fullUrl, contentData);
+            var response = await client.PostAsync(fullUrl, bodyContent);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {

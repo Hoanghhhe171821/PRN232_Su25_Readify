@@ -10,6 +10,8 @@ using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System.Security.Claims;
 using System.Numerics;
+using Newtonsoft.Json;
+using Octokit;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -19,11 +21,21 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
     {
         private readonly ReadifyDbContext _context;
         private readonly IRoyalPayoutReService _royalPayoutReService;
-
-        public AuthorsController(ReadifyDbContext context, IRoyalPayoutReService royalPayoutReService)
+        private readonly GitHubClient _gitHubClient;
+        private readonly string _owner;
+        private readonly string _repo;
+        private readonly string _branch = "main";
+        public AuthorsController(ReadifyDbContext context, IRoyalPayoutReService royalPayoutReService, IConfiguration configuration)
         {
+            var token = configuration["GitHub:Token"];
+            _owner = configuration["GitHub:Owner"];
+            _repo = configuration["GitHub:Repo"];
             _context = context;
             _royalPayoutReService = royalPayoutReService;
+            _gitHubClient = new GitHubClient(new ProductHeaderValue("ReadifyApp"))
+            {
+                Credentials = new Credentials(token)
+            };
         }
         [HttpGet("GetAllAuthors")]
         public async Task<IActionResult> GetAllAuthors()
@@ -103,8 +115,18 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
         [Authorize(Roles = "Author")]
         [HttpPost("CreateBook")]
-        public async Task<IActionResult> CreateBook([FromBody] CreateBookDto model)
+        public async Task<IActionResult> CreateBook([FromForm] CreateBookWithFile request)
         {
+            if (request.ImageFile == null || request.ImageFile.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            if (request.ImageFile.Length > 5 * 1024 * 1024)
+                return BadRequest("File too large.");
+
+            var extension = Path.GetExtension(request.ImageFile.FileName).ToLower();
+            if (extension != ".jpg" && extension != ".jpeg" && extension != ".png")
+                return BadRequest("Invalid image format. Only JPG/PNG allowed.");
+
             //Validate
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized();
@@ -112,13 +134,20 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             var author = _context.Authors.FirstOrDefault(b => b.UserId == userId);
             if (author == null) return Unauthorized();
 
+            var model = JsonConvert.DeserializeObject<CreateBookDto>(request.BookData);
+            if (model == null) return BadRequest("Invalid book data");
+
+            // Generate file path
+            var repoPath = $"{model.Title}/cover{extension}";
+            await UploadFileToGitHub(request.ImageFile, repoPath);
+
             Book newBook = new Book
             {
                 Title = model.Title,
                 Description = model.Description,
                 IsFree = model.IsFree,
                 Price = model.Price,
-                ImageUrl = model.ImageUrl,
+                ImageUrl = repoPath,
                 RoyaltyRate = model.RoyaltyRate,
                 AuthorId = author.Id,
                 UploadedBy = userId,
@@ -340,6 +369,44 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         {
             var result = await _royalPayoutReService.GetAllRequestsAsync(page, pageSize);
             return Ok(result);
+        }
+        private async Task UploadFileToGitHub(IFormFile file, string pathInRepo)
+        {
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms);
+            var content = Convert.ToBase64String(ms.ToArray());
+
+            try
+            {
+                var existingFile = await GetExistingFileSha(pathInRepo);
+
+                if (!string.IsNullOrEmpty(existingFile))
+                {
+                    var update = new UpdateFileRequest("Update book image", content, existingFile, _branch);
+                    await _gitHubClient.Repository.Content.UpdateFile(_owner, _repo, pathInRepo, update);
+                }
+                else
+                {
+                    var create = new CreateFileRequest("Upload book image", content, _branch);
+                    await _gitHubClient.Repository.Content.CreateFile(_owner, _repo, pathInRepo, create);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("GitHub upload failed: " + ex.Message);
+            }
+        }
+        private async Task<string?> GetExistingFileSha(string path)
+        {
+            try
+            {
+                var existingFile = await _gitHubClient.Repository.Content.GetAllContentsByRef(_owner, _repo, path, _branch);
+                return existingFile.FirstOrDefault()?.Sha;
+            }
+            catch (NotFoundException)
+            {
+                return null;
+            }
         }
     }
 }
