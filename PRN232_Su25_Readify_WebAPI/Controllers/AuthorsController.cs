@@ -78,6 +78,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                                     .ToListAsync();
             return Ok(books);
         }
+
         [Authorize(Roles = "Author")]
         [HttpPost("CreateBook")]
         public async Task<IActionResult> CreateBook([FromBody] CreateBookDto model)
@@ -98,6 +99,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 ImageUrl = model.ImageUrl,
                 RoyaltyRate = model.RoyaltyRate,
                 AuthorId = author.Id,
+                UploadedBy = userId,
                 IsPublished = model.IsPublished,
                 CreateDate = DateTime.UtcNow,
                 IsActive = true
@@ -123,6 +125,48 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
             return Ok(newBook);
         }
-        
+
+        [Authorize(Roles = "Author")]
+        [HttpPut("UpdateBook")]
+        public async Task<IActionResult> UpdateBook([FromBody] UpdateBookDto model)
+        {
+            //Validate
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var author = _context.Authors.FirstOrDefault(b => b.UserId == userId);
+            if (author == null) return Unauthorized();
+
+
+            var book = await _context.Books
+                            .Include(b => b.BookCategories)
+                            .FirstOrDefaultAsync(b => b.Id == model.Id && b.AuthorId == author.Id && b.IsPublished == true);
+
+            if (book == null)
+                return NotFound(new { message = "Không tìm thấy sách" });
+
+            book.Title = model.Title;
+            book.Description = model.Description;
+            book.IsFree = model.IsFree;
+            book.Price = model.Price;
+            book.ImageUrl = model.ImageUrl;
+            book.UpdateDate = DateTime.UtcNow;
+            _context.BookCategories.RemoveRange(book.BookCategories);
+            if (model.CategoryIds != null && model.CategoryIds.Any())
+            {
+                foreach (var cateId in model.CategoryIds)
+                {
+                    _context.BookCategories.Add(new BookCategory
+                    {
+                        BookId = book.Id,
+                        CategoryId = cateId
+                    });
+                }
+            }
+            await _context.SaveChangesAsync();
+            return Ok(book);
+        }
+
+
     }
 }

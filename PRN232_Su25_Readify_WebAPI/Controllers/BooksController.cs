@@ -425,23 +425,23 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         [Authorize(Roles = "Contributor")]
         public async Task<IActionResult> UpdateBook([FromBody] UpdateBookDto updateBookDto)
         {
-            var book = await _context.Books.FindAsync(updateBookDto.Id);
-            if (book == null) return NotFound("Book not found");
+            //var book = await _context.Books.FindAsync(updateBookDto.Id);
+            //if (book == null) return NotFound("Book not found");
 
-            // Gán giá trị cập nhật từ DTO sang entity
-            book.Title = updateBookDto.Title;
-            book.Description = updateBookDto.Description;
-            book.IsFree = updateBookDto.IsFree;
-            book.Price = updateBookDto.Price;
-            book.UnitInOrder = updateBookDto.UnitInOrder;
-            book.ImageUrl = updateBookDto.ImageUrl;
-            book.RoyaltyRate = updateBookDto.RoyaltyRate;
-            book.AuthorId = updateBookDto.AuthorId;
-            book.UpdateDate = DateTime.Now;
+            //// Gán giá trị cập nhật từ DTO sang entity
+            //book.Title = updateBookDto.Title;
+            //book.Description = updateBookDto.Description;
+            //book.IsFree = updateBookDto.IsFree;
+            //book.Price = updateBookDto.Price;
+            //book.UnitInOrder = updateBookDto.UnitInOrder;
+            //book.ImageUrl = updateBookDto.ImageUrl;
+            //book.RoyaltyRate = updateBookDto.RoyaltyRate;
+            //book.AuthorId = updateBookDto.AuthorId;
+            //book.UpdateDate = DateTime.Now;
 
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
 
-            return Ok(book);
+            return Ok();
         }
 
         [HttpPut("ToggleBookStatus/{id}")]
