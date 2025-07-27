@@ -7,7 +7,6 @@ using PRN232_Su25_Readify_WebAPI.Dtos.Authors;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 using PRN232_Su25_Readify_WebAPI.Dtos.RoyaltyPayout;
 using PRN232_Su25_Readify_WebAPI.Models;
-using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System.Security.Claims;
 using System.Numerics;
@@ -362,45 +361,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             var result = await _royalPayoutReService.GetAllRequestsAsync(page, pageSize);
             return Ok(result);
         }
-        private async Task UploadFileToGitHub(IFormFile file, string pathInRepo)
-        {
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms);
-            var content = Convert.ToBase64String(ms.ToArray());
-
-            try
-            {
-                var existingFile = await GetExistingFileSha(pathInRepo);
-
-                if (!string.IsNullOrEmpty(existingFile))
-                {
-                    var update = new UpdateFileRequest("Update book image", content, existingFile, _branch);
-                    await _gitHubClient.Repository.Content.UpdateFile(_owner, _repo, pathInRepo, update);
-                }
-                else
-                {
-                    var create = new CreateFileRequest("Upload book image", content, _branch);
-                    await _gitHubClient.Repository.Content.CreateFile(_owner, _repo, pathInRepo, create);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("GitHub upload failed: " + ex.Message);
-            }
-        }
-        private async Task<string?> GetExistingFileSha(string path)
-        {
-            try
-            {
-                var existingFile = await _gitHubClient.Repository.Content.GetAllContentsByRef(_owner, _repo, path, _branch);
-                return existingFile.FirstOrDefault()?.Sha;
-            }
-            catch (NotFoundException)
-            {
-                return null;
-            }
-        }
-
+        
 
         [HttpGet("book-revenue")]
         public async Task<IActionResult> GetAuthorBookRevenue([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
@@ -509,7 +470,14 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(pagedResult);
         }
 
-
+        public static string Slugify(string phrase)
+        {
+            string str = phrase.ToLowerInvariant();
+            str = Regex.Replace(str, @"[^a-z0-9\s-]", "");  // Bỏ ký tự đặc biệt
+            str = Regex.Replace(str, @"\s+", " ").Trim();   // Rút gọn khoảng trắng
+            str = Regex.Replace(str, @"\s", "-");           // Đổi space thành -
+            return str;
+        }
 
 
 
