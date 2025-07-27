@@ -346,43 +346,44 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         [Authorize(Roles = "Author")]
         public async Task<IActionResult> CreateBook([FromBody] CreateBookDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            //if (!ModelState.IsValid)
+            //    return BadRequest(ModelState);
 
-            var author = await _context.Authors.FindAsync(dto.AuthorId);
-            if (author == null)
-                return BadRequest("Author not found");
+            //var author = await _context.Authors.FindAsync(dto.AuthorId);
+            //if (author == null)
+            //    return BadRequest("Author not found");
 
-            //if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
+            ////if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
 
-            // Lấy ID người dùng hiện tại từ token
-            var userId = User?.Identity?.Name;
-            if (string.IsNullOrEmpty(userId)) throw new UnauthorEx("User not authenticated.");
+            //// Lấy ID người dùng hiện tại từ token
+            //var userId = User?.Identity?.Name;
+            //if (string.IsNullOrEmpty(userId)) throw new UnauthorEx("User not authenticated.");
 
-            var book = new Book
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                IsFree = dto.IsFree,
-                Price = dto.Price,
-                UnitInOrder = dto.UnitInOrder,
-                ImageUrl = dto.ImageUrl,
-                RoyaltyRate = dto.RoyaltyRate,
-                AuthorId = dto.AuthorId,
-                UploadedBy = dto.UploadedBy,
-                CreateDate = dto.CreateDate,
-                UpdateDate = dto.UpdateDate,
-                IsActive = false // mặc định chưa duyệt
-            };
+            //var book = new Book
+            //{
+            //    Title = dto.Title,
+            //    Description = dto.Description,
+            //    IsFree = dto.IsFree,
+            //    Price = dto.Price,
+            //    UnitInOrder = dto.UnitInOrder,
+            //    ImageUrl = dto.ImageUrl,
+            //    RoyaltyRate = dto.RoyaltyRate,
+            //    AuthorId = dto.AuthorId,
+            //    UploadedBy = dto.UploadedBy,
+            //    CreateDate = dto.CreateDate,
+            //    UpdateDate = dto.UpdateDate,
+            //    IsActive = false // mặc định chưa duyệt
+            //};
 
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
+            //_context.Books.Add(book);
+            //await _context.SaveChangesAsync();
 
-            return Ok(new
-            {
-                message = "Book uploaded successfully, pending approval",
-                bookId = book.Id
-            });
+            //return Ok(new
+            //{
+            //    message = "Book uploaded successfully, pending approval",
+            //    bookId = book.Id
+            //});
+            return Ok();
         }
 
         [HttpGet("pending")]
@@ -424,23 +425,23 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
         [Authorize(Roles = "Contributor")]
         public async Task<IActionResult> UpdateBook([FromBody] UpdateBookDto updateBookDto)
         {
-            var book = await _context.Books.FindAsync(updateBookDto.Id);
-            if (book == null) return NotFound("Book not found");
+            //var book = await _context.Books.FindAsync(updateBookDto.Id);
+            //if (book == null) return NotFound("Book not found");
 
-            // Gán giá trị cập nhật từ DTO sang entity
-            book.Title = updateBookDto.Title;
-            book.Description = updateBookDto.Description;
-            book.IsFree = updateBookDto.IsFree;
-            book.Price = updateBookDto.Price;
-            book.UnitInOrder = updateBookDto.UnitInOrder;
-            book.ImageUrl = updateBookDto.ImageUrl;
-            book.RoyaltyRate = updateBookDto.RoyaltyRate;
-            book.AuthorId = updateBookDto.AuthorId;
-            book.UpdateDate = DateTime.Now;
+            //// Gán giá trị cập nhật từ DTO sang entity
+            //book.Title = updateBookDto.Title;
+            //book.Description = updateBookDto.Description;
+            //book.IsFree = updateBookDto.IsFree;
+            //book.Price = updateBookDto.Price;
+            //book.UnitInOrder = updateBookDto.UnitInOrder;
+            //book.ImageUrl = updateBookDto.ImageUrl;
+            //book.RoyaltyRate = updateBookDto.RoyaltyRate;
+            //book.AuthorId = updateBookDto.AuthorId;
+            //book.UpdateDate = DateTime.Now;
 
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
 
-            return Ok(book);
+            return Ok();
         }
 
         [HttpPut("ToggleBookStatus/{id}")]
