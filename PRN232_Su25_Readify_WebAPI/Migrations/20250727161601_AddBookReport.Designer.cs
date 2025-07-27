@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 
@@ -11,9 +12,11 @@ using PRN232_Su25_Readify_WebAPI.DbContext;
 namespace PRN232_Su25_Readify_WebAPI.Migrations
 {
     [DbContext(typeof(ReadifyDbContext))]
-    partial class ReadifyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250727161601_AddBookReport")]
+    partial class AddBookReport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -295,7 +298,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL");
 
-                    b.ToTable("Authors", (string)null);
+                    b.ToTable("Authors");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.AuthorRequest", b =>
@@ -350,7 +353,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuthorRequests", (string)null);
+                    b.ToTable("AuthorRequests");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.AuthorRevenueSummary", b =>
@@ -383,7 +386,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.ToTable("AuthorRevenueSummary", (string)null);
+                    b.ToTable("AuthorRevenueSummary");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Book", b =>
@@ -440,7 +443,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("UploadedBy");
 
-                    b.ToTable("Books", (string)null);
+                    b.ToTable("Books");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.BookCategory", b =>
@@ -455,7 +458,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("BookCategories", (string)null);
+                    b.ToTable("BookCategories");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.BookLicense", b =>
@@ -561,7 +564,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("BookId");
 
-                    b.ToTable("BookRevenueSummaries", (string)null);
+                    b.ToTable("BookRevenueSummaries");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Cart", b =>
@@ -653,7 +656,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Category", (string)null);
+                    b.ToTable("Category");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Chapter", b =>
@@ -689,7 +692,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("BookId");
 
-                    b.ToTable("Chapters", (string)null);
+                    b.ToTable("Chapters");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.ChapterError", b =>
@@ -734,7 +737,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ChaptersError", (string)null);
+                    b.ToTable("ChaptersError");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Comment", b =>
@@ -770,60 +773,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comment", (string)null);
-                });
-
-            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.ContributorRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BackIdImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BankAccount")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FrontIdImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsAgreedToPolicy")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PortraitImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ContributorRequests");
+                    b.ToTable("Comment");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.ErrorType", b =>
@@ -849,7 +799,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ErrorTypes", (string)null);
+                    b.ToTable("ErrorTypes");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Favorite", b =>
@@ -864,7 +814,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Favorite", (string)null);
+                    b.ToTable("Favorite");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Order", b =>
@@ -898,7 +848,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Order", (string)null);
+                    b.ToTable("Order");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.OrderItem", b =>
@@ -936,7 +886,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems", (string)null);
+                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.Payment", b =>
@@ -969,7 +919,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Payment", (string)null);
+                    b.ToTable("Payment");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.RecentRead", b =>
@@ -1003,7 +953,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .IsUnique()
                         .HasFilter("[ChapterId] IS NOT NULL");
 
-                    b.ToTable("RecentRead", (string)null);
+                    b.ToTable("RecentRead");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.RefreshToken", b =>
@@ -1047,7 +997,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.RoyaltyPayoutRequest", b =>
@@ -1086,7 +1036,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.ToTable("RoyaltyPayoutRequests", (string)null);
+                    b.ToTable("RoyaltyPayoutRequests");
                 });
 
             modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.RoyaltyPayoutTransaction", b =>
@@ -1214,7 +1164,7 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TopUpTransactions", (string)null);
+                    b.ToTable("TopUpTransactions");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1485,17 +1435,6 @@ namespace PRN232_Su25_Readify_WebAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Book");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("PRN232_Su25_Readify_WebAPI.Models.ContributorRequest", b =>
-                {
-                    b.HasOne("PRN232_Su25_Readify_WebAPI.Models.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });
