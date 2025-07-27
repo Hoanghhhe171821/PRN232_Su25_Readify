@@ -38,6 +38,7 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
         public DbSet<AuthorRevenueSummary> AuthorRevenueSummary { get; set; }
         public DbSet<BookReport> BookReports { get; set; } // Báo cáo sách
         public DbSet<BookLicense> BookLicenses { get; set; }
+        public DbSet<ContributorRequest> ContributorRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -196,6 +197,9 @@ namespace PRN232_Su25_Readify_WebAPI.DbContext
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
+            builder.Entity<ContributorRequest>()
+                .Property(e => e.Status)
+                .HasConversion<string>();
 
         }
     }

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.DbContext;
-using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
 using PRN232_Su25_Readify_WebAPI.Models;
@@ -343,14 +342,16 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPost("CreateBook")]
-        [Authorize(Roles = "Contributor")]
-
-        public async Task<IActionResult> CreateBook([FromBody] CreateBookDto createBookDto)
-
+        [HttpPost("create")]
+        [Authorize(Roles = "Author")]
+        public async Task<IActionResult> CreateBook([FromBody] CreateBookDto dto)
         {
-            if (createBookDto == null) throw new BRException("Book data is required.");
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
+            var author = await _context.Authors.FindAsync(dto.AuthorId);
+            if (author == null)
+                return BadRequest("Author not found");
 
             //if (searchOption != null) query = query.Where(b => b.Title.Contains(searchOption));
 
@@ -358,31 +359,54 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             var userId = User?.Identity?.Name;
             if (string.IsNullOrEmpty(userId)) throw new UnauthorEx("User not authenticated.");
 
-
-            // Map từ DTO sang entity Book
             var book = new Book
             {
-                Title = createBookDto.Title,
-                Description = createBookDto.Description,
-                IsFree = createBookDto.IsFree,
-                Price = createBookDto.Price,
-                UnitInOrder = createBookDto.UnitInOrder,
-                ImageUrl = createBookDto.ImageUrl,
-                RoyaltyRate = createBookDto.RoyaltyRate,
-                AuthorId = createBookDto.AuthorId,
-                UploadedBy = userId,
-                CreateDate = DateTime.Now,
-                UpdateDate = createBookDto.UpdateDate,
-                IsActive = false // luôn gán false khi tạo mới, chờ manager duyệt
+                Title = dto.Title,
+                Description = dto.Description,
+                IsFree = dto.IsFree,
+                Price = dto.Price,
+                UnitInOrder = dto.UnitInOrder,
+                ImageUrl = dto.ImageUrl,
+                RoyaltyRate = dto.RoyaltyRate,
+                AuthorId = dto.AuthorId,
+                UploadedBy = dto.UploadedBy,
+                CreateDate = dto.CreateDate,
+                UpdateDate = dto.UpdateDate,
+                IsActive = false // mặc định chưa duyệt
             };
 
             _context.Books.Add(book);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetBookById), new { bookId = book.Id }, book);
+            return Ok(new
+            {
+                message = "Book uploaded successfully, pending approval",
+                bookId = book.Id
+            });
         }
 
-        [HttpPut("ApproveBook/{id}")]
+        [HttpGet("pending")]
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> GetPendingBooks()
+        {
+            var pendingBooks = await _context.Books
+                .Include(b => b.Author)
+                .Where(b => b.IsActive == false)
+                .Select(b => new
+                {
+                    b.Id,
+                    b.Title,
+                    b.Description,
+                    b.CreateDate,
+                    AuthorName = b.Author.User.UserName,
+                    b.RoyaltyRate
+                })
+                .ToListAsync();
+
+            return Ok(pendingBooks);
+        }
+
+        [HttpPut("approve/{id}")]
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> ApproveBook(int id)
         {
@@ -393,7 +417,6 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             book.UpdateDate = DateTime.Now;
 
             await _context.SaveChangesAsync();
-
             return Ok(new { message = "Book approved and now visible." });
         }
 
