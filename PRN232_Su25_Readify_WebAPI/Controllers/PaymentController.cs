@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Auths;
+using PRN232_Su25_Readify_WebAPI.Dtos.TopUpCoints;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System.Security.Claims;
 
@@ -70,5 +71,23 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(result);
 
         }
+
+        [HttpGet("TopUp/getAllPayments")]
+        public async Task<IActionResult> GetAllPayments()
+        {
+            return Ok(await _payment.FindAllPaymentHistory());
+        }
+
+        [HttpPut("TopUp/disbursePayment")]
+        public async Task<IActionResult> DisbursePayment([FromBody] DisbursePaymentRequest request)
+        {
+            var response = await _payment.DisbursePayment(request.TopUpTransactionId, request.Status);
+            if (request.Status == "SUCCESS")
+            {
+                await _authService.TopUpCoints(response.Points, response.UserId);
+            }
+            return Ok(response);
+        }
+
     }
 }
