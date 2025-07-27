@@ -9,6 +9,7 @@ using PRN232_Su25_Readify_WebAPI.Dtos.RoyaltyPayout;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System.Security.Claims;
+using System.Numerics;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -70,18 +71,34 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
         [Authorize(Roles = "Author")]
         [HttpGet("GetAllBooksByAuthor")]
-        public async Task<IActionResult> GetAllBooksByAuthor()
+        public async Task<IActionResult> GetAllBooksByAuthor(int pageNumber = 1)
         {
-            //Validate
+            const int pageSize = 7;
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized();
 
-            var author = _context.Authors.FirstOrDefault(b => b.UserId == userId);
+            var author = await _context.Authors.FirstOrDefaultAsync(b => b.UserId == userId);
             if (author == null) return Unauthorized();
 
-            var books = await _context.Books.Where(a => a.AuthorId == author.Id)
-                                    .ToListAsync();
-            return Ok(books);
+            var totalBooks = await _context.Books.CountAsync(b => b.AuthorId == author.Id);
+            var totalPages = (int)Math.Ceiling(totalBooks / (double)pageSize);
+
+            var books = await _context.Books
+                .Where(b => b.AuthorId == author.Id)
+                .OrderByDescending(b => b.UpdateDate ?? b.CreateDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                CurrentPage = pageNumber,
+                TotalPages = totalPages,
+                PageSize = pageSize,
+                TotalBooks = totalBooks,
+                Books = books
+            });
         }
 
         [Authorize(Roles = "Author")]
@@ -185,7 +202,14 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             var summarry = await _context.AuthorRevenueSummary
                 .Where(s => s.AuthorId == author.Id)
                 .FirstOrDefaultAsync();
-
+            if(summarry == null)
+            {
+                summarry = new AuthorRevenueSummary
+                {
+                    TotalRevenue = 0,
+                    TotalPaid = 0
+                };
+            }
             var listBooks = _context.Books.Where(b => b.AuthorId == author.Id).Count();
             var thirtyDaysAgo = DateTime.Now.AddDays(-30);
 

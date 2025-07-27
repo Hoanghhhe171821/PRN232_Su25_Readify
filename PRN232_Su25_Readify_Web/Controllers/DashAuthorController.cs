@@ -4,22 +4,29 @@ using PRN232_Su25_Readify_Web.Dtos.DashboardAuthor;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using PRN232_Su25_Readify_WebAPI.Models;
+using Newtonsoft.Json;
+using System.Net;
+using Newtonsoft.Json.Linq;
 
 namespace PRN232_Su25_Readify_Web.Controllers
 {
     public class DashAuthorController : Controller
     {
-        private readonly IHttpClientFactory _httpClient;
-
-        public DashAuthorController(IHttpClientFactory httpClient)
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _httpClient;
+        private readonly string _uri = "https://localhost:7267/";
+        public DashAuthorController(IHttpClientFactory factory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = factory;
+            _httpClient = factory.CreateClient();
+            _httpClient.BaseAddress = new Uri(_uri);
         }
 
         public async Task<IActionResult> Index()
         {
             var token = Request.Cookies["access_Token"];
-            var client = _httpClient.CreateClient();
+            var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             RevenueSummaryViewModel revenueData = null;
 
@@ -27,13 +34,48 @@ namespace PRN232_Su25_Readify_Web.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                revenueData = JsonSerializer.Deserialize<RevenueSummaryViewModel>(content, new JsonSerializerOptions
+                revenueData = System.Text.Json.JsonSerializer.Deserialize<RevenueSummaryViewModel>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
             }
 
             return View(revenueData);
+        }
+
+        public async Task<IActionResult> BookManager(int pageNumber = 1, int pageSize = 7)
+        {
+            var responseJson = await GetAuthorizedApiDataAsync<JObject>(
+                $"api/Authors/GetAllBooksByAuthor?pageNumber={pageNumber}");
+
+            if (responseJson == null)
+            {
+                return View(new PagedResult<Book>
+                {
+                    Items = new List<Book>(),
+                    CurrentPage = pageNumber,
+                    PageSize = pageSize,
+                    TotalItems = 0
+                });
+            }
+
+            var pagedResult = new PagedResult<Book>();
+
+            pagedResult.CurrentPage = responseJson.Value<int?>("currentPage") ?? 1;
+            pagedResult.PageSize = responseJson.Value<int?>("pageSize") ?? pageSize;
+            pagedResult.TotalItems = responseJson.Value<int?>("totalBooks") ?? 0;
+
+            var booksToken = responseJson["books"];
+            if (booksToken != null)
+            {
+                pagedResult.Items = booksToken.ToObject<List<Book>>() ?? new List<Book>();
+            }
+            else
+            {
+                pagedResult.Items = new List<Book>();
+            }
+
+            return View(pagedResult);
         }
 
         public async Task<IActionResult> CreateRequestRoyal()
@@ -46,7 +88,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
         {
             var token = Request.Cookies["access_Token"];
            
-            var client = _httpClient.CreateClient();
+            var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             var content = new StringContent(
@@ -90,7 +132,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
         {
             var token = Request.Cookies["access_Token"];
 
-            var client = _httpClient.CreateClient();
+            var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             var query = $"page={pageIndex}&pageSize={pageSize}";
@@ -106,6 +148,87 @@ namespace PRN232_Su25_Readify_Web.Controllers
             });
 
         }
+        private async Task<T> GetApiDataAsync<T>(string url)
+        {
+            var response = await _httpClient.GetAsync(url);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return default;
+            }
+            response.EnsureSuccessStatusCode(); // Báo lỗi nếu API trả lỗi
 
+            var json = await response.Content.ReadAsStringAsync();
+            var data = JsonConvert.DeserializeObject<T>(json);
+
+            return data;
+        }
+        private async Task<T> PostApiDataAsync<T>(string url, object body)
+        {
+            var json = JsonConvert.SerializeObject(body);
+            var contentData = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(url, contentData);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return default;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var resultJson = await response.Content.ReadAsStringAsync();
+            var resultData = JsonConvert.DeserializeObject<T>(resultJson);
+
+            return resultData;
+        }
+        private async Task<T> GetAuthorizedApiDataAsync<T>(string apiUrl)
+        {
+            string fullUrl = _uri + apiUrl;
+            var token = Request.Cookies["access_Token"];
+            if (string.IsNullOrEmpty(token)) return default;
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync(fullUrl);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return default;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var data = JsonConvert.DeserializeObject<T>(json);
+
+            return data;
+        }
+        private async Task<T> PostAuthorizedApiDataAsync<T>(string apiUrl, object body)
+        {
+            string fullUrl = _uri + apiUrl;
+            var token = Request.Cookies["access_Token"];
+            if (string.IsNullOrEmpty(token)) return default;
+
+            var json = JsonConvert.SerializeObject(body);
+            var contentData = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.PostAsync(fullUrl, contentData);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return default;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var resultJson = await response.Content.ReadAsStringAsync();
+            var resultData = JsonConvert.DeserializeObject<T>(resultJson);
+
+            return resultData;
+        }
     }
 }
