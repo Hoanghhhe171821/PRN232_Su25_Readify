@@ -233,9 +233,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             var query = $"?pageIndex={pageIndex}&pageSize={pageSize}";
             var response = await client.GetFromJsonAsync
-                <PagedResult<TopUpTransactionsDto>>($"/api/Payment/TopUp/History{query}");
+                <PagedResults<TopUpTransactionsDto>>($"/api/Payment/TopUp/History{query}");
 
-            return View(response ?? new PagedResult<TopUpTransactionsDto>
+            return View(response ?? new PagedResults<TopUpTransactionsDto>
             {
                 Items = new List<TopUpTransactionsDto>(),
                 TotalItems = 0,

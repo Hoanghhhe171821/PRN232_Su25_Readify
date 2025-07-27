@@ -23,7 +23,13 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _httpClient = factory.CreateClient();
             _httpClient.BaseAddress = new Uri(_uri);
         }
-
+        private HttpClient CreateClient()
+        {
+            var token = HttpContext.Request.Cookies["access_Token"];
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return client;
+        }
         public async Task<IActionResult> Index()
         {
             var token = Request.Cookies["access_Token"];
@@ -51,7 +57,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             if (responseJson == null)
             {
-                return View(new PagedResult<Book>
+                return View(new PagedResults<Book>
                 {
                     Items = new List<Book>(),
                     CurrentPage = pageNumber,
@@ -60,7 +66,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 });
             }
 
-            var pagedResult = new PagedResult<Book>();
+            var pagedResult = new PagedResults<Book>();
 
             pagedResult.CurrentPage = responseJson.Value<int?>("currentPage") ?? 1;
             pagedResult.PageSize = responseJson.Value<int?>("pageSize") ?? pageSize;
@@ -92,20 +98,24 @@ namespace PRN232_Su25_Readify_Web.Controllers
         {
             if (!ModelState.IsValid)
             {
+                var categoriesOnError = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+                ViewBag.Categories = categoriesOnError ?? new List<Category>();
                 return View(model);
             }
             if (imageFile == null || imageFile.Length == 0)
             {
                 TempData["Error"] = "Ảnh không được để trống.";
+                var categoriesOnError = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+                ViewBag.Categories = categoriesOnError ?? new List<Category>();
                 return View(model);
             }
-
-            var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
-            ViewBag.Categories = categories ?? new List<Category>();
+            var client = CreateClient();
 
             // Gửi ảnh sang API (Multipart)
             using var content = new MultipartFormDataContent();
-            content.Add(new StreamContent(imageFile.OpenReadStream()), "imageFile", imageFile.FileName);
+            var streamContent = new StreamContent(imageFile.OpenReadStream());
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
+            content.Add(streamContent, "ImageFile", imageFile.FileName);
             content.Add(new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json"), "bookData");
 
             try
@@ -182,10 +192,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             var query = $"page={pageIndex}&pageSize={pageSize}";
-            var response = await client.GetFromJsonAsync<PagedResult<RoyaltyRequestDto>>(
+            var response = await client.GetFromJsonAsync<PagedResults<RoyaltyRequestDto>>(
                 $"https://localhost:7267/api/Authors/author-request-pay?{query}");
 
-            return View(response ?? new PagedResult<RoyaltyRequestDto>
+            return View(response ?? new PagedResults<RoyaltyRequestDto>
             {
                 Items = new List<RoyaltyRequestDto>(),
                 TotalItems = 0,

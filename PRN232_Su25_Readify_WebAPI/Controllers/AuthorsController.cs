@@ -2,16 +2,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.DbContext;
+using PRN232_Su25_Readify_WebAPI.Dtos;
 using PRN232_Su25_Readify_WebAPI.Dtos.Authors;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
-using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Dtos.RoyaltyPayout;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System.Security.Claims;
 using System.Numerics;
 using Newtonsoft.Json;
-using Octokit;
+using System.Text.RegularExpressions;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -21,21 +21,12 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
     {
         private readonly ReadifyDbContext _context;
         private readonly IRoyalPayoutReService _royalPayoutReService;
-        private readonly GitHubClient _gitHubClient;
-        private readonly string _owner;
-        private readonly string _repo;
-        private readonly string _branch = "main";
-        public AuthorsController(ReadifyDbContext context, IRoyalPayoutReService royalPayoutReService, IConfiguration configuration)
+        private readonly IImageUploadService _imageUploadService;
+        public AuthorsController(ReadifyDbContext context, IRoyalPayoutReService royalPayoutReService, IImageUploadService imageUploadService)
         {
-            var token = configuration["GitHub:Token"];
-            _owner = configuration["GitHub:Owner"];
-            _repo = configuration["GitHub:Repo"];
             _context = context;
             _royalPayoutReService = royalPayoutReService;
-            _gitHubClient = new GitHubClient(new ProductHeaderValue("ReadifyApp"))
-            {
-                Credentials = new Credentials(token)
-            };
+            _imageUploadService = imageUploadService;   
         }
         [HttpGet("GetAllAuthors")]
         public async Task<IActionResult> GetAllAuthors()
@@ -138,8 +129,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (model == null) return BadRequest("Invalid book data");
 
             // Generate file path
-            var repoPath = $"{model.Title}/cover{extension}";
-            await UploadFileToGitHub(request.ImageFile, repoPath);
+            var safeTitleForFileName = Slugify(model.Title);
+            var imageUrl = await _imageUploadService.UploadImageAsync(request.ImageFile, "book-covers", safeTitleForFileName);
 
             Book newBook = new Book
             {
@@ -147,7 +138,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 Description = model.Description,
                 IsFree = model.IsFree,
                 Price = model.Price,
-                ImageUrl = repoPath,
+                ImageUrl = imageUrl,
                 RoyaltyRate = model.RoyaltyRate,
                 AuthorId = author.Id,
                 UploadedBy = userId,
@@ -370,43 +361,125 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             var result = await _royalPayoutReService.GetAllRequestsAsync(page, pageSize);
             return Ok(result);
         }
-        private async Task UploadFileToGitHub(IFormFile file, string pathInRepo)
-        {
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms);
-            var content = Convert.ToBase64String(ms.ToArray());
+        
 
-            try
-            {
-                var existingFile = await GetExistingFileSha(pathInRepo);
-
-                if (!string.IsNullOrEmpty(existingFile))
-                {
-                    var update = new UpdateFileRequest("Update book image", content, existingFile, _branch);
-                    await _gitHubClient.Repository.Content.UpdateFile(_owner, _repo, pathInRepo, update);
-                }
-                else
-                {
-                    var create = new CreateFileRequest("Upload book image", content, _branch);
-                    await _gitHubClient.Repository.Content.CreateFile(_owner, _repo, pathInRepo, create);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("GitHub upload failed: " + ex.Message);
-            }
-        }
-        private async Task<string?> GetExistingFileSha(string path)
+        [HttpGet("book-revenue")]
+        public async Task<IActionResult> GetAuthorBookRevenue([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            try
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Không tìm thấy thông tin người dùng.");
+
+            var author = await _context.Authors.FirstOrDefaultAsync(a => a.UserId == userId);
+            if (author == null)
+                return NotFound("Không tìm thấy tác giả tương ứng với tài khoản.");
+
+            var query = _context.BookRevenueSummaries
+                .Include(br => br.Book)
+                .Where(br => br.Book != null && br.Book.AuthorId == author.Id);
+
+            // Đếm tổng số sách
+            var totalItems = await query.CountAsync();
+
+            // Lấy danh sách có phân trang
+            var bookRevenues = await query
+                .OrderBy(br => br.Book.Title)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var result = bookRevenues
+                .Select((br, index) => new BookRevenueDto
+                {
+                    No = (pageNumber - 1) * pageSize + index + 1,
+                    BookId = br.BookId,
+                    BookTitle = br.Book?.Title ?? "Không rõ",
+                    ImageUrl = br.Book?.ImageUrl, // giả sử cột ImageUrl
+                    TotalSold = br.TotalSold,
+                    TotalRevenue = br.TotalRevenue
+                })
+                .ToList();
+
+            var pagedResult = new PagedResult<BookRevenueDto>
             {
-                var existingFile = await _gitHubClient.Repository.Content.GetAllContentsByRef(_owner, _repo, path, _branch);
-                return existingFile.FirstOrDefault()?.Sha;
-            }
-            catch (NotFoundException)
-            {
-                return null;
-            }
+                Items = result,
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+
+            return Ok(pagedResult);
         }
+
+        //[Authorize(Roles = "Author")]
+        [HttpGet("book-revenue/{bookId}/transactions")]
+        public async Task<IActionResult> GetRoyaltyTransactionsByBook(
+    int bookId,
+    int pageNumber = 1,
+    int pageSize = 10)
+        {
+            // 1. Lấy userId từ JWT token
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Invalid token.");
+
+            // 2. Tìm tác giả dựa vào userId
+            var author = await _context.Authors
+                .FirstOrDefaultAsync(a => a.UserId == userId);
+            if (author == null)
+                return NotFound("Tác giả không tồn tại.");
+
+            // 3. Kiểm tra cuốn sách có thuộc tác giả này không
+            var book = await _context.Books
+                .FirstOrDefaultAsync(b => b.Id == bookId && b.AuthorId == author.Id);
+            if (book == null)
+                return Forbid("Bạn không có quyền xem giao dịch của cuốn sách này.");
+
+            // 4. Tổng số giao dịch
+            var totalItems = await _context.RoyaltyTransaction
+                .Where(rt => rt.BookId == bookId)
+                .CountAsync();
+
+            // 5. Lấy giao dịch theo phân trang
+            var transactions = await _context.RoyaltyTransaction
+                .Where(rt => rt.BookId == bookId)
+                .Include(rt => rt.OrderItem)
+                .OrderBy(rt => rt.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // 6. Map sang DTO
+            var resultItems = transactions.Select(rt => new RoyaltyTransactionDto
+            {
+                Id = rt.Id,
+                Amount = rt.Amount,
+                IsPaid = rt.IsPaid,
+                OrderId = rt.OrderItem?.OrderId
+            }).ToList();
+
+            // 7. Tạo kết quả phân trang
+            var pagedResult = new PagedResult<RoyaltyTransactionDto>
+            {
+                Items = resultItems,
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+
+            return Ok(pagedResult);
+        }
+
+        public static string Slugify(string phrase)
+        {
+            string str = phrase.ToLowerInvariant();
+            str = Regex.Replace(str, @"[^a-z0-9\s-]", "");  // Bỏ ký tự đặc biệt
+            str = Regex.Replace(str, @"\s+", " ").Trim();   // Rút gọn khoảng trắng
+            str = Regex.Replace(str, @"\s", "-");           // Đổi space thành -
+            return str;
+        }
+
+
+
     }
 }

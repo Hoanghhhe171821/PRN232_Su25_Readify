@@ -180,7 +180,6 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
 
         [HttpPost("reject-royalty-request")]
-
         public async Task<IActionResult> RejectRoyaltyRequest([FromBody] RoyaltyRequestActionDto dto)
         {
 
@@ -203,5 +202,9 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Yêu cầu đã bị từ chối." });
         }
+
+
+
+
     }
 }
