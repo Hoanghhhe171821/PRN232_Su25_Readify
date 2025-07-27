@@ -1,4 +1,4 @@
-﻿@model PRN232_Su25_Readify_Web.Dtos.PagedResult<PRN232_Su25_Readify_Web.Dtos.DashboardAuthor.RoyaltyRequestDto>
+﻿@model PRN232_Su25_Readify_Web.Dtos.PagedResults<PRN232_Su25_Readify_Web.Dtos.DashboardAuthor.RoyaltyRequestDto>
 
 @{
     ViewData["Title"] = "Yêu cầu rút tiền";
@@ -57,13 +57,29 @@
 </table>
 
 <!-- Pagination -->
-<nav>
-    <ul class="pagination justify-content-center">
-        @for (int i = 1; i <= Model.TotalPages; i++)
-        {
-            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                <a class="page-link" href="@Url.Action("RoyaltyRequests", "Author", new { page = i })">@i</a>
-            </li>
-        }
-    </ul>
-</nav>
+<div class="row">
+    <div class="col-lg-12 text-center">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                @if (Model.CurrentPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="@Url.Action("ListPayoutRequest", new { pageIndex = Model.CurrentPage - 1, pageSize = Model.PageSize })">«</a>
+                    </li>
+                }
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("ListPayoutRequest", new { pageIndex = i, pageSize = Model.PageSize })">@i</a>
+                    </li>
+                }
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="@Url.Action("ListPayoutRequest", new { pageIndex = Model.CurrentPage + 1, pageSize = Model.PageSize })">»</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+</div>

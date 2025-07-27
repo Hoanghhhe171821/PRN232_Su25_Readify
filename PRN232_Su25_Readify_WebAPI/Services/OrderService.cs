@@ -123,7 +123,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
 
             var order = await _context.Order
                 .Include(o => o.User)
-                .Where(o => o.UserId == userId && o.Id == orderId)
+                .Where(o =>  o.Id == orderId)
                 .AsNoTracking()
                 .Select(o => new OrderDto
                 {

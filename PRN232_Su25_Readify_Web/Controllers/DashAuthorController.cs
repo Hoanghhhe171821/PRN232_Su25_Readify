@@ -51,7 +51,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             if (responseJson == null)
             {
-                return View(new PagedResult<Book>
+                return View(new PagedResults<Book>
                 {
                     Items = new List<Book>(),
                     CurrentPage = pageNumber,
@@ -60,7 +60,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 });
             }
 
-            var pagedResult = new PagedResult<Book>();
+            var pagedResult = new PagedResults<Book>();
 
             pagedResult.CurrentPage = responseJson.Value<int?>("currentPage") ?? 1;
             pagedResult.PageSize = responseJson.Value<int?>("pageSize") ?? pageSize;
@@ -182,10 +182,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             var query = $"page={pageIndex}&pageSize={pageSize}";
-            var response = await client.GetFromJsonAsync<PagedResult<RoyaltyRequestDto>>(
+            var response = await client.GetFromJsonAsync<PagedResults<RoyaltyRequestDto>>(
                 $"https://localhost:7267/api/Authors/author-request-pay?{query}");
 
-            return View(response ?? new PagedResult<RoyaltyRequestDto>
+            return View(response ?? new PagedResults<RoyaltyRequestDto>
             {
                 Items = new List<RoyaltyRequestDto>(),
                 TotalItems = 0,
