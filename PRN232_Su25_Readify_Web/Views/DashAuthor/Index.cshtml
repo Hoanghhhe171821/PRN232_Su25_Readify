@@ -1,0 +1,67 @@
+﻿@model PRN232_Su25_Readify_Web.Dtos.DashboardAuthor.RevenueSummaryViewModel
+@{
+    Layout = "~/Views/Shared/_PartialAuthor.cshtml";
+    ViewData["Title"] = "Dashboard";
+}
+@if (Model != null)
+{
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <!-- Tổng doanh thu -->
+        <div class="col-md-3">
+            <div class="card text-white bg-primary shadow-sm rounded p-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-cash-coin display-6 me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Tổng doanh thu</h6>
+                        <h4 class="mb-0">@String.Format("{0:N0} đ", Model.TotalRevenue)</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Số lượng sách -->
+        <div class="col-md-3">
+            <div class="card text-white bg-success shadow-sm rounded p-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-book display-6 me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Số lượng sách</h6>
+                        <h4 class="mb-0">@Model.Books</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng tiền đã trả -->
+        <div class="col-md-3">
+            <div class="card text-white bg-warning shadow-sm rounded p-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-wallet2 display-6 me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Tổng tiền đã trả</h6>
+                        <h4 class="mb-0">@String.Format("{0:N0} đ", Model.TotalPaid)</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng tiền khả dụng -->
+        <div class="col-md-3">
+            <div class="card text-white bg-danger shadow-sm rounded p-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-piggy-bank display-6 me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Tổng tiền khả dụng</h6>
+                        <h4 class="mb-0">@String.Format("{0:N0} đ", Model.AvailRevenue)</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+}
+else
+{
+    <p class="text-danger">Không thể tải dữ liệu doanh thu.</p>
+}

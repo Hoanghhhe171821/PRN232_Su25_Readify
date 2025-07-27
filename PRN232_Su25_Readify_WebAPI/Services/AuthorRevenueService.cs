@@ -21,12 +21,11 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             if (book == null) throw new BRException("Book is null");
             if (book.RoyaltyRate < 0) throw new BRException("Book don't have royalty rate");
 
-            if (book.Author == null)
-            {
+            
                 book.Author = await _context.Authors.Include(a => a.User)
                     .FirstOrDefaultAsync(a => a.Id == book.AuthorId)
-                    ?? throw new NFoundEx($"Author {book.AuthorId} not found.");
-            }
+                   ?? throw new NFoundEx($"Author {book.AuthorId} not found.");
+            
             if (book.Author.UserId == null) return;
 
             int royalty = (int)Math.Round(book.Price *
@@ -34,7 +33,8 @@ namespace PRN232_Su25_Readify_WebAPI.Services
                   MidpointRounding.AwayFromZero);
             if (royalty <= 0) return;
 
-            var summary = await _context.AuthorRevenueSummary.FindAsync(book.AuthorId);
+            var summary = await _context.AuthorRevenueSummary
+                .FirstOrDefaultAsync(ars => ars.AuthorId == book.AuthorId);
             if (summary == null)
             {
                 summary = new AuthorRevenueSummary
@@ -48,7 +48,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             }
             else
             {
-                summary.TotalRevenue = royalty;
+                summary.TotalRevenue += royalty;
             }
         }
 
