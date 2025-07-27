@@ -24,9 +24,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             var client = _apiClientHelper.CreateClientWithToken();
             var query = $"?pageIndex={pageIndex}&pageSize={pageSize}";
-            var response = await client.GetFromJsonAsync<PagedResult<OrderDto>>($"/api/order/orders/{query}");
+            var response = await client.GetFromJsonAsync<PagedResults<OrderDto>>($"/api/order/orders/{query}");
 
-            return View(response ?? new PagedResult<OrderDto>
+            return View(response ?? new PagedResults<OrderDto>
             {
                 Items = new List<OrderDto>(),
                 TotalItems = 0,

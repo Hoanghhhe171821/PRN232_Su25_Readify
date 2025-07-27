@@ -25,10 +25,10 @@ namespace PRN232_Su25_Readify_Web.Controllers
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-            var response = await client.GetFromJsonAsync<PagedResult<RoyaltyPayoutRequest>>(
+            var response = await client.GetFromJsonAsync<PagedResults<RoyaltyPayoutRequest>>(
                 $"https://localhost:7267/api/Authors/royal-request-all?page={page}&pageSize={pageSize}");
 
-            var viewModel = new PagedResult<RoyaltyRequestAdminViewModel>
+            var viewModel = new PagedResults<RoyaltyRequestAdminViewModel>
             {
                 Items = response.Items.Select(x => new RoyaltyRequestAdminViewModel
                 {

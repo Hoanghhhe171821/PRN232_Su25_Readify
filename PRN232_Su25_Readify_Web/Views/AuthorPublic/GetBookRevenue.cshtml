@@ -1,0 +1,87 @@
+﻿@model PRN232_Su25_Readify_Web.Dtos.PagedResults<PRN232_Su25_Readify_Web.Dtos.Books.BookRevenueDto>
+
+@{
+    ViewData["Title"] = "Doanh thu của sách";
+    Layout = "~/Views/Shared/_PartialAuthor.cshtml";
+}
+
+<h2>Danh sách doanh thu sách</h2>
+<div class="table-responsive">
+    <table class="table table-bordered check-tbl table-hover text-center align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>STT</th>
+                <th>Tên sách</th>
+                <th>Ảnh</th>
+                <th>Số lượng bán</th>
+                <th>Tổng doanh thu</th>
+                <th>Doanh thu chi tiết</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items != null && Model.Items.Any())
+            {
+                foreach (var book in Model.Items)
+                {
+                    <tr>
+                        <td>@book.No</td>
+                        <td style="display:none">@book.BookId</td>
+                        <td>@book.BookTitle</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(book.ImageUrl))
+                            {
+                                <img src="@book.ImageUrl" alt="Book Image" style="width: 80px; height: auto;" />
+                            }
+                            else
+                            {
+                                <span class="text-muted">Không có ảnh</span>
+                            }
+                        </td>
+
+                        <td>@book.TotalSold</td>
+                        <td>@($"{book.TotalRevenue:N0} đ")</td>
+                        <td>
+                            <a class="btn btn-sm btn-info" href="@Url.Action("BookTransactions", new { bookId = book.BookId })">
+                                Xem chi tiết
+                            </a>
+                        </td>
+
+                    </tr>
+                        }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Không có doanh thu của sách</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("AuthorBookRevenue", new { page = Model.CurrentPage - 1, pageSize = Model.PageSize })">«</a>
+                        </li>
+                    }
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("AuthorBookRevenue", new { page = i, pageSize = Model.PageSize })">@i</a>
+                        </li>
+                    }
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("AuthorBookRevenue", new { page = Model.CurrentPage + 1, pageSize = Model.PageSize })">»</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>

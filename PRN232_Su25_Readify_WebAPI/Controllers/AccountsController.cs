@@ -180,7 +180,6 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
 
 
         [HttpPost("reject-royalty-request")]
-
         public async Task<IActionResult> RejectRoyaltyRequest([FromBody] RoyaltyRequestActionDto dto)
         {
 
