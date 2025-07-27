@@ -24,7 +24,7 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             if (book == null) throw new BRException("Book is null");
             
             var summary = await _context.BookRevenueSummaries.
-                FindAsync(book.Id);
+                FirstOrDefaultAsync(brs => brs.BookId == book.Id);
 
             var authorApp = await _context.Authors
                 .Include(a => a.User)

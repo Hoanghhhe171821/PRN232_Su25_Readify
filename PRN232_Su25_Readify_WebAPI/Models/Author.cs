@@ -16,5 +16,6 @@ namespace PRN232_Su25_Readify_WebAPI.Models
         [ForeignKey("UserId")]
         public AppUser? User { get; set; }
         public ICollection<Book>? Books { get; set; }
+        public ICollection<AuthorRevenueSummary>? RevenueSummaries { get; set; } = new List<AuthorRevenueSummary>();
     }
 }

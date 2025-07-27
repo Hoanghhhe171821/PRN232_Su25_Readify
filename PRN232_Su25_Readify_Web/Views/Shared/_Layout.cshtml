@@ -467,6 +467,9 @@
                             },
                             error: function (xhr) {
                                 const status = xhr.status;
+                                console.log(status);
+                                console.log("Status ID:", status);
+
                                 const response = xhr.responseJSON;
 
                                 switch (status) {
