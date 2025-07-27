@@ -16,7 +16,7 @@ namespace PRN232_Su25_Readify_WebAPI.Models
 
         public int AuthorId { get; set; }
         public Author? Author { get; set; }
-
+        public bool IsPublished { get; set; } = false; // Sach da duoc xuat ban
         public string? UploadedBy { get; set; }
         [ForeignKey("UploadedBy")]
         public AppUser? AppUser { get; set; }

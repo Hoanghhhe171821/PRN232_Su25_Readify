@@ -11,7 +11,7 @@
             <h2>@Model.UserName</h2>
             <p><strong>Email:</strong> @Model.Email</p>
             <p><strong>Phone:</strong> @Model.PhoneNumber</p>
-            <p><strong>Point:</strong> @Model.Points</p>
+            <p><strong>Points:</strong> @Model.Points</p>
 
             @if (Model.IsAuthor)
             {
@@ -19,17 +19,17 @@
                 <p><strong>📖 Bio:</strong> @Model.Bio</p>
                 @if (!string.IsNullOrEmpty(Model.PublicEmail))
                 {
-                    <p><strong>✉️ Email (công khai):</strong> @Model.PublicEmail</p>
+                    <p><strong>✉️ Public Email:</strong> @Model.PublicEmail</p>
                 }
                 @if (!string.IsNullOrEmpty(Model.PublicPhone))
                 {
-                    <p><strong>📱 SĐT (công khai):</strong> @Model.PublicPhone</p>
+                    <p><strong>📱 Public Phone:</strong> @Model.PublicPhone</p>
                 }
             }
 
             <div class="mt-3">
                 <a asp-action="Edit" class="btn btn-primary">🖋️ Edit Profile</a>
-                <a asp-action="ChangePassword" class="btn btn-warning ms-2">🔐 Đổi mật khẩu</a>
+                <a asp-action="ChangePassword" class="btn btn-warning ms-2">🔐 Change Password</a>
             </div>
         </div>
     </div>
