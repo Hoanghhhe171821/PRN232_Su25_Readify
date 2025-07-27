@@ -51,7 +51,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
             if (responseJson == null)
             {
-                return View(new PagedResult<Book>
+                return View(new PagedResults<Book>
                 {
                     Items = new List<Book>(),
                     CurrentPage = pageNumber,
@@ -60,7 +60,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 });
             }
 
-            var pagedResult = new PagedResult<Book>();
+            var pagedResult = new PagedResults<Book>();
 
             pagedResult.CurrentPage = responseJson.Value<int?>("currentPage") ?? 1;
             pagedResult.PageSize = responseJson.Value<int?>("pageSize") ?? pageSize;

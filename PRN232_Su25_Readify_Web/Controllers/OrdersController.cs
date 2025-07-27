@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Octokit;
 using PRN232_Su25_Readify_Web.Dtos;
 using PRN232_Su25_Readify_Web.Dtos.Order;
 using PRN232_Su25_Readify_Web.Services;
@@ -47,6 +48,46 @@ namespace PRN232_Su25_Readify_Web.Controllers
             };
 
             return View(viewModel);
+        }
+
+        public async Task<IActionResult> OrderItemsAdmin(int id)
+        {
+            var client = _apiClientHelper.CreateClientWithToken();
+            var order = await client.GetFromJsonAsync<OrderDto>($"/api/order/{id}");
+            var orderItems = await client.GetFromJsonAsync<List<OrderItemDto>>($"/api/order/{id}/items");
+
+            var viewModel = new OrderDetailsVM
+            {
+                Order = order,
+                OrderItems = orderItems
+            };
+
+            return View(viewModel);
+        }
+
+        public async Task<IActionResult> AdminOrder(int pageIndex = 1, int pageSize = 5, string? keyword = null)
+        {
+            var accessToken = Request.Cookies["access_Token"];
+            var sessionId = Request.Cookies["session_Id"];
+
+            var client = _apiClientHelper.CreateClientWithToken();
+            var query = $"?pageIndex={pageIndex}&pageSize={pageSize}";
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                query += $"&searchString={keyword}";
+            }
+            var response = await client.GetFromJsonAsync<PagedResults<OrderDto>>($"/api/order/{query}");
+
+            ViewBag.Keyword = keyword;
+
+            return View(response ?? new PagedResults<OrderDto>
+            {
+                Items = new List<OrderDto>(),
+                TotalItems = 0,
+                CurrentPage = pageIndex,
+                PageSize = pageSize
+            });
+
         }
     }
 }
