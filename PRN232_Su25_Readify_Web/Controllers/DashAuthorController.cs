@@ -23,7 +23,13 @@ namespace PRN232_Su25_Readify_Web.Controllers
             _httpClient = factory.CreateClient();
             _httpClient.BaseAddress = new Uri(_uri);
         }
-
+        private HttpClient CreateClient()
+        {
+            var token = HttpContext.Request.Cookies["access_Token"];
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return client;
+        }
         public async Task<IActionResult> Index()
         {
             var token = Request.Cookies["access_Token"];
@@ -92,20 +98,24 @@ namespace PRN232_Su25_Readify_Web.Controllers
         {
             if (!ModelState.IsValid)
             {
+                var categoriesOnError = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+                ViewBag.Categories = categoriesOnError ?? new List<Category>();
                 return View(model);
             }
             if (imageFile == null || imageFile.Length == 0)
             {
                 TempData["Error"] = "Ảnh không được để trống.";
+                var categoriesOnError = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
+                ViewBag.Categories = categoriesOnError ?? new List<Category>();
                 return View(model);
             }
-
-            var categories = await GetApiDataAsync<List<Category>>("api/Categories/GetAllCategories");
-            ViewBag.Categories = categories ?? new List<Category>();
+            var client = CreateClient();
 
             // Gửi ảnh sang API (Multipart)
             using var content = new MultipartFormDataContent();
-            content.Add(new StreamContent(imageFile.OpenReadStream()), "imageFile", imageFile.FileName);
+            var streamContent = new StreamContent(imageFile.OpenReadStream());
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
+            content.Add(streamContent, "ImageFile", imageFile.FileName);
             content.Add(new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json"), "bookData");
 
             try

@@ -6,12 +6,11 @@ using PRN232_Su25_Readify_WebAPI.Dtos.Authors;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Dtos.RoyaltyPayout;
-using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System.Security.Claims;
 using System.Numerics;
 using Newtonsoft.Json;
-using Octokit;
+using System.Text.RegularExpressions;
 
 namespace PRN232_Su25_Readify_WebAPI.Controllers
 {
@@ -21,21 +20,12 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
     {
         private readonly ReadifyDbContext _context;
         private readonly IRoyalPayoutReService _royalPayoutReService;
-        private readonly GitHubClient _gitHubClient;
-        private readonly string _owner;
-        private readonly string _repo;
-        private readonly string _branch = "main";
-        public AuthorsController(ReadifyDbContext context, IRoyalPayoutReService royalPayoutReService, IConfiguration configuration)
+        private readonly IImageUploadService _imageUploadService;
+        public AuthorsController(ReadifyDbContext context, IRoyalPayoutReService royalPayoutReService, IImageUploadService imageUploadService)
         {
-            var token = configuration["GitHub:Token"];
-            _owner = configuration["GitHub:Owner"];
-            _repo = configuration["GitHub:Repo"];
             _context = context;
             _royalPayoutReService = royalPayoutReService;
-            _gitHubClient = new GitHubClient(new ProductHeaderValue("ReadifyApp"))
-            {
-                Credentials = new Credentials(token)
-            };
+            _imageUploadService = imageUploadService;   
         }
         [HttpGet("GetAllAuthors")]
         public async Task<IActionResult> GetAllAuthors()
@@ -138,8 +128,8 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             if (model == null) return BadRequest("Invalid book data");
 
             // Generate file path
-            var repoPath = $"{model.Title}/cover{extension}";
-            await UploadFileToGitHub(request.ImageFile, repoPath);
+            var safeTitleForFileName = Slugify(model.Title);
+            var imageUrl = await _imageUploadService.UploadImageAsync(request.ImageFile, "book-covers", safeTitleForFileName);
 
             Book newBook = new Book
             {
@@ -147,7 +137,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 Description = model.Description,
                 IsFree = model.IsFree,
                 Price = model.Price,
-                ImageUrl = repoPath,
+                ImageUrl = imageUrl,
                 RoyaltyRate = model.RoyaltyRate,
                 AuthorId = author.Id,
                 UploadedBy = userId,
@@ -370,43 +360,14 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             var result = await _royalPayoutReService.GetAllRequestsAsync(page, pageSize);
             return Ok(result);
         }
-        private async Task UploadFileToGitHub(IFormFile file, string pathInRepo)
+        
+        public static string Slugify(string phrase)
         {
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms);
-            var content = Convert.ToBase64String(ms.ToArray());
-
-            try
-            {
-                var existingFile = await GetExistingFileSha(pathInRepo);
-
-                if (!string.IsNullOrEmpty(existingFile))
-                {
-                    var update = new UpdateFileRequest("Update book image", content, existingFile, _branch);
-                    await _gitHubClient.Repository.Content.UpdateFile(_owner, _repo, pathInRepo, update);
-                }
-                else
-                {
-                    var create = new CreateFileRequest("Upload book image", content, _branch);
-                    await _gitHubClient.Repository.Content.CreateFile(_owner, _repo, pathInRepo, create);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("GitHub upload failed: " + ex.Message);
-            }
-        }
-        private async Task<string?> GetExistingFileSha(string path)
-        {
-            try
-            {
-                var existingFile = await _gitHubClient.Repository.Content.GetAllContentsByRef(_owner, _repo, path, _branch);
-                return existingFile.FirstOrDefault()?.Sha;
-            }
-            catch (NotFoundException)
-            {
-                return null;
-            }
+            string str = phrase.ToLowerInvariant();
+            str = Regex.Replace(str, @"[^a-z0-9\s-]", "");  // Bỏ ký tự đặc biệt
+            str = Regex.Replace(str, @"\s+", " ").Trim();   // Rút gọn khoảng trắng
+            str = Regex.Replace(str, @"\s", "-");           // Đổi space thành -
+            return str;
         }
     }
 }
