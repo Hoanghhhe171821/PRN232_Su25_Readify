@@ -15,20 +15,16 @@ namespace PRN232_Su25_Readify_WebAPI.Dtos.Books
         [Range(0, int.MaxValue)]
         public int Price { get; set; }
 
-        public int UnitInOrder { get; set; }
-
         public string? ImageUrl { get; set; }
 
         [Range(0.0, 1.0)]
         public decimal RoyaltyRate { get; set; }
+        public bool IsPublished { get; set; } = false;
 
         [Required]
         public int AuthorId { get; set; }
 
-        public string? UploadedBy { get; set; }
-
-        public DateTime CreateDate { get; set; } = DateTime.Now;
-
-        public DateTime? UpdateDate { get; set; }
+        // List CategoryId người dùng chọn
+        public List<int> CategoryIds { get; set; }
     }
 }

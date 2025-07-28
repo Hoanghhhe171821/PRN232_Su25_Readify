@@ -140,6 +140,16 @@
                                     @Model.Book.Description
                                 </p>
                                 <span id="descToggle" class="see-more" style="color: dimgray; cursor: pointer; display: none;">Xem thêm</span>
+                                <!-- Nút Báo Cáo -->
+                                <div class="mt-3">
+                                    <a class="btn btn-danger"
+                                       asp-controller="BookReports"
+                                       asp-action="Report"
+                                       asp-route-bookId="@Model.Book.Id"
+                                       asp-route-title="@Model.Book.Title">
+                                        📣 Báo cáo sách
+                                    </a>
+                                </div>
                                 <h4>Danh sách các chương:</h4>
                                 <p class="text-2 promo-links" style="width: 760px;">
                                     <div id="chapterList">

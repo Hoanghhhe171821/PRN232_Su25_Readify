@@ -1,0 +1,48 @@
+﻿@model int?
+@{
+    Layout = "~/Views/Shared/_PartialAuthor.cshtml";
+    ViewData["Title"] = "Tạo yêu cầu rút tiền";
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<div class="container mt-5">
+    <div class="card shadow rounded-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Tạo Yêu Cầu Rút Tiền</h3>
+        </div>
+        <div class="card-body">
+            <form id="withdrawForm" method="post" asp-action="CreateRequestRoyal" asp-controller="DashAuthor">
+                <div class="mb-3">
+                    <label for="RequestAmount" class="form-label">Số tiền cần rút (VNĐ)</label>
+                    <input type="number" class="form-control" id="RequestAmount" name="RequestAmount"/>
+                    <span class="form-text text-muted">Tối thiểu: 100,000 VNĐ</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById("withdrawForm").addEventListener("submit", function (e) {
+            const amount = document.getElementById("RequestAmount").value;
+            if (amount < 100000) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Số tiền rút tối thiểu là 100,000 VNĐ!'
+                });
+            }
+        });
+    </script>
+}

@@ -1,0 +1,65 @@
+﻿@model PRN232_Su25_Readify_Web.Models.Common.PaginatedResponse<PRN232_Su25_Readify_Web.Models.Book.ManagerBookReviewViewModel>
+
+@{
+    ViewData["Title"] = "Sách chờ duyệt";
+}
+
+<h2>Sách chờ duyệt</h2>
+
+<form method="get" class="form-inline mb-3">
+    <input type="text" name="search" class="form-control mr-2" placeholder="Tìm theo tên sách" value="@Context.Request.Query["search"]" />
+    <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+</form>
+
+@if (!Model.Items.Any())
+{
+    <p>Không có sách nào đang chờ duyệt.</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Tiêu đề</th>
+                <th>Tác giả</th>
+                <th>Ngày tạo</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in Model.Items)
+            {
+                <tr>
+                    <td>@book.Title</td>
+                    <td>@book.AuthorName</td>
+                    <td>@book.CreateDate.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        @if (!book.IsActive)
+                        {
+                            <span class="text-danger font-weight-bold">Đã từ chối</span>
+                        }
+                        else
+                        {
+                            <form method="post" asp-action="Approve">
+                                <input type="hidden" name="bookId" value="@book.Id" />
+                                <button type="submit" name="isApproved" value="true" class="btn btn-success btn-sm">✔️ Duyệt</button>
+                                <button type="submit" name="isApproved" value="false" class="btn btn-danger btn-sm">❌ Từ chối</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(Model.Page == i ? "active" : "")">
+                    <a class="page-link" href="?page=@i&search=@Context.Request.Query["search"]">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

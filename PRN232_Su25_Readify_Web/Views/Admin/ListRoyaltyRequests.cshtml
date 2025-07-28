@@ -1,0 +1,152 @@
+﻿@model PRN232_Su25_Readify_Web.Dtos.PagedResults<PRN232_Su25_Readify_Web.Dtos.Admin.RoyaltyRequestAdminViewModel>
+
+@{
+    ViewData["Title"] = "Royalty Requests";
+    Layout = "~/Views/Shared/_PartialAuthor.cshtml";
+}
+
+<h2>Danh sách yêu cầu rút tiền</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tác giả</th>
+            <th>Số tiền yêu cầu</th>
+            <th>Ngày yêu cầu</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var request in Model.Items)
+        {
+            <tr>
+                <td>@request.AuthorName</td>
+                <td>@request.RequestAmount.ToString("N0") ₫</td>
+                <td>@request.CreateDate.ToString("dd/MM/yyyy")</td>
+                <td>
+                    @{
+                        var statusText = request.Status switch
+                        {
+                            0 => "Đang chờ duyệt",
+                            1 => "Đã duyệt",
+                            2 => "Đã từ chối",
+                            _ => "Không rõ"
+                        };
+                    }
+                    @statusText
+                </td>
+                <td>
+                    @if (request.Status == 0)
+                    {
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="@request.Id" data-action="approve">Duyệt</button>
+                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="@request.Id" data-action="reject">Từ chối</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Pagination -->
+<nav>
+    <ul class="pagination justify-content-center">
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                <a class="page-link" href="@Url.Action("ListRoyaltyRequests", "Admin", new { page = i })">@i</a>
+            </li>
+        }
+    </ul>
+</nav>
+
+<!-- Modal phản hồi -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="responseForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approveModalLabel">Phản hồi yêu cầu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="requestId" name="id" />
+                    <input type="hidden" id="actionType" name="action" />
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Lời nhắn đến tác giả</label>
+                        <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Gửi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script>
+        $(document).ready(function () {
+            let selectedRequestId = null;
+            let selectedAction = null;
+
+            // Khi ấn nút Duyệt hoặc Từ chối
+            $('#approveModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                selectedRequestId = button.data('id');
+                selectedAction = button.data('action');
+                $('#requestId').val(selectedRequestId);
+                $('#actionType').val(selectedAction);
+            });
+
+            // Gửi phản hồi (duyệt / từ chối)
+            $('#responseForm').submit(function (e) {
+                e.preventDefault();
+
+                const id = $('#requestId').val();
+                const message = $('#message').val();
+                const action = $('#actionType').val();
+
+                if (!message) {
+                    Swal.fire('Lỗi', 'Vui lòng nhập lời nhắn.', 'error');
+                    return;
+                }
+
+                const apiUrl = action === 'approve'
+                    ? 'https://localhost:7267/api/Accounts/approvel-royalty-request'
+                    : 'https://localhost:7267/api/Accounts/reject-royalty-request';
+
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ id: id, message: message }),
+                        xhrFields: {
+            withCredentials: true 
+        },
+                    success: function (response) {
+                        $('#approveModal').modal('hide'); // Ẩn modal
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+
+                        setTimeout(() => {
+                            location.reload(); // Reload sau khi thông báo
+                        }, 2200);
+                    },
+                    error: function (xhr) {
+                        const err = xhr.responseJSON?.message || 'Đã xảy ra lỗi!';
+                        Swal.fire('Lỗi', err, 'error');
+                    }
+                });
+            });
+        });
+    </script>
+}
+

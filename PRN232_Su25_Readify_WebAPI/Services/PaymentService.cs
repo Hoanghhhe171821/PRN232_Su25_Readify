@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.TopUpCoints;
+using PRN232_Su25_Readify_WebAPI.Exceptions;
 using PRN232_Su25_Readify_WebAPI.Models;
 using PRN232_Su25_Readify_WebAPI.Services.IServices;
 using System;
@@ -113,6 +114,58 @@ namespace PRN232_Su25_Readify_WebAPI.Services
             return "SUCCESS";
         }
 
-       
+        public async Task<List<PaymentHistoryResponse>> FindAllPaymentHistory()
+        {
+            return await _context.TopUpTransactions.Include(t => t.User)
+                .Select(tx => new PaymentHistoryResponse
+                {
+                    Id = tx.Id,
+                    UserId = tx.UserId,
+                    UserName = tx.User.UserName,
+                    Points = tx.Points,
+                    Amount = tx.Amount,
+                    MoMoOrderId = tx.MoMoOrderId,
+                    MoMoRequestId = tx.MoMoRequestId,
+                    Status = tx.Status,
+                    CreatedAt = tx.CreatedAt
+                })
+                .ToListAsync();
+        }
+
+        public async Task<PaymentHistoryResponse> DisbursePayment(int topUpTransactionId, string status)
+        {
+            var transaction = _context.TopUpTransactions.FirstOrDefault(t => t.Id == topUpTransactionId);
+            if (transaction == null)
+            {
+                throw new BRException("Không tìm thấy giao dịch");
+            }
+            if (status != "SUCCESS" && status != "FAILED")
+            {
+                throw new BRException("Trạng thái không hợp lệ(SUCCESS, FAILED)");
+            }
+            if (status == "SUCCESS")
+            {
+                var validPoints = new[] { 50, 100, 200, 500 };
+                if (!validPoints.Contains(transaction.Points))
+                {
+                    throw new BRException("Chỉ được phép nạp: 50, 100, 200 hoặc 500 xu.");
+                }
+            }
+            transaction.Status = status;
+            var result = await _context.SaveChangesAsync();
+            if (result <= 0)
+                throw new BRException("Giải ngân giao dịch thất bại, vui lòng thử lại");
+            return new PaymentHistoryResponse
+            {
+                Id = transaction.Id,
+                UserId = transaction.UserId,
+                Points = transaction.Points,
+                Amount = transaction.Amount,
+                MoMoOrderId = transaction.MoMoOrderId,
+                MoMoRequestId = transaction.MoMoRequestId,
+                Status = transaction.Status,
+                CreatedAt = transaction.CreatedAt
+            };
+        }
     }
 }
