@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.DbContext;
+using PRN232_Su25_Readify_WebAPI.Dtos;
+using PRN232_Su25_Readify_WebAPI.Dtos.Authors;
 using PRN232_Su25_Readify_WebAPI.Dtos.Auths;
+using PRN232_Su25_Readify_WebAPI.Dtos.Books;
 using PRN232_Su25_Readify_WebAPI.Dtos.RoyaltyPayout;
 using PRN232_Su25_Readify_WebAPI.Exceptions;
 using PRN232_Su25_Readify_WebAPI.Models;
@@ -203,6 +206,150 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(new { message = "Yêu cầu đã bị từ chối." });
         }
 
+        [HttpGet("book-revenue/admin")]
+        public async Task<IActionResult> GetAdminBookRevenue(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? searchTerm = null)
+        {
+            var query = _context.BookRevenueSummaries
+                .Include(br => br.Book)
+                    .ThenInclude(b => b.Author)
+                .Where(br => br.Book != null && br.Book.Author.UserId == null);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(br => br.Book.Title.Contains(searchTerm));
+            }
+
+            var totalItems = await query.CountAsync();
+
+            var bookRevenues = await query
+                .OrderBy(br => br.Book.Title)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var result = bookRevenues
+                .Select((br, index) => new BookRevenueDto
+                {
+                    No = (pageNumber - 1) * pageSize + index + 1,
+                    BookId = br.BookId,
+                    BookTitle = br.Book?.Title ?? "Không rõ",
+                    ImageUrl = br.Book?.ImageUrl,
+                    TotalSold = br.TotalSold,
+                    TotalRevenue = br.TotalRevenue
+                })
+                .ToList();
+
+            var pagedResult = new PagedResult<BookRevenueDto>
+            {
+                Items = result,
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+
+            return Ok(pagedResult);
+        }
+
+        [HttpGet("admin/book-revenue/{bookId}/transactions")]
+        //[Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAdminRoyaltyTransactionsByBook(
+            int bookId,
+            int pageNumber = 1,
+            int pageSize = 10)
+        {
+            // 1. Kiểm tra sách có tồn tại và là sách của admin (Author.UserId == null)
+            var book = await _context.Books
+                .Include(b => b.Author)
+                .FirstOrDefaultAsync(b => b.Id == bookId && b.Author != null && b.Author.UserId == null);
+
+            if (book == null)
+                return NotFound("Sách không tồn tại hoặc không phải do admin đăng.");
+
+            // 2. Tổng số giao dịch bản quyền
+            var totalItems = await _context.RoyaltyTransaction
+                .Where(rt => rt.BookId == bookId)
+                .CountAsync();
+
+            // 3. Lấy danh sách giao dịch có phân trang
+            var transactions = await _context.RoyaltyTransaction
+                .Where(rt => rt.BookId == bookId)
+                .Include(rt => rt.OrderItem)
+                .OrderBy(rt => rt.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // 4. Map sang DTO
+            var resultItems = transactions.Select(rt => new RoyaltyTransactionDto
+            {
+                Id = rt.Id,
+                Amount = rt.Amount,
+                IsPaid = rt.IsPaid,
+                OrderId = rt.OrderItem?.OrderId
+            }).ToList();
+
+            // 5. Trả về kết quả phân trang
+            var pagedResult = new PagedResult<RoyaltyTransactionDto>
+            {
+                Items = resultItems,
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+
+            return Ok(pagedResult);
+        }
+
+        [HttpGet("admin/revenue-summary")]
+        //[Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAdminRevenueSummary()
+        {
+            // Tổng sách
+            var totalBooks = await _context.Books.CountAsync();
+
+            // Tổng doanh thu từ sách hệ thống (không có Author)
+            var systemBookRevenue = await _context.BookRevenueSummaries
+                .Where(b => b.Book != null && b.Book.AuthorId == null)
+                .SumAsync(b => (int?)b.TotalRevenue) ?? 0;
+
+            // Tổng doanh thu từ sách tác giả
+            var authorBookRevenue = await _context.RoyaltyTransaction
+                .Where(r => r.Book != null && r.Book.AuthorId != null)
+                .SumAsync(r => (int?)r.Amount) ?? 0;
+
+            var totalRevenue = systemBookRevenue + authorBookRevenue;
+
+            // Tổng đã trả
+            var totalPaid = await _context.RoyaltyTransaction
+                .Where(r => r.IsPaid)
+                .SumAsync(r => (int?)r.Amount) ?? 0;
+
+            // Tổng chưa trả
+            var totalUnpaid = await _context.RoyaltyTransaction
+                .Where(r => !r.IsPaid)
+                .SumAsync(r => (int?)r.Amount) ?? 0;
+
+            // Có thể thanh toán: chưa thanh toán + đơn hàng đã quá 30 ngày
+            var thirtyDaysAgo = DateTime.Now.AddDays(-30);
+
+            var availableToPay = await _context.RoyaltyTransaction
+                .Where(rt =>
+                    !rt.IsPaid &&
+                    rt.OrderItem != null &&
+                    rt.OrderItem.CreateDate <= thirtyDaysAgo)
+                .SumAsync(rt => (int?)rt.Amount) ?? 0;
+
+            return Ok(new
+            {
+                TotalRevenue = totalRevenue,
+                TotalPaid = 0,
+                TotalUnpaid = 0,
+                Books = totalBooks,
+            });
+        }
 
 
 
