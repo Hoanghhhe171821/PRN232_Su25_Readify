@@ -1,5 +1,7 @@
 ﻿@model List<PRN232_Su25_Readify_Web.Models.BookReport.AuthorPendingWarningViewModel>
-
+@{
+    Layout = "~/Views/Shared/_PartialAuthor.cshtml";
+}
 <h2>Cảnh báo chưa phản hồi</h2>
 
 @if (!Model.Any())
