@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Dtos.Books;
@@ -61,8 +63,7 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 Items = books,
                 Page = page,
                 TotalPages = totalPages,
-                TotalItems = totalItems,
-                SearchKeyword = search
+                TotalItems = totalItems
             };
 
             return Ok(response);
@@ -83,5 +84,64 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
                 message = dto.IsApproved ? "Sách đã được duyệt." : "Sách đã bị từ chối."
             });
         }
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllBooks(int page = 1)
+        {
+            const int pageSize = 5;
+
+            var query = _context.Books
+                .Include(b => b.Author)
+                    .ThenInclude(a => a.User)
+                .OrderByDescending(b => b.CreateDate)
+                .AsQueryable();
+
+            var totalItems = await query.CountAsync();
+
+            var books = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(b => new ManagerBookListItemViewModel
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    Description = b.Description,
+                    ImageUrl = b.ImageUrl,
+                    AuthorName = b.Author.User.UserName,
+                    CreateDate = (DateTime)b.CreateDate,
+                    IsActive = b.IsActive,
+                    IsPublished = b.IsPublished
+                })
+                .ToListAsync();
+
+            var response = new PaginatedResponse<ManagerBookListItemViewModel>
+            {
+                Items = books,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetBookDetailsById/{bookId}")]
+        public async Task<IActionResult> GetBookDetailsById(int bookId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var author = await _context.Authors.FirstOrDefaultAsync(b => b.UserId == userId);
+            if (author == null) return Unauthorized();
+
+            var book = await _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
+                .Include(b => b.Chapters).Include(b => b.Author)
+                .Where(b => b.AuthorId == author.Id && b.Id == bookId)
+                .FirstOrDefaultAsync();
+            if (book == null) return NotFound();
+            return Ok(book);
+
+        }
+
     }
 }

@@ -10,7 +10,7 @@ public class ManagerBooksController : Controller
     private readonly IHttpClientFactory _httpClientFactory;
     private const string apiBase = "https://localhost:7267/api/ManagerBooks";
 
-    public ManagerBooksController(IHttpClientFactory httpClientFactory)
+    public ManagerBooksController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         _httpClientFactory = httpClientFactory;
     }
@@ -46,4 +46,29 @@ public class ManagerBooksController : Controller
         var res = await client.PutAsync($"{apiBase}/decision", content);
         return RedirectToAction("Index");
     }
+
+    public async Task<IActionResult> All(int page = 1)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var url = $"{apiBase}/all?page={page}";
+
+        var response = await client.GetAsync(url);
+        if (!response.IsSuccessStatusCode)
+        {
+            ViewBag.Error = "Không thể tải dữ liệu từ server.";
+            return View(new PaginatedWebResponse<ManagerBookListItemViewModel>());
+        }
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        var apiResponse = JsonConvert.DeserializeObject<PaginatedWebResponse<ManagerBookListItemViewModel>>(json);
+        if (apiResponse == null || apiResponse.Items == null)
+        {
+            ViewBag.Error = "Lỗi phân tích dữ liệu từ API.";
+            return View(new PaginatedWebResponse<ManagerBookListItemViewModel>());
+        }
+
+        return View(apiResponse);
+    }
+
 }
