@@ -45,6 +45,9 @@ else if (Model.Items.Any())
                             <span class="text-warning">Chờ duyệt</span>
                         }
                     </td>
+                    <td>
+                        <a type="submit" asp-controller="ManagerBooks" asp-action="Details" asp-route-bookId="@book.Id" class="btn btn-danger btn-sm">Xem</a>
+                    </td>
                 </tr>
             }
         </tbody>
