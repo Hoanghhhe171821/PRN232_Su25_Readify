@@ -217,26 +217,32 @@ namespace PRN232_Su25_Readify_Web.Controllers
                 return RedirectToAction("BookManager");
             }
             // Có thể thêm validation kích thước/loại file ở đây trước khi gửi đi
-
+            var request = new ChapterUploadRequest
+            {
+                File = model.File,
+                BookId = model.BookId,
+                ChapterOrder = model.ChapterOrder,
+                ChapterTitle = model.ChapterTitle
+            };
             var client = CreateClient(); // Sử dụng HttpClient từ BaseController
 
             using var form = new MultipartFormDataContent();
 
             // Thêm các thuộc tính của ChapterUploadRequest vào form data
-            form.Add(new StringContent(model.BookId.ToString()), "BookId");
-            form.Add(new StringContent(model.ChapterOrder.ToString()), "ChapterOrder");
-            form.Add(new StringContent(model.ChapterTitle ?? ""), "ChapterTitle");
+            form.Add(new StringContent(request.BookId.ToString()), "BookId");
+            form.Add(new StringContent(request.ChapterOrder.ToString()), "ChapterOrder");
+            form.Add(new StringContent(request.ChapterTitle ?? ""), "ChapterTitle");
 
             // Thêm IFormFile
             var streamContent = new StreamContent(model.File.OpenReadStream());
-            streamContent.Headers.ContentType = new MediaTypeHeaderValue(model.File.ContentType);
-            form.Add(streamContent, "File", model.File.FileName);
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue(request.File.ContentType);
+            form.Add(streamContent, "File", request.File.FileName);
 
             
             try
             {
                 // Gửi yêu cầu POST đến API
-                var response = await PostAuthorizedApiDataAsync<ChapterUploadRequest>("https://localhost:7267/api/Chapters/AddOrUpdateChapter", form);
+                var response = await PostAuthorizedApiDataAsync<ChapterUploadRequest>("api/Chapters/AddOrUpdateChapter", form);
                 return RedirectToAction("BookManager");
 
             }
