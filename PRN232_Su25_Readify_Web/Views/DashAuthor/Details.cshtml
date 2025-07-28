@@ -81,6 +81,7 @@
                     <div class="product-description tabs-site-button">
                         <ul class="nav nav-tabs">
                             <li><a data-bs-toggle="tab" href="#graphic-design-1" class="active">Details Product</a></li>
+                            <li><a data-bs-toggle="tab" href="#developement-1" class="active">Add/Update Chapter</a></li>
                         </ul>
                         <div class="tab-content">
                             @*Book details*@
@@ -110,6 +111,50 @@
                                 </table>
                             </div                          
                         </div>
+                            <div id="developement-1" class="tab-pane ">
+                                <div class="clear" id="comment-list">
+                                    <div class="post-comments comments-area style-1 clearfix">
+                                        @*Add Chapter*@
+                                        <div class="default-form comment-respond style-1" id="respond">
+                                            @if (TempData["ErrorMessage"] != null)
+                                            {
+                                                <div class="alert alert-danger">
+                                                    @TempData["ErrorMessage"]
+                                                </div>
+                                            }
+                                            <h4 class="comment-reply-title" id="reply-title">Add new chapter <small> <a rel="nofollow" id="cancel-comment-reply-link" href="javascript:void(0)" style="display:none;">Cancel reply</a> </small></h4>
+                                            <div class="clearfix">
+                                                <form asp-action="CreateOrUpdateChapter" method="post" enctype="multipart/form-data">
+                                                    <div class="mb-3">
+                                                        <input type="hidden" asp-for="BookId" class="form-control" />
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label asp-for="ChapterOrder" class="form-label">Thứ tự Chương</label>
+                                                        <input asp-for="ChapterOrder" class="form-control" type="number" />
+                                                        <span asp-validation-for="ChapterOrder" class="text-danger"></span>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label asp-for="ChapterTitle" class="form-label">Tiêu đề Chương</label>
+                                                        <input asp-for="ChapterTitle" class="form-control" />
+                                                        <span asp-validation-for="ChapterTitle" class="text-danger"></span>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Chọn File PDF (tối đa 20MB, chỉ .pdf)</label>
+                                                        <input asp-for="File" type="file" name="File" accept=".pdf" class="form-control" />
+                                                    </div>
+
+                                                    <button type="submit" class="btn btn-success">Lưu Chương</button>
+                                                    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                     </div>
                 </div>               
             </div>
