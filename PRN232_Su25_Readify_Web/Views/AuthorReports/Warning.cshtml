@@ -1,5 +1,7 @@
 ﻿@model PRN232_Su25_Readify_Web.Models.BookReport.AuthorReportViewModel
-
+@{
+    Layout = "~/Views/Shared/_PartialAuthor.cshtml";
+}
 <h2>Cảnh báo về sách: @Model.BookTitle</h2>
 
 <p><strong>Lý do:</strong> @Model.Reason</p>
