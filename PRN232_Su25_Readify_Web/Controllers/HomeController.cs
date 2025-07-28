@@ -19,8 +19,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var recommendBooks = await GetApiDataAsync<List<Book>>("api/Books/RecommendBooks")?? new List<Book>();
-            var newReleaseBooks = await GetApiDataAsync<List<Book>>("api/Books/NewReleaseBooks") ?? new List<Book>();
+            var recommendBooks = await GetApiDataAsync<List<Book>>("api/Books/RecommendBooks") ?? new List<Book>();
+
+            var newReleaseBooks = await GetApiDataAsync<List<Book>>("api/Books/NewReleaseBooks")?? new List<Book>();
            
             var data = new HomeIndexViewModel
             {
@@ -33,7 +34,7 @@ namespace PRN232_Su25_Readify_Web.Controllers
         private async Task<T> GetApiDataAsync<T>(string url)
         {
             var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode(); // Báo l?i n?u API tr? l?i
+            response.EnsureSuccessStatusCode(); // BÃ¡o l?i n?u API tr? l?i
 
             var json = await response.Content.ReadAsStringAsync();
             var data = JsonConvert.DeserializeObject<T>(json);
