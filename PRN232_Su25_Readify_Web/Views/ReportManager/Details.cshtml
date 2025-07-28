@@ -1,13 +1,27 @@
 ﻿@model PRN232_Su25_Readify_Web.Models.BookReport.ReportManagementViewModel
-
+@{
+    Layout = "~/Views/Shared/_PartialManager.cshtml";
+}
 <h2>Chi tiết báo cáo</h2>
-
+@{
+    string displayStatus = Model.Status switch
+    {
+        "PENDING" => "Đang chờ xử lý",
+        "WARNING" => "Cảnh báo tác giả",
+        "BOOK_LOCKED" => "Đã khóa sách",
+        "RESOLVED_NO_ACTION" => "Đã xử lý (Không hành động)",
+        "AUTHOR_DENIED_LOCK" => "Tác giả từ chối khóa",
+        "CLOSED_ACCEPTED_DENIAL" => "Đã đóng (Chấp nhận từ chối)",
+        "CLOSED_REJECTED_DENIAL" => "Đã đóng (Từ chối từ chối)",
+        _ => "Không xác định"
+    };
+}
 <div class="card p-3">
     <p><strong>Sách:</strong> @Model.BookTitle</p>
     <p><strong>Người báo cáo:</strong> @Model.ReporterName</p>
     <p><strong>Lý do:</strong> @Model.Reason</p>
     <p><strong>Mô tả:</strong> @Model.Description</p>
-    <p><strong>Trạng thái:</strong> @Model.Status</p>
+    <p><strong>Trạng thái:</strong> @displayStatus</p>
 
     @if (Model.Status == "PENDING")
     {

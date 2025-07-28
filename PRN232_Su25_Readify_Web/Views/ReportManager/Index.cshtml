@@ -1,5 +1,7 @@
 ﻿@model List<PRN232_Su25_Readify_Web.Models.BookReport.ReportManagementViewModel>
-
+@{
+    Layout = "~/Views/Shared/_PartialManager.cshtml";
+}
 <h2>Danh sách Báo cáo</h2>
 <table class="table table-bordered">
     <thead>
@@ -20,7 +22,24 @@
                 <td>@Model[i].BookTitle</td>
                 <td>@Model[i].ReporterName</td>
                 <td>@Model[i].Reason</td>
-                <td>@Model[i].Status</td>
+                <td>
+                    @{
+                        var status = Model[i].Status.ToString();
+                        string displayStatus = status switch
+                        {
+                            "PENDING" => "Đang chờ xử lý",
+                            "WARNING" => "Cảnh báo tác giả",
+                            "BOOK_LOCKED" => "Đã khóa sách",
+                            "RESOLVED_NO_ACTION" => "Đã xử lý (Không hành động)",
+                            "AUTHOR_DENIED_LOCK" => "Tác giả từ chối khóa",
+                            "CLOSED_ACCEPTED_DENIAL" => "Đã đóng (Chấp nhận từ chối)",
+                            "CLOSED_REJECTED_DENIAL" => "Đã đóng (Từ chối từ chối)",
+                            _ => "Không xác định"
+                        };
+                    }
+                    @displayStatus
+                </td>
+
                 <td>
                     <a asp-action="Details" asp-route-id="@Model[i].ReportId" class="btn btn-info btn-sm">Xem</a>
                 </td>

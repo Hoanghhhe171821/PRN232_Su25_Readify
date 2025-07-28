@@ -160,71 +160,23 @@
         <!-- Sidebar -->
         <div class="sidebar pt-0" id="sidebar">
             <div class="sidebar-title">
-                <i class="ti-layout-grid2"></i> <a asp-action="index" asp-controller="Dashauthor" class="sidebar-title">Dashboard</a>
+                <i class="fas fa-cog me-2"></i> Quản lý sách
             </div>
 
-            <div class="accordion accordion-flush" id="sidebarAccordion">
-                <!-- Book -->
-                <div class="accordion-item bg-transparent border-0">
-                    <h2 class="accordion-header" id="headingBook">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBook">
-                            <i class="fas fa-book"></i> Quản lý Sách
-                        </button>
-                    </h2>
-                    <div id="collapseBook" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
-                        <div class="accordion-body p-0">
-                            <ul class="nav flex-column">
-                                <li class="nav-item"><a asp-controller="DashAuthor" asp-action="BookManager" class="nav-link"><i class="fas fa-list-ul"></i> Danh sách</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="DashAuthor" asp-action="Create"><i class="fas fa-plus-circle"></i> Thêm mới</a></li>
-                                <a asp-controller="AuthorReports" asp-action="PendingWarnings" class="nav-link">
-                                    <i class="fas fa-bell me-2"></i> Cảnh báo từ quản lý
-                                </a>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <!-- Orders -->
-                <div class="accordion-item bg-transparent border-0">
-                    <h2 class="accordion-header" id="headingOrder">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrder">
-                            <i class="fas fa-shopping-cart"></i> Quản lý doanh thu sách
-                        </button>
-                    </h2>
-                    <div id="collapseOrder" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
-                        <div class="accordion-body p-0">
-                            <ul class="nav flex-column">
-                                <li class="nav-item"><a class="nav-link" asp-action="AuthorBookRevenue" asp-controller="AuthorPublic"><i class="fas fa-tasks"></i> Danh sách</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                @* Yêu cầu rút tiền *@
-                <div class="accordion-item bg-transparent border-0">
-                    <h2 class="accordion-header" id="headingRutTien">
-                        <button class="accordion-button collapsed bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRutTien" aria-expanded="false" aria-controls="collapseRutTien">
-                            <i class="fas fa-money-bill-wave me-2"></i> Yêu cầu rút tiền
-                        </button>
-                    </h2>
-                    <div id="collapseRutTien" class="accordion-collapse collapse" aria-labelledby="headingRutTien" data-bs-parent="#sidebarAccordion">
-                        <div class="accordion-body p-0">
-                            <ul class="nav flex-column">
-                                <li class="nav-item">
-                                    <a class="nav-link text-white" asp-controller="DashAuthor" asp-action="ListPayoutRequest">
-                                        <i class="fas fa-list me-2"></i> Danh sách
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-white" asp-action="CreateRequestRoyal" asp-controller="DashAuthor">
-                                        <i class="fas fa-chart-line me-2"></i> Tạo yêu cầu
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+            <a class="nav-link" asp-controller="ManagerBooks" asp-action="All">
+                <i class="fas fa-book-open me-2"></i> Quản lý sách
+            </a>
 
+            <a class="nav-link" asp-controller="ManagerBooks" asp-action="Index">
+                <i class="fas fa-check-circle me-2"></i> Duyệt sách
+            </a>
 
-            </div>
+            <a class="nav-link" asp-controller="ReportManager" asp-action="Index">
+                <i class="fas fa-exclamation-triangle me-2"></i> Danh sách báo cáo
+            </a>
+
+            
+
         </div>
 
         <!-- Main Content -->
