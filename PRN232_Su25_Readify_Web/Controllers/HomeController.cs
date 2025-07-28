@@ -19,8 +19,9 @@ namespace PRN232_Su25_Readify_Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var recommendBooks = await GetApiDataAsync<List<Book>>("api/Books/RecommendBooks");
-            var newReleaseBooks = await GetApiDataAsync<List<Book>>("api/Books/NewReleaseBooks");
+            var recommendBooks = await GetApiDataAsync<List<Book>>("api/Books/RecommendBooks") ?? new List<Book>();
+
+            var newReleaseBooks = await GetApiDataAsync<List<Book>>("api/Books/NewReleaseBooks")?? new List<Book>();
            
             var data = new HomeIndexViewModel
             {
