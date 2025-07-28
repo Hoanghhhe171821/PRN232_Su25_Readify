@@ -131,26 +131,25 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(response);
         }
 
-        [Authorize(Roles = "Author")]
+ 
         [HttpGet("GetBookDetailsById/{bookId}")]
         public async Task<IActionResult> GetBookDetailsById(int bookId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized();
 
-            var author = await _context.Authors.FirstOrDefaultAsync(b => b.UserId == userId);
-            if (author == null) return Unauthorized();
+          
 
             var book = await _context.Books.Include(b => b.BookCategories).ThenInclude(bc => bc.Category)
                 .Include(b => b.Chapters).Include(b => b.Author)
-                .Where(b => b.AuthorId == author.Id && b.Id == bookId)
+                .Where(b =>  b.Id == bookId)
                 .FirstOrDefaultAsync();
             if (book == null) return NotFound();
             return Ok(book);
 
         }
 
-        [Authorize(Roles = "Author")]
+ 
         [HttpPost("CreateBook")]
         public async Task<IActionResult> CreateBook([FromForm] CreateBookWithFile request)
         {
@@ -214,7 +213,6 @@ namespace PRN232_Su25_Readify_WebAPI.Controllers
             return Ok(newBook);
         }
 
-        [Authorize(Roles = "Author")]
         [HttpPut("UpdateBook")]
         public async Task<IActionResult> UpdateBook([FromBody] CreateBookWithFile request)
         {

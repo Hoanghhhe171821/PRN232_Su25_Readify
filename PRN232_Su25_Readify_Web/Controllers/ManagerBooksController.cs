@@ -14,7 +14,7 @@ public class ManagerBooksController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HttpClient _httpClient;
-    private const string apiBase = "https://localhost:7267/api/ManagerBooks";
+    private const string apiBase = "https://localhost:7267/";
 
     public ManagerBooksController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
@@ -29,7 +29,7 @@ public class ManagerBooksController : Controller
         var token = Request.Cookies["access_Token"];
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var url = $"{apiBase}?page={page}&search={search}";
+        var url = $"{apiBase}api/ManagerBooks/?page={page}&search={search}";
         var res = await client.GetAsync(url);
         if (!res.IsSuccessStatusCode) return View(new PaginatedResponse<PRN232_Su25_Readify_Web.Models.Book.ManagerBookReviewViewModel>());
 
@@ -51,14 +51,14 @@ public class ManagerBooksController : Controller
             IsApproved = isApproved
         }), Encoding.UTF8, "application/json");
 
-        var res = await client.PutAsync($"{apiBase}/decision", content);
+        var res = await client.PutAsync($"{apiBase}api/ManagerBooks/decision", content);
         return RedirectToAction("Index");
     }
 
     public async Task<IActionResult> All(int page = 1)
     {
         var client = _httpClientFactory.CreateClient();
-        var url = $"{apiBase}/all?page={page}";
+        var url = $"{apiBase}api/ManagerBooks/all?page={page}";
 
         var response = await client.GetAsync(url);
         if (!response.IsSuccessStatusCode)
@@ -128,7 +128,7 @@ public class ManagerBooksController : Controller
     }
     public async Task<IActionResult> Details(int bookId)
     {
-        var book = await GetAuthorizedApiDataAsync<Book>($"api/Authors/GetBookDetailsById/{bookId}");
+        var book = await GetAuthorizedApiDataAsync<Book>($"api/ManagerBooks/GetBookDetailsById/{bookId}");
         if (book == null) RedirectToAction("BookManager");
 
         var chapters = await GetApiDataAsync<List<Chapter>>($"api/Books/GetAllChapterByBookId/{bookId}");
