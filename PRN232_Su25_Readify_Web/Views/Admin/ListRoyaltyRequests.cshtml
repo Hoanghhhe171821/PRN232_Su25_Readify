@@ -5,102 +5,116 @@
     Layout = "~/Views/Shared/_PartialAuthor.cshtml";
 }
 
-<h2>Danh sách yêu cầu rút tiền</h2>
+<div class="container mt-4">
+    <h2 class="mb-3">Danh sách yêu cầu rút tiền</h2>
+    <hr />
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Tác giả</th>
-            <th>Số tiền yêu cầu</th>
-            <th>Ngày yêu cầu</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var request in Model.Items)
-        {
+    <table class="table table-hover align-middle text-center">
+        <thead class="table-dark">
             <tr>
-                <td>@request.AuthorName</td>
-                <td>@request.RequestAmount.ToString("N0") ₫</td>
-                <td>@request.CreateDate.ToString("dd/MM/yyyy")</td>
-                <td>
-                    @{
-                        var statusText = request.Status switch
-                        {
-                            0 => "Đang chờ duyệt",
-                            1 => "Đã duyệt",
-                            2 => "Đã từ chối",
-                            _ => "Không rõ"
-                        };
-                    }
-                    @statusText
-                </td>
-                <td>
-                    @if (request.Status == 0)
-                    {
-                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="@request.Id" data-action="approve">Duyệt</button>
-                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="@request.Id" data-action="reject">Từ chối</button>
-                    }
-                </td>
+                <th>#</th>
+                <th>Tác giả</th>
+                <th>Số tiền yêu cầu</th>
+                <th>Ngày yêu cầu</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @{
+                int stt = ((ViewBag.PageIndex ?? 1) - 1) * (ViewBag.PageSize ?? Model.TotalItems);
+            }
+            @foreach (var request in Model.Items)
+            {
+                stt++;
+                var statusClass = request.Status switch
+                {
+                    0 => "badge bg-warning text-dark",
+                    1 => "badge bg-success",
+                    2 => "badge bg-danger",
+                    _ => "badge bg-secondary"
+                };
 
-<!-- Pagination -->
-<nav>
-    <ul class="pagination justify-content-center">
-        @for (int i = 1; i <= Model.TotalPages; i++)
-        {
-            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                <a class="page-link" href="@Url.Action("ListRoyaltyRequests", "Admin", new { page = i })">@i</a>
-            </li>
-        }
-    </ul>
-</nav>
+                var statusText = request.Status switch
+                {
+                    0 => "Đang chờ duyệt",
+                    1 => "Đã duyệt",
+                    2 => "Đã từ chối",
+                    _ => "Không rõ"
+                };
 
-<!-- Modal phản hồi -->
+                <tr>
+                    <td>@stt</td>
+                    <td>@request.AuthorName</td>
+                    <td>@request.RequestAmount.ToString("N0") ₫</td>
+                    <td>@request.CreateDate.ToString("dd/MM/yyyy")</td>
+                    <td><span class="@statusClass">@statusText</span></td>
+                    <td>
+                        @if (request.Status == 0)
+                        {
+                            <div class="d-flex justify-content-center gap-2">
+                                <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="@request.Id" data-action="approve">
+                                    <i class="bi bi-check-circle"></i> Duyệt
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-id="@request.Id" data-action="reject">
+                                    <i class="bi bi-x-circle"></i> Từ chối
+                                </button>
+                            </div>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("ListRoyaltyRequests", "Admin", new { page = i })">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+</div>
+
+<!-- Modal -->
 <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow">
             <form id="responseForm">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="approveModalLabel">Phản hồi yêu cầu</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="requestId" name="id" />
                     <input type="hidden" id="actionType" name="action" />
                     <div class="mb-3">
                         <label for="message" class="form-label">Lời nhắn đến tác giả</label>
-                        <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+                        <textarea class="form-control" id="message" name="message" rows="4" placeholder="Nhập lời nhắn..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary">Gửi</button>
+                    <button type="submit" class="btn btn-primary">Gửi phản hồi</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-@section Scripts{
+
+@section Scripts {
     <script>
         $(document).ready(function () {
-            let selectedRequestId = null;
-            let selectedAction = null;
-
-            // Khi ấn nút Duyệt hoặc Từ chối
             $('#approveModal').on('show.bs.modal', function (event) {
-                var button = $(event.relatedTarget);
-                selectedRequestId = button.data('id');
-                selectedAction = button.data('action');
-                $('#requestId').val(selectedRequestId);
-                $('#actionType').val(selectedAction);
+                const button = $(event.relatedTarget);
+                $('#requestId').val(button.data('id'));
+                $('#actionType').val(button.data('action'));
             });
 
-            // Gửi phản hồi (duyệt / từ chối)
             $('#responseForm').submit(function (e) {
                 e.preventDefault();
 
@@ -121,24 +135,12 @@
                     url: apiUrl,
                     method: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ id: id, message: message }),
-                        xhrFields: {
-            withCredentials: true 
-        },
+                    data: JSON.stringify({ id, message }),
+                    xhrFields: { withCredentials: true },
                     success: function (response) {
-                        $('#approveModal').modal('hide'); // Ẩn modal
-
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Thành công',
-                            text: response.message,
-                            showConfirmButton: false,
-                            timer: 2000
-                        });
-
-                        setTimeout(() => {
-                            location.reload(); // Reload sau khi thông báo
-                        }, 2200);
+                        $('#approveModal').modal('hide');
+                        Swal.fire('Thành công', response.message, 'success');
+                        setTimeout(() => location.reload(), 2000);
                     },
                     error: function (xhr) {
                         const err = xhr.responseJSON?.message || 'Đã xảy ra lỗi!';
@@ -149,4 +151,3 @@
         });
     </script>
 }
-
