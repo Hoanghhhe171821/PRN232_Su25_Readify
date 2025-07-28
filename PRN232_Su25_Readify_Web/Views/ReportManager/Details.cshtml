@@ -1,0 +1,45 @@
+﻿@model PRN232_Su25_Readify_Web.Models.BookReport.ReportManagementViewModel
+
+<h2>Chi tiết báo cáo</h2>
+
+<div class="card p-3">
+    <p><strong>Sách:</strong> @Model.BookTitle</p>
+    <p><strong>Người báo cáo:</strong> @Model.ReporterName</p>
+    <p><strong>Lý do:</strong> @Model.Reason</p>
+    <p><strong>Mô tả:</strong> @Model.Description</p>
+    <p><strong>Trạng thái:</strong> @Model.Status</p>
+
+    @if (Model.Status == "PENDING")
+    {
+        <form method="post" asp-action="Handle">
+            <input type="hidden" name="ReportId" value="@Model.ReportId" />
+            <div class="form-group">
+                <label>Ghi chú (nếu có)</label>
+                <textarea name="Note" class="form-control"></textarea>
+            </div>
+            <br />
+            <button name="Action" value="warning" class="btn btn-warning">⚠️ Cảnh báo</button>
+            <button name="Action" value="lock" class="btn btn-danger">🔒 Khóa sách</button>
+            <button name="Action" value="resolve" class="btn btn-secondary">❌ Bỏ qua</button>
+        </form>
+    }
+
+    @if (Model.Status == "AUTHOR_DENIED_LOCK")
+    {
+        <hr />
+        <h4 class="text-danger">Tác giả đã từ chối khóa sách</h4>
+        <p><strong>Lý do tác giả từ chối:</strong></p>
+        <div class="alert alert-warning">@Model.AuthorDenialReason</div>
+
+        <form method="post" asp-action="FinalDecision">
+            <input type="hidden" name="ReportId" value="@Model.ReportId" />
+            <div class="form-group">
+                <label>Ghi chú quyết định</label>
+                <textarea name="Note" class="form-control"></textarea>
+            </div>
+            <br />
+            <button name="AcceptAuthorDenial" value="true" class="btn btn-success">✔️ Chấp nhận từ chối</button>
+            <button name="AcceptAuthorDenial" value="false" class="btn btn-danger">✖️ Từ chối từ chối & Khóa sách</button>
+        </form>
+    }
+</div>

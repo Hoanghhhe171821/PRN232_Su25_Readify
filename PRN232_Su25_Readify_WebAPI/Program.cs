@@ -1,8 +1,11 @@
 ﻿using CloudinaryDotNet;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OData.Edm;
+using Microsoft.OData.ModelBuilder;
 using PRN232_Su25_Readify_WebAPI.DbContext;
 using PRN232_Su25_Readify_WebAPI.Middlewares;
 using PRN232_Su25_Readify_WebAPI.Models;
@@ -20,7 +23,12 @@ builder.Services.AddControllers()
                  });
 builder.Services.Configure<MoMoConfig>(
     builder.Configuration.GetSection("MoMo"));
-
+builder.Services.AddControllers()
+    .AddOData(opt =>
+    {
+        opt.Select().Filter().Expand().OrderBy().SetMaxTop(100).Count()
+            .AddRouteComponents("odata", GetEdmModel());
+    });
 builder.Services.AddDbContext<ReadifyDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -37,6 +45,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITopUpTransService, TopUpTransService>();
+builder.Services.AddScoped<IRoyalPayoutReService, RoyalPayoutReService>();
 builder.Services.AddScoped<IRoyaltyTransactionService, RoyaltyTransactionService>();
 builder.Services.AddScoped<IAuthorRevenueService, AuthorRevenueService>();
 builder.Services.AddScoped<IBookRevenueService, BookRevenueService>();
@@ -157,3 +166,16 @@ app.UseEndpoints(endpoints =>
 });
 app.MapControllers();
 app.Run();
+
+
+static IEdmModel GetEdmModel()
+{
+    var builder = new ODataConventionModelBuilder();
+
+    builder.EntitySet<AuthorRevenueSummary>("AuthorRevenueSummaries");
+    builder.EntitySet<BookRevenueSummary>("BookRevenueSummaries");
+    builder.EntitySet<RoyaltyTransaction>("RoyaltyTransactions");
+    builder.EntitySet<Book>("Books");
+
+    return builder.GetEdmModel();
+}

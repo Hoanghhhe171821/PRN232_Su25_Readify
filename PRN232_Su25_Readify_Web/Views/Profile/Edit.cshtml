@@ -14,14 +14,14 @@
     </div>
 
     <div class="form-group">
-        <label>Change avatar</label>
+        <label>Change Avatar</label>
         <input type="file" name="avatar" class="form-control" />
     </div>
 
     @if (Model.IsAuthor)
     {
         <hr />
-        <h4>Thông tin tác giả</h4>
+        <h4>Author Information</h4>
 
         <div class="form-group">
             <label>Bio</label>
@@ -29,12 +29,12 @@
         </div>
 
         <div class="form-group">
-            <label>Email công khai</label>
+            <label>Public Email</label>
             <input asp-for="PublicEmail" class="form-control" />
         </div>
 
         <div class="form-group">
-            <label>SĐT công khai</label>
+            <label>Public Phone</label>
             <input asp-for="PublicPhone" class="form-control" />
         </div>
     }
